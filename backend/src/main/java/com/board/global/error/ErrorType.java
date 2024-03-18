@@ -10,6 +10,7 @@ public enum ErrorType {
     UN_SUPPORT_ERROR_TYPE("E000000", HttpStatus.NOT_FOUND.value(), "지원하지 않는 예외 유형입니다."),
     INVALID_INPUT_VALUE("E400001", HttpStatus.BAD_REQUEST.value(), "입력값이 잘못되었습니다."),
     PASSWORD_MISMATCH("E400002", HttpStatus.BAD_REQUEST.value(), "비밀번호가 일치하지 않습니다."),
+    BAD_CREDENTIALS("E401001", HttpStatus.UNAUTHORIZED.value(), "아이디 또는 비밀번호가 일치하지 않습니다."),
     DUPLICATE_NICKNAME("E409001", HttpStatus.CONFLICT.value(), "사용 중인 닉네임입니다."),
     DUPLICATE_USERNAME("E409002", HttpStatus.CONFLICT.value(), "사용 중인 아이디입니다.");
 
