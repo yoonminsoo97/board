@@ -1,0 +1,19 @@
+package com.board.global.error;
+
+import com.board.global.error.dto.ErrorResponse;
+import com.board.global.error.exception.BaseException;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    @ExceptionHandler(BaseException.class)
+    ResponseEntity<ErrorResponse> handleBaseException(BaseException e) {
+        final ErrorResponse errorResponse = ErrorResponse.of(e.getErrorType());
+        return ResponseEntity.status(errorResponse.getStatus()).body(errorResponse);
+    }
+
+}
