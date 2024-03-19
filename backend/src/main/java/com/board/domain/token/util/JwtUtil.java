@@ -1,5 +1,11 @@
 package com.board.domain.token.util;
 
+import com.board.domain.token.exception.ExpiredTokenException;
+import com.board.domain.token.exception.InvalidTokenException;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
@@ -49,6 +55,20 @@ public class JwtUtil {
                 .expiration(exp)
                 .signWith(secretKey, Jwts.SIG.HS256)
                 .compact();
+    }
+
+    public Claims getPayload(String token) {
+        try {
+            return Jwts.parser()
+                    .verifyWith(secretKey)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+        } catch (ExpiredJwtException e) {
+            throw new ExpiredTokenException();
+        } catch (JwtException | IllegalArgumentException e) {
+            throw new InvalidTokenException();
+        }
     }
 
 }
