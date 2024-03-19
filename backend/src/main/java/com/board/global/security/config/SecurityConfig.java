@@ -1,6 +1,8 @@
 package com.board.global.security.config;
 
 import com.board.domain.token.service.TokenService;
+import com.board.global.security.filter.JwtAuthenticationFilter;
+import com.board.global.security.handler.JwtAuthenticationEntryPoint;
 import com.board.global.security.handler.MemberLoginFailureHandler;
 import com.board.global.security.handler.MemberLoginSuccessHandler;
 
@@ -17,9 +19,11 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.logout.LogoutFilter;
 
 @EnableWebSecurity
 @Configuration
@@ -34,8 +38,12 @@ public class SecurityConfig {
         httpSecurity
                 .csrf(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
+                .addFilterBefore(jwtAuthenticationFilter(), LogoutFilter.class)
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .exceptionHandling(e -> e
+                        .authenticationEntryPoint(authenticationEntryPoint())
                 )
                 .formLogin(form -> form
                         .loginProcessingUrl("/api/members/login")
@@ -69,6 +77,16 @@ public class SecurityConfig {
     @Bean
     public AuthenticationFailureHandler memberLoginFailureHandler() {
         return new MemberLoginFailureHandler(objectMapper);
+    }
+
+    @Bean
+    public AuthenticationEntryPoint authenticationEntryPoint() {
+        return new JwtAuthenticationEntryPoint(objectMapper);
+    }
+
+    @Bean
+    public JwtAuthenticationFilter jwtAuthenticationFilter() {
+        return new JwtAuthenticationFilter(tokenService, authenticationEntryPoint());
     }
 
 }
