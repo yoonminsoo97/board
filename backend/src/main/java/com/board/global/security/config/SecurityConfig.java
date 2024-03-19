@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -28,9 +29,12 @@ import org.springframework.security.web.authentication.logout.LogoutFilter;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 
 @EnableWebSecurity
+@EnableMethodSecurity(securedEnabled = true)
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfig {
+
+    private static final String ROLE_MEMBER = "MEMBER";
 
     private final ObjectMapper objectMapper;
     private final TokenService tokenService;
@@ -66,6 +70,8 @@ public class SecurityConfig {
                                 "/api/members/username/*").permitAll()
                         .requestMatchers(HttpMethod.POST,
                                 "/api/members/signup").permitAll()
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/posts/write").hasRole(ROLE_MEMBER)
                         .anyRequest().denyAll()
                 );
         return httpSecurity.build();

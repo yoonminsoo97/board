@@ -15,6 +15,7 @@ public enum ErrorType {
     BAD_CREDENTIALS("E401001", HttpStatus.UNAUTHORIZED.value(), "아이디 또는 비밀번호가 일치하지 않습니다."),
     INVALID_TOKEN("E401002", HttpStatus.UNAUTHORIZED.value(), "토큰이 유효하지 않습니다."),
     EXPIRED_TOKEN("E401003", HttpStatus.UNAUTHORIZED.value(), "토큰이 만료되었습니다."),
+    NOT_FOUND_MEMBER("E404001", HttpStatus.NOT_FOUND.value(), "회원을 찾을 수 없습니다."),
     DUPLICATE_NICKNAME("E409001", HttpStatus.CONFLICT.value(), "사용 중인 닉네임입니다."),
     DUPLICATE_USERNAME("E409002", HttpStatus.CONFLICT.value(), "사용 중인 아이디입니다.");
 
