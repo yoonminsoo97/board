@@ -5,6 +5,7 @@ import com.board.global.security.filter.JwtAuthenticationFilter;
 import com.board.global.security.handler.JwtAuthenticationEntryPoint;
 import com.board.global.security.handler.MemberLoginFailureHandler;
 import com.board.global.security.handler.MemberLoginSuccessHandler;
+import com.board.global.security.handler.MemberLogoutSuccessHandler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -24,6 +25,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.logout.LogoutFilter;
+import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 
 @EnableWebSecurity
 @Configuration
@@ -53,6 +55,11 @@ public class SecurityConfig {
                         .failureHandler(memberLoginFailureHandler())
                         .permitAll()
                 )
+                .logout(logout -> logout
+                        .logoutUrl("/api/members/logout")
+                        .logoutSuccessHandler(logoutSuccessHandler())
+                        .permitAll(false)
+                )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET,
                                 "/api/members/nickname/*",
@@ -77,6 +84,11 @@ public class SecurityConfig {
     @Bean
     public AuthenticationFailureHandler memberLoginFailureHandler() {
         return new MemberLoginFailureHandler(objectMapper);
+    }
+
+    @Bean
+    public LogoutSuccessHandler logoutSuccessHandler() {
+        return new MemberLogoutSuccessHandler(tokenService);
     }
 
     @Bean

@@ -7,16 +7,22 @@ import com.board.domain.member.exception.DuplicateUsernameException;
 import com.board.domain.member.exception.PasswordMismatchException;
 import com.board.domain.member.service.MemberService;
 import com.board.domain.token.dto.TokenResponse;
+import com.board.domain.token.exception.InvalidTokenException;
 import com.board.domain.token.service.TokenService;
 import com.board.global.security.config.SecurityConfig;
 import com.board.global.security.dto.AuthPrincipal;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
@@ -24,6 +30,9 @@ import org.springframework.http.MediaType;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Date;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -56,6 +65,12 @@ class MemberControllerTest {
 
     @MockBean
     private MemberService memberService;
+
+    @Value("${jwt.secret-key}")
+    private String secretKey;
+
+    @Value("${jwt.access-token.expire}")
+    private long accessTokenExpire;
 
     @Test
     @DisplayName("닉네임 중복 확인을 한다")
@@ -201,6 +216,62 @@ class MemberControllerTest {
                 .andExpect(jsonPath("$.status").value(401))
                 .andExpect(jsonPath("$.message").value("아이디 또는 비밀번호가 일치하지 않습니다."))
                 .andDo(print());
+    }
+
+    @Test
+    @DisplayName("로그아웃을 한다")
+    void memberLogout() throws Exception {
+        String accessToken = createAccessToken();
+        Claims payload = getPayload(accessToken);
+
+        given(tokenService.tokenPayload(anyString())).willReturn(payload);
+        willDoNothing().given(tokenService).tokenDelete(anyString());
+
+        mockMvc.perform(post("/api/members/logout")
+                        .header("Authorization", "Bearer " + accessToken)
+                )
+                .andExpect(status().isOk())
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("로그아웃 시 Refresh Token이 존재하지 않으면 예외가 발생한다")
+    void memberLogout_invalidToken() throws Exception {
+        String accessToken = createAccessToken();
+        Claims payload = getPayload(accessToken);
+
+        given(tokenService.tokenPayload(anyString())).willReturn(payload);
+        willThrow(new InvalidTokenException()).given(tokenService).tokenDelete(anyString());
+
+        mockMvc.perform(post("/api/members/logout")
+                        .header("Authorization", "Bearer " + accessToken)
+                )
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.errorCode").value("E401002"))
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.message").value("토큰이 유효하지 않습니다."))
+                .andDo(print());
+    }
+
+    private String createAccessToken() {
+        Date iat = new Date();
+        Date exp = new Date(iat.getTime() + accessTokenExpire);
+        return Jwts.builder()
+                .subject("yoon1234")
+                .claim("nickname", "yoonkun")
+                .claim("authority", "ROLE_MEMBER")
+                .signWith(Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8)), Jwts.SIG.HS256)
+                .issuedAt(iat)
+                .expiration(exp)
+                .compact();
+    }
+
+    private Claims getPayload(String token) {
+        return Jwts.parser()
+                .verifyWith(Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8)))
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 
 }

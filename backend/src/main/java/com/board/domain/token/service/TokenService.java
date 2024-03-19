@@ -3,6 +3,7 @@ package com.board.domain.token.service;
 import com.board.domain.member.entity.Member;
 import com.board.domain.token.dto.TokenResponse;
 import com.board.domain.token.entity.Token;
+import com.board.domain.token.exception.InvalidTokenException;
 import com.board.domain.token.repository.TokenRepository;
 import com.board.domain.token.util.JwtUtil;
 
@@ -12,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +33,15 @@ public class TokenService {
                 .build();
         tokenRepository.save(token);
         return new TokenResponse(accessToken, refreshToken);
+    }
+
+    @Transactional
+    public void tokenDelete(String username) {
+        Optional<Token> token = tokenRepository.findByMemberUsername(username);
+        if (token.isEmpty()) {
+            throw new InvalidTokenException();
+        }
+        tokenRepository.delete(token.get());
     }
 
     public Claims tokenPayload(String token) {
