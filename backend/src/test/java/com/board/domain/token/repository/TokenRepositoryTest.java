@@ -49,4 +49,34 @@ class TokenRepositoryTest {
         assertThat(saveToken.getId()).isNotNull();
     }
 
+    @Test
+    @DisplayName("회원 아이디로 토큰을 조회한다")
+    void tokenFindByMemberUsername() {
+        Token token = Token.builder()
+                .refreshToken("refresh-token")
+                .member(member)
+                .build();
+        tokenRepository.save(token);
+
+        Token findToken = tokenRepository.findByMemberUsername(member.getUsername()).get();
+
+        assertThat(findToken.getRefreshToken()).isEqualTo("refresh-token");
+    }
+
+    @Test
+    @DisplayName("토큰을 삭제한다")
+    void tokenDelete() {
+        Token token = Token.builder()
+                .refreshToken("refresh-token")
+                .member(member)
+                .build();
+        tokenRepository.save(token);
+
+        Token findToken = tokenRepository.findByMemberUsername(member.getUsername()).get();
+
+        tokenRepository.delete(findToken);
+
+        assertThat(tokenRepository.findByMemberUsername(member.getUsername())).isEmpty();
+    }
+
 }
