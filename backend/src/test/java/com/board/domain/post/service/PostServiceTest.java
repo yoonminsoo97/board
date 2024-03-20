@@ -7,6 +7,7 @@ import com.board.domain.post.dto.PostModifyRequest;
 import com.board.domain.post.dto.PostWriteRequest;
 import com.board.domain.post.entity.Post;
 import com.board.domain.post.exception.NotFoundPostException;
+import com.board.domain.post.exception.PostDeleteAccessDeniedException;
 import com.board.domain.post.exception.PostModifyAccessDeniedException;
 import com.board.domain.post.repository.PostRepository;
 
@@ -28,6 +29,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.never;
 
@@ -159,6 +161,54 @@ class PostServiceTest {
                 .isInstanceOf(PostModifyAccessDeniedException.class);
 
         then(postRepository).should().findPostJoinFetch(anyLong());
+    }
+
+    @Test
+    @DisplayName("게시글을 삭제한다")
+    void postDelete() {
+        Post post = Post.builder()
+                .title("제목")
+                .content("내용")
+                .member(member)
+                .build();
+
+        given(postRepository.findPostJoinFetch(anyLong())).willReturn(Optional.of(post));
+        willDoNothing().given(postRepository).delete(any(Post.class));
+
+        postService.postDelete(1L, "yoon1234");
+
+        then(postRepository).should().findPostJoinFetch(anyLong());
+        then(postRepository).should().delete(any(Post.class));
+    }
+
+    @Test
+    @DisplayName("게시글 삭제 시 게시글을 찾을 수 없으면 예외가 발생한다")
+    void postDelete_notFoundPost() {
+        willThrow(new NotFoundPostException()).given(postRepository).findPostJoinFetch(anyLong());
+
+        assertThatThrownBy(() -> postService.postDelete(1L, "yoon1234"))
+                .isInstanceOf(NotFoundPostException.class);
+
+        then(postRepository).should().findPostJoinFetch(anyLong());
+        then(postRepository).should(never()).delete(any(Post.class));
+    }
+
+    @Test
+    @DisplayName("게시글 삭제 시 작성자가 아닌데 삭제를 시도할 경우 예외가 발생한다")
+    void postDelete_notPostOwner() {
+        Post post = Post.builder()
+                .title("제목")
+                .content("내용")
+                .member(member)
+                .build();
+
+        given(postRepository.findPostJoinFetch(anyLong())).willReturn(Optional.of(post));
+
+        assertThatThrownBy(() -> postService.postDelete(1L, "unknown"))
+                .isInstanceOf(PostDeleteAccessDeniedException.class);
+
+        then(postRepository).should().findPostJoinFetch(anyLong());
+        then(postRepository).should(never()).delete(any(Post.class));
     }
 
 }

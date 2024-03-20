@@ -8,6 +8,7 @@ import com.board.domain.post.dto.PostModifyRequest;
 import com.board.domain.post.dto.PostWriteRequest;
 import com.board.domain.post.entity.Post;
 import com.board.domain.post.exception.NotFoundPostException;
+import com.board.domain.post.exception.PostDeleteAccessDeniedException;
 import com.board.domain.post.exception.PostModifyAccessDeniedException;
 import com.board.domain.post.repository.PostRepository;
 
@@ -50,6 +51,16 @@ public class PostService {
             throw new PostModifyAccessDeniedException();
         }
         post.modify(postModifyRequest.getTitle(), postModifyRequest.getContent());
+    }
+
+    @Transactional
+    public void postDelete(Long postNumber, String loginUsername) {
+        Post post = postRepository.findPostJoinFetch(postNumber)
+                .orElseThrow(NotFoundPostException::new);
+        if (!post.isOwner(loginUsername)) {
+            throw new PostDeleteAccessDeniedException();
+        }
+        postRepository.delete(post);
     }
 
 }

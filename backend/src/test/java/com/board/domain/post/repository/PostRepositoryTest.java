@@ -84,4 +84,20 @@ class PostRepositoryTest {
         assertThat(findPost.getMember().getUsername()).isEqualTo("yoon1234");
     }
 
+    @Test
+    @DisplayName("게시글을 삭제한다")
+    void postDelete() {
+        Post post = Post.builder()
+                .title("제목")
+                .content("내용")
+                .member(member)
+                .build();
+        Post savePost = postRepository.save(post);
+        Post findPost = postRepository.findPostJoinFetch(savePost.getId()).get();
+
+        postRepository.delete(findPost);
+
+        assertThat(postRepository.findPostJoinFetch(savePost.getId())).isEmpty();
+    }
+
 }
