@@ -15,6 +15,7 @@ public enum ErrorType {
     BAD_CREDENTIALS("E401001", HttpStatus.UNAUTHORIZED.value(), "아이디 또는 비밀번호가 일치하지 않습니다."),
     INVALID_TOKEN("E401002", HttpStatus.UNAUTHORIZED.value(), "토큰이 유효하지 않습니다."),
     EXPIRED_TOKEN("E401003", HttpStatus.UNAUTHORIZED.value(), "토큰이 만료되었습니다."),
+    POST_MODIFY_ACCESS_DENIED("E403001", HttpStatus.FORBIDDEN.value(), "게시글 수정은 작성자만 할 수 있습니다."),
     NOT_FOUND_MEMBER("E404001", HttpStatus.NOT_FOUND.value(), "회원을 찾을 수 없습니다."),
     NOT_FOUND_POST("E404002", HttpStatus.NOT_FOUND.value(), "게시글을 찾을 수 없습니다."),
     DUPLICATE_NICKNAME("E409001", HttpStatus.CONFLICT.value(), "사용 중인 닉네임입니다."),
