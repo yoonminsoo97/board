@@ -73,7 +73,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         MEMBER_NICKNAME_EXISTS("GET", "/api/members/nickname/*"),
         MEMBER_USERNAME_EXISTS("GET", "/api/members/username/*"),
         MEMBER_SIGNUP("POST", "/api/members/signup"),
-        MEMBER_LOGIN("POST", "/api/members/login");
+        MEMBER_LOGIN("POST", "/api/members/login"),
+        POST_DETAIL("GET", "/api/posts/*");
 
         private final String method;
         private final String pattern;
