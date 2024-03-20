@@ -16,6 +16,7 @@ public enum ErrorType {
     INVALID_TOKEN("E401002", HttpStatus.UNAUTHORIZED.value(), "토큰이 유효하지 않습니다."),
     EXPIRED_TOKEN("E401003", HttpStatus.UNAUTHORIZED.value(), "토큰이 만료되었습니다."),
     NOT_FOUND_MEMBER("E404001", HttpStatus.NOT_FOUND.value(), "회원을 찾을 수 없습니다."),
+    NOT_FOUND_POST("E404002", HttpStatus.NOT_FOUND.value(), "게시글을 찾을 수 없습니다."),
     DUPLICATE_NICKNAME("E409001", HttpStatus.CONFLICT.value(), "사용 중인 닉네임입니다."),
     DUPLICATE_USERNAME("E409002", HttpStatus.CONFLICT.value(), "사용 중인 아이디입니다.");
 
