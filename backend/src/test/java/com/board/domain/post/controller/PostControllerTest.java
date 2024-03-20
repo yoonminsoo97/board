@@ -2,6 +2,8 @@ package com.board.domain.post.controller;
 
 import com.board.domain.member.exception.NotFoundMemberException;
 import com.board.domain.post.dto.PostDetailResponse;
+import com.board.domain.post.dto.PostListItem;
+import com.board.domain.post.dto.PostListResponse;
 import com.board.domain.post.dto.PostModifyRequest;
 import com.board.domain.post.dto.PostWriteRequest;
 import com.board.domain.post.exception.NotFoundPostException;
@@ -31,8 +33,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
@@ -159,6 +163,25 @@ class PostControllerTest {
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.message").value("게시글을 찾을 수 없습니다."))
                 .andDo(print());
+    }
+
+    @Test
+    @DisplayName("게시글 목록을 조회한다")
+    void postList() throws Exception {
+        List<PostListItem> posts = List.of(
+                new PostListItem(5L, "제목5", "작성자5", LocalDateTime.now()),
+                new PostListItem(4L, "제목4", "작성자4", LocalDateTime.now()),
+                new PostListItem(3L, "제목3", "작성자3", LocalDateTime.now()),
+                new PostListItem(2L, "제목2", "작성자2", LocalDateTime.now()),
+                new PostListItem(1L, "제목1", "작성자1", LocalDateTime.now())
+        );
+        PostListResponse postListResponse = new PostListResponse(posts, 0, 1, 5, false, false, true, true);
+
+        given(postService.postList(anyInt())).willReturn(postListResponse);
+
+        mockMvc.perform(get("/api/posts/page/1"))
+                .andDo(print())
+                .andExpect(status().isOk());
     }
 
     @Test
