@@ -4,9 +4,11 @@ import com.board.domain.member.entity.Member;
 import com.board.domain.member.exception.NotFoundMemberException;
 import com.board.domain.member.repository.MemberRepository;
 import com.board.domain.post.dto.PostDetailResponse;
+import com.board.domain.post.dto.PostModifyRequest;
 import com.board.domain.post.dto.PostWriteRequest;
 import com.board.domain.post.entity.Post;
 import com.board.domain.post.exception.NotFoundPostException;
+import com.board.domain.post.exception.PostModifyAccessDeniedException;
 import com.board.domain.post.repository.PostRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -38,6 +40,16 @@ public class PostService {
         Post post = postRepository.findById(postNumber)
                 .orElseThrow(NotFoundPostException::new);
         return new PostDetailResponse(post);
+    }
+
+    @Transactional
+    public void postModify(Long postNumber, PostModifyRequest postModifyRequest, String loginUsername) {
+        Post post = postRepository.findPostJoinFetch(postNumber)
+                .orElseThrow(NotFoundPostException::new);
+        if (!post.isOwner(loginUsername)) {
+            throw new PostModifyAccessDeniedException();
+        }
+        post.modify(postModifyRequest.getTitle(), postModifyRequest.getContent());
     }
 
 }

@@ -66,4 +66,22 @@ class PostRepositoryTest {
         assertThat(findPost.getContent()).isEqualTo("내용");
     }
 
+    @Test
+    @DisplayName("게시글과 해당 게시글을 작성한 회원을 한 번에 조회한다")
+    void findPostJoinFetch() {
+        Post post = Post.builder()
+                .title("제목")
+                .content("내용")
+                .member(member)
+                .build();
+        Post savePost = postRepository.save(post);
+
+        Post findPost = postRepository.findPostJoinFetch(savePost.getId()).get();
+
+        assertThat(findPost.getTitle()).isEqualTo("제목");
+        assertThat(findPost.getContent()).isEqualTo("내용");
+        assertThat(findPost.getMember().getNickname()).isEqualTo("yoonkun");
+        assertThat(findPost.getMember().getUsername()).isEqualTo("yoon1234");
+    }
+
 }

@@ -47,4 +47,13 @@ public class Post extends BaseEntity {
         this.member = member;
     }
 
+    public void modify(String title, String content) {
+        this.title = title;
+        this.content = content;
+    }
+
+    public boolean isOwner(String loginUsername) {
+        return member.getUsername().equals(loginUsername);
+    }
+
 }

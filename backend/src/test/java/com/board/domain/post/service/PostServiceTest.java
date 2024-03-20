@@ -3,9 +3,11 @@ package com.board.domain.post.service;
 import com.board.domain.member.entity.Member;
 import com.board.domain.member.exception.NotFoundMemberException;
 import com.board.domain.member.repository.MemberRepository;
+import com.board.domain.post.dto.PostModifyRequest;
 import com.board.domain.post.dto.PostWriteRequest;
 import com.board.domain.post.entity.Post;
 import com.board.domain.post.exception.NotFoundPostException;
+import com.board.domain.post.exception.PostModifyAccessDeniedException;
 import com.board.domain.post.repository.PostRepository;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -109,6 +111,54 @@ class PostServiceTest {
                 .isInstanceOf(NotFoundPostException.class);
 
         then(postRepository).should().findById(anyLong());
+    }
+
+    @Test
+    @DisplayName("게시글을 수정한다")
+    void postModify() {
+        PostModifyRequest postModifyRequest = new PostModifyRequest("제목", "내용");
+        Post post = Post.builder()
+                .title("제목")
+                .content("내용")
+                .member(member)
+                .build();
+
+        given(postRepository.findPostJoinFetch(anyLong())).willReturn(Optional.of(post));
+
+        postService.postModify(1L, postModifyRequest, "yoon1234");
+
+        then(postRepository).should().findPostJoinFetch(anyLong());
+    }
+
+    @Test
+    @DisplayName("게시글 수정 시 게시글을 찾을 수 없으면 예외가 발생한다")
+    void postModify_notFoundPost() {
+        PostModifyRequest postModifyRequest = new PostModifyRequest("제목", "내용");
+
+        willThrow(new NotFoundPostException()).given(postRepository).findPostJoinFetch(anyLong());
+
+        assertThatThrownBy(() -> postService.postModify(1L, postModifyRequest, "yoon1234"))
+                .isInstanceOf(NotFoundPostException.class);
+
+        then(postRepository).should().findPostJoinFetch(anyLong());
+    }
+
+    @Test
+    @DisplayName("게시글 수정 시 작성자가 아닌데 수정을 시도할 경우 예외가 발생한다")
+    void postModify_notPostOwner() {
+        PostModifyRequest postModifyRequest = new PostModifyRequest("제목", "내용");
+        Post post = Post.builder()
+                .title("제목")
+                .content("내용")
+                .member(member)
+                .build();
+
+        given(postRepository.findPostJoinFetch(anyLong())).willReturn(Optional.of(post));
+
+        assertThatThrownBy(() -> postService.postModify(1L, postModifyRequest, "unknown"))
+                .isInstanceOf(PostModifyAccessDeniedException.class);
+
+        then(postRepository).should().findPostJoinFetch(anyLong());
     }
 
 }
