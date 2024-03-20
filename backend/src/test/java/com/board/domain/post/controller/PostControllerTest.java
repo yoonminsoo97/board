@@ -5,6 +5,7 @@ import com.board.domain.post.dto.PostDetailResponse;
 import com.board.domain.post.dto.PostModifyRequest;
 import com.board.domain.post.dto.PostWriteRequest;
 import com.board.domain.post.exception.NotFoundPostException;
+import com.board.domain.post.exception.PostDeleteAccessDeniedException;
 import com.board.domain.post.exception.PostModifyAccessDeniedException;
 import com.board.domain.post.service.PostService;
 import com.board.domain.token.service.TokenService;
@@ -38,6 +39,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -241,6 +243,60 @@ class PostControllerTest {
                 .andExpect(jsonPath("$.errorCode").value("E403001"))
                 .andExpect(jsonPath("$.status").value(403))
                 .andExpect(jsonPath("$.message").value("게시글 수정은 작성자만 할 수 있습니다."))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("게시글을 삭제한다")
+    void postDelete() throws Exception {
+        String accessToken = createAccessToken();
+        Claims payload = getPayload(accessToken);
+
+        given(tokenService.tokenPayload(anyString())).willReturn(payload);
+        willDoNothing().given(postService).postDelete(anyLong(), anyString());
+
+        mockMvc.perform(delete("/api/posts/1")
+                        .header("Authorization", "Bearer " + accessToken)
+                )
+                .andExpect(status().isOk())
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("게시글 삭제 시 게시글을 찾을 수 없으면 예외가 발생한다")
+    void postDelete_notFoundPost() throws Exception {
+        String accessToken = createAccessToken();
+        Claims payload = getPayload(accessToken);
+
+        given(tokenService.tokenPayload(anyString())).willReturn(payload);
+        willThrow(new NotFoundPostException()).given(postService).postDelete(anyLong(), anyString());
+
+        mockMvc.perform(delete("/api/posts/1")
+                        .header("Authorization", "Bearer " + accessToken)
+                )
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errorCode").value("E404002"))
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value("게시글을 찾을 수 없습니다."))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("게시글 삭제 시 작성자가 아닌데 삭제를 시도할 경우 예외가 발생한다")
+    void postDelete_notPostOwner() throws Exception {
+        String accessToken = createAccessToken();
+        Claims payload = getPayload(accessToken);
+
+        given(tokenService.tokenPayload(anyString())).willReturn(payload);
+        willThrow(new PostDeleteAccessDeniedException()).given(postService).postDelete(anyLong(), anyString());
+
+        mockMvc.perform(delete("/api/posts/1")
+                        .header("Authorization", "Bearer " + accessToken)
+                )
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.errorCode").value("E403002"))
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.message").value("게시글 삭제는 작성자만 할 수 있습니다."))
                 .andDo(print());
     }
 
