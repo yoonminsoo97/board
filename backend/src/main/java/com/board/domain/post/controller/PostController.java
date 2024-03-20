@@ -1,6 +1,7 @@
 package com.board.domain.post.controller;
 
 import com.board.domain.post.dto.PostDetailResponse;
+import com.board.domain.post.dto.PostModifyRequest;
 import com.board.domain.post.dto.PostWriteRequest;
 import com.board.domain.post.service.PostService;
 
@@ -14,6 +15,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -37,6 +39,15 @@ public class PostController {
     public ResponseEntity<PostDetailResponse> postDetail(@PathVariable("postNumber") Long postNumber) {
         PostDetailResponse postDetailResponse = postService.postDetail(postNumber);
         return ResponseEntity.ok().body(postDetailResponse);
+    }
+
+    @Secured("ROLE_MEMBER")
+    @PutMapping("/{postNumber}")
+    public ResponseEntity<Void> postModify(@PathVariable("postNumber") Long postNumber,
+                                           @RequestBody @Valid PostModifyRequest postModifyRequest,
+                                           @AuthenticationPrincipal String loginUsername) {
+        postService.postModify(postNumber, postModifyRequest, loginUsername);
+        return ResponseEntity.ok().build();
     }
 
 }
