@@ -2,8 +2,10 @@ package com.board.domain.post.controller;
 
 import com.board.domain.member.exception.NotFoundMemberException;
 import com.board.domain.post.dto.PostDetailResponse;
+import com.board.domain.post.dto.PostModifyRequest;
 import com.board.domain.post.dto.PostWriteRequest;
 import com.board.domain.post.exception.NotFoundPostException;
+import com.board.domain.post.exception.PostModifyAccessDeniedException;
 import com.board.domain.post.service.PostService;
 import com.board.domain.token.service.TokenService;
 import com.board.global.security.config.SecurityConfig;
@@ -38,6 +40,7 @@ import static org.mockito.BDDMockito.willThrow;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -153,6 +156,91 @@ class PostControllerTest {
                 .andExpect(jsonPath("$.errorCode").value("E404002"))
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.message").value("게시글을 찾을 수 없습니다."))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("게시글을 수정한다")
+    void postModify() throws Exception {
+        PostModifyRequest postModifyRequest = new PostModifyRequest("제목", "내용");
+        String accessToken = createAccessToken();
+        Claims payload = getPayload(accessToken);
+
+        given(tokenService.tokenPayload(anyString())).willReturn(payload);
+        willDoNothing().given(postService).postModify(anyLong(), any(PostModifyRequest.class), anyString());
+
+        mockMvc.perform(put("/api/posts/1")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(postModifyRequest))
+                )
+                .andExpect(status().isOk())
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("게시글 수정 시 입력값이 잘못되면 예외가 발생한다")
+    void postModify_invalidInputValue() throws Exception {
+        PostModifyRequest invalidPostModifyRequest = new PostModifyRequest("", "내용");
+        String accessToken = createAccessToken();
+        Claims payload = getPayload(accessToken);
+
+        given(tokenService.tokenPayload(anyString())).willReturn(payload);
+        willDoNothing().given(postService).postModify(anyLong(), any(PostModifyRequest.class), anyString());
+
+        mockMvc.perform(put("/api/posts/1")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidPostModifyRequest))
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("E400001"))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("입력값이 잘못되었습니다."))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("게시글 수정 시 게시글을 찾을 수 없으면 예외가 발생한다")
+    void postModify_notFoundPost() throws Exception {
+        PostModifyRequest postModifyRequest = new PostModifyRequest("제목", "내용");
+        String accessToken = createAccessToken();
+        Claims payload = getPayload(accessToken);
+
+        given(tokenService.tokenPayload(anyString())).willReturn(payload);
+        willThrow(new NotFoundPostException()).given(postService).postModify(anyLong(), any(PostModifyRequest.class), anyString());
+
+        mockMvc.perform(put("/api/posts/1")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(postModifyRequest))
+                )
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errorCode").value("E404002"))
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value("게시글을 찾을 수 없습니다."))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("게시글 수정 시 작성자가 아닌데 수정을 시도할 경우 예외가 발생한다")
+    void postModify_notPostOwner() throws Exception {
+        PostModifyRequest postModifyRequest = new PostModifyRequest("제목", "내용");
+        String accessToken = createAccessToken();
+        Claims payload = getPayload(accessToken);
+
+        given(tokenService.tokenPayload(anyString())).willReturn(payload);
+        willThrow(new PostModifyAccessDeniedException()).given(postService).postModify(anyLong(), any(PostModifyRequest.class), anyString());
+
+        mockMvc.perform(put("/api/posts/1")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(postModifyRequest))
+                )
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.errorCode").value("E403001"))
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.message").value("게시글 수정은 작성자만 할 수 있습니다."))
                 .andDo(print());
     }
 
