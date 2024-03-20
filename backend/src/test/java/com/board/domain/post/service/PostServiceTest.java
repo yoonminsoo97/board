@@ -5,6 +5,7 @@ import com.board.domain.member.exception.NotFoundMemberException;
 import com.board.domain.member.repository.MemberRepository;
 import com.board.domain.post.dto.PostWriteRequest;
 import com.board.domain.post.entity.Post;
+import com.board.domain.post.exception.NotFoundPostException;
 import com.board.domain.post.repository.PostRepository;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -21,6 +22,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
@@ -80,6 +82,33 @@ class PostServiceTest {
 
         then(memberRepository).should().findMemberByUsername(anyString());
         then(postRepository).should(never()).save(any(Post.class));
+    }
+
+    @Test
+    @DisplayName("게시글을 상세조회 한다")
+    void postDetail() {
+        Post post = Post.builder()
+                .title("제목")
+                .content("내용")
+                .member(member)
+                .build();
+
+        given(postRepository.findById(anyLong())).willReturn(Optional.of(post));
+
+        postService.postDetail(1L);
+
+        then(postRepository).should().findById(anyLong());
+    }
+
+    @Test
+    @DisplayName("게시글 상세조회 시 게시글을 찾을 수 없으면 예외가 발생한다")
+    void postDetail_notFoundPost() {
+        willThrow(new NotFoundPostException()).given(postRepository).findById(anyLong());
+
+        assertThatThrownBy(() -> postService.postDetail(1L))
+                .isInstanceOf(NotFoundPostException.class);
+
+        then(postRepository).should().findById(anyLong());
     }
 
 }

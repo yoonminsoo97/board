@@ -50,4 +50,20 @@ class PostRepositoryTest {
         assertThat(savePost.getId()).isNotNull();
     }
 
+    @Test
+    @DisplayName("게시글 기본키로 상세조회 한다")
+    void postDetail() {
+        Post post = Post.builder()
+                .title("제목")
+                .content("내용")
+                .member(member)
+                .build();
+        Post savePost = postRepository.save(post);
+
+        Post findPost = postRepository.findById(savePost.getId()).get();
+
+        assertThat(findPost.getTitle()).isEqualTo("제목");
+        assertThat(findPost.getContent()).isEqualTo("내용");
+    }
+
 }
