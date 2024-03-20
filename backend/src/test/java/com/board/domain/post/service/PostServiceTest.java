@@ -19,7 +19,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -113,6 +116,25 @@ class PostServiceTest {
                 .isInstanceOf(NotFoundPostException.class);
 
         then(postRepository).should().findById(anyLong());
+    }
+
+    @Test
+    @DisplayName("게시글 목록을 조회한다")
+    void postList() {
+        List<Post> content = List.of(
+                Post.builder().title("제목").member(member).build(),
+                Post.builder().title("제목").member(member).build(),
+                Post.builder().title("제목").member(member).build(),
+                Post.builder().title("제목").member(member).build(),
+                Post.builder().title("제목").member(member).build()
+        );
+        PageImpl<Post> postPage = new PageImpl<>(content);
+
+        given(postRepository.findAll(any(Pageable.class))).willReturn(postPage);
+
+        postService.postList(1);
+
+        then(postRepository).should().findAll(any(Pageable.class));
     }
 
     @Test

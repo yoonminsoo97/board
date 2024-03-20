@@ -12,6 +12,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -82,6 +88,30 @@ class PostRepositoryTest {
         assertThat(findPost.getContent()).isEqualTo("내용");
         assertThat(findPost.getMember().getNickname()).isEqualTo("yoonkun");
         assertThat(findPost.getMember().getUsername()).isEqualTo("yoon1234");
+    }
+
+    @Test
+    @DisplayName("게시글 목록을 조회한다")
+    void postFindAll() {
+        List<Post> content = List.of(
+                Post.builder().title("제목").content("내용").member(member).build(),
+                Post.builder().title("제목").content("내용").member(member).build(),
+                Post.builder().title("제목").content("내용").member(member).build(),
+                Post.builder().title("제목").content("내용").member(member).build(),
+                Post.builder().title("제목").content("내용").member(member).build()
+        );
+        postRepository.saveAll(content);
+
+        Pageable pageable = PageRequest.of(0, 10, Sort.Direction.DESC, "id");
+        Page<Post> postPage = postRepository.findAll(pageable);
+
+        assertThat(postPage.getNumber()).isEqualTo(0);
+        assertThat(postPage.getTotalPages()).isEqualTo(1);
+        assertThat(postPage.getTotalElements()).isEqualTo(5);
+        assertThat(postPage.hasPrevious()).isFalse();
+        assertThat(postPage.hasNext()).isFalse();
+        assertThat(postPage.isFirst()).isTrue();
+        assertThat(postPage.isLast()).isTrue();
     }
 
     @Test
