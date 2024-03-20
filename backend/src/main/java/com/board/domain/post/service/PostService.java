@@ -3,8 +3,10 @@ package com.board.domain.post.service;
 import com.board.domain.member.entity.Member;
 import com.board.domain.member.exception.NotFoundMemberException;
 import com.board.domain.member.repository.MemberRepository;
+import com.board.domain.post.dto.PostDetailResponse;
 import com.board.domain.post.dto.PostWriteRequest;
 import com.board.domain.post.entity.Post;
+import com.board.domain.post.exception.NotFoundPostException;
 import com.board.domain.post.repository.PostRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -29,6 +31,13 @@ public class PostService {
                 .member(member)
                 .build();
         postRepository.save(post);
+    }
+
+    @Transactional(readOnly = true)
+    public PostDetailResponse postDetail(Long postNumber) {
+        Post post = postRepository.findById(postNumber)
+                .orElseThrow(NotFoundPostException::new);
+        return new PostDetailResponse(post);
     }
 
 }
