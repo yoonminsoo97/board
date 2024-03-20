@@ -75,6 +75,8 @@ public class SecurityConfig {
                                 "/api/posts/write").hasRole(ROLE_MEMBER)
                         .requestMatchers(HttpMethod.PUT,
                                 "/api/posts/*").hasRole(ROLE_MEMBER)
+                        .requestMatchers(HttpMethod.DELETE,
+                                "/api/posts/*").hasRole(ROLE_MEMBER)
                         .anyRequest().denyAll()
                 );
         return httpSecurity.build();
