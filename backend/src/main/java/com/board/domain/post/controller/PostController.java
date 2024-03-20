@@ -1,6 +1,7 @@
 package com.board.domain.post.controller;
 
 import com.board.domain.post.dto.PostDetailResponse;
+import com.board.domain.post.dto.PostListResponse;
 import com.board.domain.post.dto.PostModifyRequest;
 import com.board.domain.post.dto.PostWriteRequest;
 import com.board.domain.post.service.PostService;
@@ -40,6 +41,13 @@ public class PostController {
     public ResponseEntity<PostDetailResponse> postDetail(@PathVariable("postNumber") Long postNumber) {
         PostDetailResponse postDetailResponse = postService.postDetail(postNumber);
         return ResponseEntity.ok().body(postDetailResponse);
+    }
+
+    @GetMapping("/page/{pageNumber}")
+    public ResponseEntity<PostListResponse> postList(@PathVariable("pageNumber") int pageNumber) {
+        pageNumber = pageNumber <= 0 ? 0 : pageNumber - 1;
+        PostListResponse postListResponse = postService.postList(pageNumber);
+        return ResponseEntity.ok().body(postListResponse);
     }
 
     @Secured("ROLE_MEMBER")

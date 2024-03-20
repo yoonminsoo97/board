@@ -4,6 +4,7 @@ import com.board.domain.member.entity.Member;
 import com.board.domain.member.exception.NotFoundMemberException;
 import com.board.domain.member.repository.MemberRepository;
 import com.board.domain.post.dto.PostDetailResponse;
+import com.board.domain.post.dto.PostListResponse;
 import com.board.domain.post.dto.PostModifyRequest;
 import com.board.domain.post.dto.PostWriteRequest;
 import com.board.domain.post.entity.Post;
@@ -14,12 +15,19 @@ import com.board.domain.post.repository.PostRepository;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 public class PostService {
+
+    private static final int PAGE_SIZE = 10;
+    private static final String PROPERTIES = "id";
 
     private final PostRepository postRepository;
     private final MemberRepository memberRepository;
@@ -41,6 +49,13 @@ public class PostService {
         Post post = postRepository.findById(postNumber)
                 .orElseThrow(NotFoundPostException::new);
         return new PostDetailResponse(post);
+    }
+
+    @Transactional
+    public PostListResponse postList(int pageNumber) {
+        Pageable pageable = PageRequest.of(pageNumber, PAGE_SIZE, Sort.Direction.DESC, PROPERTIES);
+        Page<Post> postPage = postRepository.findAll(pageable);
+        return new PostListResponse(postPage);
     }
 
     @Transactional
