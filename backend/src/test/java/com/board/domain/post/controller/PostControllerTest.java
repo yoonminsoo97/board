@@ -1,7 +1,9 @@
 package com.board.domain.post.controller;
 
 import com.board.domain.member.exception.NotFoundMemberException;
+import com.board.domain.post.dto.PostDetailResponse;
 import com.board.domain.post.dto.PostWriteRequest;
+import com.board.domain.post.exception.NotFoundPostException;
 import com.board.domain.post.service.PostService;
 import com.board.domain.token.service.TokenService;
 import com.board.global.security.config.SecurityConfig;
@@ -24,14 +26,17 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -119,6 +124,35 @@ class PostControllerTest {
                 .andExpect(jsonPath("$.errorCode").value("E404001"))
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.message").value("회원을 찾을 수 없습니다."))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("게시글을 상세조회 한다")
+    void postDetail() throws Exception {
+        PostDetailResponse postDetailResponse = new PostDetailResponse(1L, "제목", "yoonkun", "내용", LocalDateTime.now());
+
+        given(postService.postDetail(anyLong())).willReturn(postDetailResponse);
+
+        mockMvc.perform(get("/api/posts/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.postNumber").value(1))
+                .andExpect(jsonPath("$.title").value("제목"))
+                .andExpect(jsonPath("$.writer").value("yoonkun"))
+                .andExpect(jsonPath("$.content").value("내용"))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("게시글 상세조회 시 게시글을 찾을 수 없으면 예외가 발생한다")
+    void postDetail_notFoundPost() throws Exception {
+        willThrow(new NotFoundPostException()).given(postService).postDetail(anyLong());
+
+        mockMvc.perform(get("/api/posts/1"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errorCode").value("E404002"))
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value("게시글을 찾을 수 없습니다."))
                 .andDo(print());
     }
 

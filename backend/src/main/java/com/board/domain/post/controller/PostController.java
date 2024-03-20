@@ -1,5 +1,6 @@
 package com.board.domain.post.controller;
 
+import com.board.domain.post.dto.PostDetailResponse;
 import com.board.domain.post.dto.PostWriteRequest;
 import com.board.domain.post.service.PostService;
 
@@ -10,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,6 +31,12 @@ public class PostController {
                                           @AuthenticationPrincipal String username) {
         postService.postWrite(postWriteRequest, username);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{postNumber}")
+    public ResponseEntity<PostDetailResponse> postDetail(@PathVariable("postNumber") Long postNumber) {
+        PostDetailResponse postDetailResponse = postService.postDetail(postNumber);
+        return ResponseEntity.ok().body(postDetailResponse);
     }
 
 }
