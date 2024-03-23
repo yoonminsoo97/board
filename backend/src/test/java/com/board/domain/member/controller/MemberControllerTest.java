@@ -8,31 +8,19 @@ import com.board.domain.member.exception.PasswordMismatchException;
 import com.board.domain.member.service.MemberService;
 import com.board.domain.token.dto.TokenResponse;
 import com.board.domain.token.exception.InvalidTokenException;
-import com.board.domain.token.service.TokenService;
-import com.board.global.security.config.SecurityConfig;
 import com.board.global.security.dto.AuthPrincipal;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.board.support.RestDocsTestSupport;
 
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.test.web.servlet.MockMvc;
-
-import java.nio.charset.StandardCharsets;
-import java.util.Date;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -40,60 +28,65 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.restdocs.payload.JsonFieldType.NUMBER;
+import static org.springframework.restdocs.payload.JsonFieldType.STRING;
+import static org.springframework.restdocs.headers.HeaderDocumentation.headerWithName;
+import static org.springframework.restdocs.headers.HeaderDocumentation.requestHeaders;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
+import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
+import static org.springframework.restdocs.payload.PayloadDocumentation.requestFields;
+import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
+import static org.springframework.restdocs.request.RequestDocumentation.formParameters;
+import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
+import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
+
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(controllers = MemberController.class)
-@Import(SecurityConfig.class)
-class MemberControllerTest {
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @Autowired
-    private MockMvc mockMvc;
-
-    @MockBean
-    private UserDetailsService userDetailsService;
-
-    @MockBean
-    private TokenService tokenService;
+class MemberControllerTest extends RestDocsTestSupport {
 
     @MockBean
     private MemberService memberService;
-
-    @Value("${jwt.secret-key}")
-    private String secretKey;
-
-    @Value("${jwt.access-token.expire}")
-    private long accessTokenExpire;
 
     @Test
     @DisplayName("닉네임 중복 확인을 한다")
     void memberNicknameExists() throws Exception {
         willDoNothing().given(memberService).memberNicknameExists(anyString());
 
-        mockMvc.perform(get("/api/members/nickname/yoonkun"))
+        mockMvc.perform(get("/api/members/nickname/{nickname}", "yoonkun"))
                 .andExpect(status().isOk())
                 .andExpect(content().string("ok"))
-                .andDo(print());
+                .andDo(restDocs.document(
+                        pathParameters(
+                                parameterWithName("nickname").description("닉네임")
+                        )
+                ));
     }
 
     @Test
     @DisplayName("닉네임 중복 시 예외가 발생한다")
-    void memberNicknameExists_duplicateNickname() throws Exception {
+    void memberNicknameExistsDuplicateNickname() throws Exception {
         willThrow(new DuplicateNicknameException()).given(memberService).memberNicknameExists(anyString());
 
-        mockMvc.perform(get("/api/members/nickname/yoonkun"))
+        mockMvc.perform(get("/api/members/nickname/{nickname}", "yoonkun"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.errorCode").value("E409001"))
                 .andExpect(jsonPath("$.status").value(409))
                 .andExpect(jsonPath("$.message").value("사용 중인 닉네임입니다."))
-                .andDo(print());
+                .andDo(restDocs.document(
+                        pathParameters(
+                                parameterWithName("nickname").description("닉네임")
+                        ),
+                        responseFields(
+                                fieldWithPath("errorCode").type(STRING).description("에러 코드"),
+                                fieldWithPath("status").type(NUMBER).description("상태 코드"),
+                                fieldWithPath("message").type(STRING).description("에러 메세지"),
+                                fieldWithPath("timeStamp").type(STRING).description("에러 발생 시간")
+                        )
+                ));
     }
 
     @Test
@@ -101,23 +94,37 @@ class MemberControllerTest {
     void memberUsernameExists() throws Exception {
         willDoNothing().given(memberService).memberUsernameExists(anyString());
 
-        mockMvc.perform(get("/api/members/username/yoon1234"))
+        mockMvc.perform(get("/api/members/username/{username}", "yoon1234"))
                 .andExpect(status().isOk())
                 .andExpect(content().string("ok"))
-                .andDo(print());
+                .andDo(restDocs.document(
+                        pathParameters(
+                                parameterWithName("username").description("아이디")
+                        )
+                ));
     }
 
     @Test
     @DisplayName("아이디 중복 시 예외가 발생한다")
-    void memberUsernameExists_duplicateUsername() throws Exception {
+    void memberUsernameExistsDuplicateUsername() throws Exception {
         willThrow(new DuplicateUsernameException()).given(memberService).memberUsernameExists(anyString());
 
-        mockMvc.perform(get("/api/members/username/yoon1234"))
+        mockMvc.perform(get("/api/members/username/{username}", "yoon1234"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.errorCode").value("E409002"))
                 .andExpect(jsonPath("$.status").value(409))
                 .andExpect(jsonPath("$.message").value("사용 중인 아이디입니다."))
-                .andDo(print());
+                .andDo(restDocs.document(
+                        pathParameters(
+                                parameterWithName("username").description("아이디")
+                        ),
+                        responseFields(
+                                fieldWithPath("errorCode").type(STRING).description("에러 코드"),
+                                fieldWithPath("status").type(NUMBER).description("상태 코드"),
+                                fieldWithPath("message").type(STRING).description("에러 메세지"),
+                                fieldWithPath("timeStamp").type(STRING).description("에러 발생 시간")
+                        )
+                ));
     }
 
     @Test
@@ -132,12 +139,19 @@ class MemberControllerTest {
                         .content(objectMapper.writeValueAsString(memberSignupRequest))
                 )
                 .andExpect(status().isOk())
-                .andDo(print());
+                .andDo(restDocs.document(
+                        requestFields(
+                                fieldWithPath("nickname").type(STRING).description("닉네임"),
+                                fieldWithPath("username").type(STRING).description("아이디"),
+                                fieldWithPath("password").type(STRING).description("비밀번호"),
+                                fieldWithPath("passwordConfirm").type(STRING).description("비밀번호 확인")
+                        )
+                ));
     }
 
     @Test
     @DisplayName("회원가입 시 입력값이 잘못되면 예외가 발생한다")
-    void memberSignup_invalidInputValue() throws Exception {
+    void memberSignupInvalidInputValue() throws Exception {
         MemberSignupRequest invalidMemberSignupRequest = new MemberSignupRequest("", "", "12345678", "12345678");
 
         willDoNothing().given(memberService).memberSignup(any(MemberSignupRequest.class));
@@ -150,12 +164,25 @@ class MemberControllerTest {
                 .andExpect(jsonPath("$.errorCode").value("E400001"))
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.message").value("입력값이 잘못되었습니다."))
-                .andDo(print());
+                .andDo(restDocs.document(
+                        requestFields(
+                                fieldWithPath("nickname").type(STRING).description("닉네임"),
+                                fieldWithPath("username").type(STRING).description("아이디"),
+                                fieldWithPath("password").type(STRING).description("비밀번호"),
+                                fieldWithPath("passwordConfirm").type(STRING).description("비밀번호 확인")
+                        ),
+                        responseFields(
+                                fieldWithPath("errorCode").type(STRING).description("에러 코드"),
+                                fieldWithPath("status").type(NUMBER).description("상태 코드"),
+                                fieldWithPath("message").type(STRING).description("에러 메세지"),
+                                fieldWithPath("timeStamp").type(STRING).description("에러 발생 시간")
+                        )
+                ));
     }
 
     @Test
     @DisplayName("회원가입 시 비밀번호가 일치하지 않으면 예외가 발생한다")
-    void memberSignup_passwordMismatch() throws Exception {
+    void memberSignupPasswordMismatch() throws Exception {
         MemberSignupRequest memberSignupRequest = new MemberSignupRequest("yoonkun", "yoon1234", "12345678", "12345679");
 
         willThrow(new PasswordMismatchException()).given(memberService).memberSignup(any(MemberSignupRequest.class));
@@ -168,7 +195,20 @@ class MemberControllerTest {
                 .andExpect(jsonPath("$.errorCode").value("E400002"))
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.message").value("비밀번호가 일치하지 않습니다."))
-                .andDo(print());
+                .andDo(restDocs.document(
+                        requestFields(
+                                fieldWithPath("nickname").type(STRING).description("닉네임"),
+                                fieldWithPath("username").type(STRING).description("아이디"),
+                                fieldWithPath("password").type(STRING).description("비밀번호"),
+                                fieldWithPath("passwordConfirm").type(STRING).description("비밀번호 확인")
+                        ),
+                        responseFields(
+                                fieldWithPath("errorCode").type(STRING).description("에러 코드"),
+                                fieldWithPath("status").type(NUMBER).description("상태 코드"),
+                                fieldWithPath("message").type(STRING).description("에러 메세지"),
+                                fieldWithPath("timeStamp").type(STRING).description("에러 발생 시간")
+                        )
+                ));
     }
 
     @Test
@@ -192,12 +232,21 @@ class MemberControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").value("access-token"))
                 .andExpect(jsonPath("$.refreshToken").value("refresh-token"))
-                .andDo(print());
+                .andDo(restDocs.document(
+                        formParameters(
+                                parameterWithName("username").description("아이디"),
+                                parameterWithName("password").description("비밀번호")
+                        ),
+                        responseFields(
+                                fieldWithPath("accessToken").type(STRING).description("액세스 토큰"),
+                                fieldWithPath("refreshToken").type(STRING).description("리프레시 토큰")
+                        )
+                ));
     }
 
     @Test
     @DisplayName("로그인 시 아이디 또는 비밀번호가 일치하지 않으면 예외가 발생한다")
-    void memberLogin_badCredentials() throws Exception {
+    void memberLoginBadCredentials() throws Exception {
         Member member = Member.builder()
                 .username("yoon1234")
                 .password(new BCryptPasswordEncoder().encode("12345678"))
@@ -215,7 +264,18 @@ class MemberControllerTest {
                 .andExpect(jsonPath("$.errorCode").value("E401001"))
                 .andExpect(jsonPath("$.status").value(401))
                 .andExpect(jsonPath("$.message").value("아이디 또는 비밀번호가 일치하지 않습니다."))
-                .andDo(print());
+                .andDo(restDocs.document(
+                        formParameters(
+                                parameterWithName("username").description("아이디"),
+                                parameterWithName("password").description("비밀번호")
+                        ),
+                        responseFields(
+                                fieldWithPath("errorCode").type(STRING).description("에러 코드"),
+                                fieldWithPath("status").type(NUMBER).description("상태 코드"),
+                                fieldWithPath("message").type(STRING).description("에러 메세지"),
+                                fieldWithPath("timeStamp").type(STRING).description("에러 발생 시간")
+                        )
+                ));
     }
 
     @Test
@@ -228,15 +288,19 @@ class MemberControllerTest {
         willDoNothing().given(tokenService).tokenDelete(anyString());
 
         mockMvc.perform(post("/api/members/logout")
-                        .header("Authorization", "Bearer " + accessToken)
+                        .header("Authorization", "Bearer access-token")
                 )
                 .andExpect(status().isOk())
-                .andDo(print());
+                .andDo(restDocs.document(
+                        requestHeaders(
+                                headerWithName("Authorization").description("Autorization 헤더")
+                        )
+                ));
     }
 
     @Test
     @DisplayName("로그아웃 시 Refresh Token이 존재하지 않으면 예외가 발생한다")
-    void memberLogout_invalidToken() throws Exception {
+    void memberLogoutInvalidToken() throws Exception {
         String accessToken = createAccessToken();
         Claims payload = getPayload(accessToken);
 
@@ -244,34 +308,23 @@ class MemberControllerTest {
         willThrow(new InvalidTokenException()).given(tokenService).tokenDelete(anyString());
 
         mockMvc.perform(post("/api/members/logout")
-                        .header("Authorization", "Bearer " + accessToken)
+                        .header("Authorization", "Bearer access-token")
                 )
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.errorCode").value("E401002"))
                 .andExpect(jsonPath("$.status").value(401))
                 .andExpect(jsonPath("$.message").value("토큰이 유효하지 않습니다."))
-                .andDo(print());
-    }
-
-    private String createAccessToken() {
-        Date iat = new Date();
-        Date exp = new Date(iat.getTime() + accessTokenExpire);
-        return Jwts.builder()
-                .subject("yoon1234")
-                .claim("nickname", "yoonkun")
-                .claim("authority", "ROLE_MEMBER")
-                .signWith(Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8)), Jwts.SIG.HS256)
-                .issuedAt(iat)
-                .expiration(exp)
-                .compact();
-    }
-
-    private Claims getPayload(String token) {
-        return Jwts.parser()
-                .verifyWith(Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8)))
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
+                .andDo(restDocs.document(
+                        requestHeaders(
+                                headerWithName("Authorization").description("Autorization 헤더")
+                        ),
+                        responseFields(
+                                fieldWithPath("errorCode").type(STRING).description("에러 코드"),
+                                fieldWithPath("status").type(NUMBER).description("상태 코드"),
+                                fieldWithPath("message").type(STRING).description("에러 메세지"),
+                                fieldWithPath("timeStamp").type(STRING).description("에러 발생 시간")
+                        )
+                ));
     }
 
 }
