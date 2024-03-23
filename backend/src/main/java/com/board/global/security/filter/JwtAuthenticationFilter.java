@@ -70,6 +70,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Getter
     private enum ExcludeRequest {
 
+        REST_DOCS("GET", "/docs/board.html"),
         MEMBER_NICKNAME_EXISTS("GET", "/api/members/nickname/*"),
         MEMBER_USERNAME_EXISTS("GET", "/api/members/username/*"),
         MEMBER_SIGNUP("POST", "/api/members/signup"),
