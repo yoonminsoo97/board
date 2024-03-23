@@ -66,6 +66,7 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET,
+                                "/docs/board.html",
                                 "/api/members/nickname/*",
                                 "/api/members/username/*",
                                 "/api/posts/*",
