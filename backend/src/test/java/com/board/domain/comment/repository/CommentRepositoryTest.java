@@ -61,4 +61,21 @@ class CommentRepositoryTest {
         assertThat(saveComment.getId()).isNotNull();
     }
 
+    @Test
+    @DisplayName("댓글과 댓글을 작성한 회원을 한 번에 조회한다")
+    void findCommentJoinFetchMember() {
+        Comment comment = Comment.builder()
+                .content("댓글")
+                .member(member)
+                .post(post)
+                .build();
+        Comment saveComment = commentRepository.save(comment);
+
+        Comment findComment = commentRepository.findCommentJoinFetchMember(post.getId(), saveComment.getId()).get();
+
+        assertThat(findComment.getContent()).isEqualTo("댓글");
+        assertThat(findComment.getMember().getNickname()).isEqualTo("yoonkun");
+        assertThat(findComment.getMember().getUsername()).isEqualTo("yoon1234");
+    }
+
 }
