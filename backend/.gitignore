@@ -38,3 +38,6 @@ out/
 
 ### Config ###
 src/main/resources/application-local.yml
+
+### Rest Docs HTML ###
+src/main/resources/static/**
