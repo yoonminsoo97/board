@@ -1,7 +1,10 @@
 package com.board.domain.comment.service;
 
+import com.board.domain.comment.dto.CommentModifyRequest;
 import com.board.domain.comment.dto.CommentWriteRequest;
 import com.board.domain.comment.entity.Comment;
+import com.board.domain.comment.exception.CommentModifyAccessDeniedException;
+import com.board.domain.comment.exception.NotFoundCommentException;
 import com.board.domain.comment.repository.CommentRepository;
 import com.board.domain.member.entity.Member;
 import com.board.domain.member.exception.NotFoundMemberException;
@@ -35,6 +38,16 @@ public class CommentService {
                 .post(post)
                 .build();
         commentRepository.save(comment);
+    }
+
+    @Transactional
+    public void commentModify(Long postNumber, Long commentNumber, CommentModifyRequest commentModifyRequest, String loginUsername) {
+        Comment comment = commentRepository.findCommentJoinFetchMember(postNumber, commentNumber)
+                .orElseThrow(NotFoundCommentException::new);
+        if (!comment.isOwner(loginUsername)) {
+            throw new CommentModifyAccessDeniedException();
+        }
+        comment.modify(commentModifyRequest.getContent());
     }
 
 }

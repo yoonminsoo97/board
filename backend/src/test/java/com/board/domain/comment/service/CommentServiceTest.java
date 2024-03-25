@@ -1,7 +1,10 @@
 package com.board.domain.comment.service;
 
+import com.board.domain.comment.dto.CommentModifyRequest;
 import com.board.domain.comment.dto.CommentWriteRequest;
 import com.board.domain.comment.entity.Comment;
+import com.board.domain.comment.exception.CommentModifyAccessDeniedException;
+import com.board.domain.comment.exception.NotFoundCommentException;
 import com.board.domain.comment.repository.CommentRepository;
 import com.board.domain.member.entity.Member;
 import com.board.domain.member.exception.NotFoundMemberException;
@@ -112,6 +115,49 @@ class CommentServiceTest {
         then(postRepository).should().findById(anyLong());
         then(memberRepository).should().findMemberByUsername(anyString());
         then(commentRepository).should(never()).save(any(Comment.class));
+    }
+
+    @Test
+    @DisplayName("댓글을 수정한다")
+    void commentModify() {
+        CommentModifyRequest commentModifyRequest = new CommentModifyRequest("댓글");
+        Comment comment = Comment.builder()
+                .content("댓글")
+                .member(member)
+                .post(post)
+                .build();
+
+        given(commentRepository.findCommentJoinFetchMember(anyLong(), anyLong())).willReturn(Optional.of(comment));
+
+        commentService.commentModify(1L, 1L, commentModifyRequest, "yoon1234");
+
+        then(commentRepository).should().findCommentJoinFetchMember(anyLong(), anyLong());
+    }
+
+    @Test
+    @DisplayName("댓글 수정 시 댓글을 찾을 수 없으면 예외가 발생한다")
+    void commentModifyNotFoundComment() {
+        CommentModifyRequest commentModifyRequest = new CommentModifyRequest("댓글");
+
+        willThrow(new NotFoundCommentException()).given(commentRepository).findCommentJoinFetchMember(anyLong(), anyLong());
+
+        assertThatThrownBy(() -> commentService.commentModify(1L, 1L, commentModifyRequest, "yoon1234"))
+                .isInstanceOf(NotFoundCommentException.class);
+
+        then(commentRepository).should().findCommentJoinFetchMember(anyLong(), anyLong());
+    }
+
+    @Test
+    @DisplayName("댓글 수정 시 작성자가 아닌데 수정을 시도하면 예외가 발생한다")
+    void commentModifyNotCommentOwner() {
+        CommentModifyRequest commentModifyRequest = new CommentModifyRequest("댓글");
+
+        willThrow(new CommentModifyAccessDeniedException()).given(commentRepository).findCommentJoinFetchMember(anyLong(), anyLong());
+
+        assertThatThrownBy(() -> commentService.commentModify(1L, 1L, commentModifyRequest, "yoon1234"))
+                .isInstanceOf(CommentModifyAccessDeniedException.class);
+
+        then(commentRepository).should().findCommentJoinFetchMember(anyLong(), anyLong());
     }
 
 }

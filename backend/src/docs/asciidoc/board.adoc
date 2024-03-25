@@ -426,3 +426,64 @@ include::{snippets}/comment-controller-test/comment-write-not-found-member/reque
 
 include::{snippets}/comment-controller-test/comment-write-not-found-member/http-response.adoc[]
 include::{snippets}/comment-controller-test/comment-write-not-found-member/response-fields.adoc[]
+
+== 댓글 수정 요청
+
+=== 성공
+
+==== 댓글 수정
+
+===== 요청
+
+include::{snippets}/comment-controller-test/comment-modify/http-request.adoc[]
+include::{snippets}/comment-controller-test/comment-modify/path-parameters.adoc[]
+include::{snippets}/comment-controller-test/comment-modify/request-headers.adoc[]
+include::{snippets}/comment-controller-test/comment-modify/request-fields.adoc[]
+
+===== 응답
+
+include::{snippets}/comment-controller-test/comment-modify/http-response.adoc[]
+
+=== 실패
+
+==== 잘못된 입력값
+
+===== 요청
+
+include::{snippets}/comment-controller-test/comment-modify-invalid-input-value/http-request.adoc[]
+include::{snippets}/comment-controller-test/comment-modify-invalid-input-value/path-parameters.adoc[]
+include::{snippets}/comment-controller-test/comment-modify-invalid-input-value/request-headers.adoc[]
+include::{snippets}/comment-controller-test/comment-modify-invalid-input-value/request-fields.adoc[]
+
+===== 응답
+
+include::{snippets}/comment-controller-test/comment-modify-invalid-input-value/http-response.adoc[]
+include::{snippets}/comment-controller-test/comment-modify-invalid-input-value/response-fields.adoc[]
+
+==== 댓글 찾을 수 없음
+
+===== 요청
+
+include::{snippets}/comment-controller-test/comment-modify-not-found-comment/http-request.adoc[]
+include::{snippets}/comment-controller-test/comment-modify-not-found-comment/path-parameters.adoc[]
+include::{snippets}/comment-controller-test/comment-modify-not-found-comment/request-headers.adoc[]
+include::{snippets}/comment-controller-test/comment-modify-not-found-comment/request-fields.adoc[]
+
+===== 응답
+
+include::{snippets}/comment-controller-test/comment-modify-not-found-comment/http-response.adoc[]
+include::{snippets}/comment-controller-test/comment-modify-not-found-comment/request-fields.adoc[]
+
+==== 작성자 아닌데 수정 시도
+
+===== 요청
+
+include::{snippets}/comment-controller-test/comment-modify-not-comment-owner/http-request.adoc[]
+include::{snippets}/comment-controller-test/comment-modify-not-comment-owner/path-parameters.adoc[]
+include::{snippets}/comment-controller-test/comment-modify-not-comment-owner/request-headers.adoc[]
+include::{snippets}/comment-controller-test/comment-modify-not-comment-owner/request-fields.adoc[]
+
+===== 응답
+
+include::{snippets}/comment-controller-test/comment-modify-not-comment-owner/http-response.adoc[]
+include::{snippets}/comment-controller-test/comment-modify-not-comment-owner/response-fields.adoc[]

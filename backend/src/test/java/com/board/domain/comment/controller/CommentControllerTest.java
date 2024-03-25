@@ -1,6 +1,9 @@
 package com.board.domain.comment.controller;
 
+import com.board.domain.comment.dto.CommentModifyRequest;
 import com.board.domain.comment.dto.CommentWriteRequest;
+import com.board.domain.comment.exception.CommentModifyAccessDeniedException;
+import com.board.domain.comment.exception.NotFoundCommentException;
 import com.board.domain.comment.service.CommentService;
 import com.board.domain.member.exception.NotFoundMemberException;
 import com.board.domain.post.exception.NotFoundPostException;
@@ -22,6 +25,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
 
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.put;
 import static org.springframework.restdocs.payload.JsonFieldType.NUMBER;
 import static org.springframework.restdocs.payload.JsonFieldType.STRING;
 import static org.springframework.restdocs.headers.HeaderDocumentation.headerWithName;
@@ -173,6 +177,148 @@ class CommentControllerTest extends RestDocsTestSupport {
                         ),
                         requestFields(
                                 fieldWithPath("content").type(STRING).description("댓글")
+                        ),
+                        responseFields(
+                                fieldWithPath("errorCode").type(STRING).description("에러 코드"),
+                                fieldWithPath("status").type(NUMBER).description("상태 코드"),
+                                fieldWithPath("message").type(STRING).description("에러 메세지"),
+                                fieldWithPath("timeStamp").type(STRING).description("에러 발생 시간")
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("댓글을 수정한다")
+    void commentModify() throws Exception {
+        CommentModifyRequest commentModifyRequest = new CommentModifyRequest("댓글");
+        Claims payload = getPayload(createAccessToken());
+
+        given(tokenService.tokenPayload(anyString())).willReturn(payload);
+        willDoNothing().given(commentService).commentModify(anyLong(), anyLong(), any(CommentModifyRequest.class), anyString());
+
+        mockMvc.perform(put("/api/posts/{postNumber}/comments/{commentNumber}", 1, 1)
+                        .header("Authorization", "Bearer acces-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(commentModifyRequest))
+                )
+                .andExpect(status().isOk())
+                .andDo(restDocs.document(
+                        pathParameters(
+                                parameterWithName("postNumber").description("게시글 번호"),
+                                parameterWithName("commentNumber").description("댓글 번호")
+                        ),
+                        requestHeaders(
+                                headerWithName("Authorization").description("Authorization 헤더")
+                        ),
+                        requestFields(
+                                fieldWithPath("content").type(STRING).description("수정 댓글")
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("댓글 수정 시 입력값이 잘못되면 예외가 발생한다")
+    void commentModifyInvalidInputValue() throws Exception {
+        CommentModifyRequest invalidCommentModifyRequest = new CommentModifyRequest("");
+        Claims payload = getPayload(createAccessToken());
+
+        given(tokenService.tokenPayload(anyString())).willReturn(payload);
+
+        mockMvc.perform(put("/api/posts/{postNumber}/comments/{commentNumber}", 1, 1)
+                        .header("Authorization", "Bearer acces-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidCommentModifyRequest))
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("E400001"))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("입력값이 잘못되었습니다."))
+                .andDo(restDocs.document(
+                        pathParameters(
+                                parameterWithName("postNumber").description("게시글 번호"),
+                                parameterWithName("commentNumber").description("댓글 번호")
+                        ),
+                        requestHeaders(
+                                headerWithName("Authorization").description("Authorization 헤더")
+                        ),
+                        requestFields(
+                                fieldWithPath("content").type(STRING).description("수정 댓글")
+                        ),
+                        responseFields(
+                                fieldWithPath("errorCode").type(STRING).description("에러 코드"),
+                                fieldWithPath("status").type(NUMBER).description("상태 코드"),
+                                fieldWithPath("message").type(STRING).description("에러 메세지"),
+                                fieldWithPath("timeStamp").type(STRING).description("에러 발생 시간")
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("댓글 수정 시 댓글을 찾을 수 없으면 예외가 발생한다")
+    void commentModifyNotFoundComment() throws Exception {
+        CommentModifyRequest commentModifyRequest = new CommentModifyRequest("댓글");
+        Claims payload = getPayload(createAccessToken());
+
+        given(tokenService.tokenPayload(anyString())).willReturn(payload);
+        willThrow(new NotFoundCommentException()).given(commentService).commentModify(anyLong(), anyLong(), any(CommentModifyRequest.class), anyString());
+
+        mockMvc.perform(put("/api/posts/{postNumber}/comments/{commentNumber}", 1, 1)
+                        .header("Authorization", "Bearer acces-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(commentModifyRequest))
+                )
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errorCode").value("E404003"))
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value("댓글을 찾을 수 없습니다."))
+                .andDo(restDocs.document(
+                        pathParameters(
+                                parameterWithName("postNumber").description("게시글 번호"),
+                                parameterWithName("commentNumber").description("댓글 번호")
+                        ),
+                        requestHeaders(
+                                headerWithName("Authorization").description("Authorization 헤더")
+                        ),
+                        requestFields(
+                                fieldWithPath("content").type(STRING).description("수정 댓글")
+                        ),
+                        responseFields(
+                                fieldWithPath("errorCode").type(STRING).description("에러 코드"),
+                                fieldWithPath("status").type(NUMBER).description("상태 코드"),
+                                fieldWithPath("message").type(STRING).description("에러 메세지"),
+                                fieldWithPath("timeStamp").type(STRING).description("에러 발생 시간")
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("댓글 수정 시 작성자가 아닌데 수정을 시도할 경우 예외가 발생한다")
+    void commentModifyNotCommentOwner() throws Exception {
+        CommentModifyRequest commentModifyRequest = new CommentModifyRequest("댓글");
+        Claims payload = getPayload(createAccessToken());
+
+        given(tokenService.tokenPayload(anyString())).willReturn(payload);
+        willThrow(new CommentModifyAccessDeniedException()).given(commentService).commentModify(anyLong(), anyLong(), any(CommentModifyRequest.class), anyString());
+
+        mockMvc.perform(put("/api/posts/{postNumber}/comments/{commentNumber}", 1, 1)
+                        .header("Authorization", "Bearer acces-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(commentModifyRequest))
+                )
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.errorCode").value("E403003"))
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.message").value("댓글 수정은 작성자만 할 수 있습니다."))
+                .andDo(restDocs.document(
+                        pathParameters(
+                                parameterWithName("postNumber").description("게시글 번호"),
+                                parameterWithName("commentNumber").description("댓글 번호")
+                        ),
+                        requestHeaders(
+                                headerWithName("Authorization").description("Authorization 헤더")
+                        ),
+                        requestFields(
+                                fieldWithPath("content").type(STRING).description("수정 댓글")
                         ),
                         responseFields(
                                 fieldWithPath("errorCode").type(STRING).description("에러 코드"),
