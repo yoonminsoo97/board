@@ -17,8 +17,10 @@ public enum ErrorType {
     EXPIRED_TOKEN("E401003", HttpStatus.UNAUTHORIZED.value(), "토큰이 만료되었습니다."),
     POST_MODIFY_ACCESS_DENIED("E403001", HttpStatus.FORBIDDEN.value(), "게시글 수정은 작성자만 할 수 있습니다."),
     POST_DELETE_ACCESS_DENIED("E403002", HttpStatus.FORBIDDEN.value(), "게시글 삭제는 작성자만 할 수 있습니다."),
+    COMMENT_MODIFY_ACCESS_DENIED("E403003", HttpStatus.FORBIDDEN.value(), "댓글 수정은 작성자만 할 수 있습니다."),
     NOT_FOUND_MEMBER("E404001", HttpStatus.NOT_FOUND.value(), "회원을 찾을 수 없습니다."),
     NOT_FOUND_POST("E404002", HttpStatus.NOT_FOUND.value(), "게시글을 찾을 수 없습니다."),
+    NOT_FOUND_COMMENT("E404003", HttpStatus.NOT_FOUND.value(), "댓글을 찾을 수 없습니다."),
     DUPLICATE_NICKNAME("E409001", HttpStatus.CONFLICT.value(), "사용 중인 닉네임입니다."),
     DUPLICATE_USERNAME("E409002", HttpStatus.CONFLICT.value(), "사용 중인 아이디입니다.");
 
