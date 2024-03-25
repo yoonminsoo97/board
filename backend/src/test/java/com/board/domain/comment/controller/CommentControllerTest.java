@@ -1,0 +1,186 @@
+package com.board.domain.comment.controller;
+
+import com.board.domain.comment.dto.CommentWriteRequest;
+import com.board.domain.comment.service.CommentService;
+import com.board.domain.member.exception.NotFoundMemberException;
+import com.board.domain.post.exception.NotFoundPostException;
+import com.board.support.RestDocsTestSupport;
+
+import io.jsonwebtoken.Claims;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willDoNothing;
+import static org.mockito.BDDMockito.willThrow;
+
+import static org.springframework.restdocs.payload.JsonFieldType.NUMBER;
+import static org.springframework.restdocs.payload.JsonFieldType.STRING;
+import static org.springframework.restdocs.headers.HeaderDocumentation.headerWithName;
+import static org.springframework.restdocs.headers.HeaderDocumentation.requestHeaders;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
+import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
+import static org.springframework.restdocs.payload.PayloadDocumentation.requestFields;
+import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
+import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
+import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
+
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@WebMvcTest(controllers = CommentController.class)
+class CommentControllerTest extends RestDocsTestSupport {
+
+    @MockBean
+    private CommentService commentService;
+
+    @Test
+    @DisplayName("댓글을 작성한다")
+    void commentWrite() throws Exception {
+        CommentWriteRequest commentWriteRequest = new CommentWriteRequest("댓글");
+
+        Claims payload = getPayload(createAccessToken());
+
+        given(tokenService.tokenPayload(anyString())).willReturn(payload);
+        willDoNothing().given(commentService).commentWrite(anyLong(), any(CommentWriteRequest.class), anyString());
+
+        mockMvc.perform(post("/api/posts/{postNumber}/comments/write", 1)
+                        .header("Authorization", "Bearer access-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(commentWriteRequest))
+                )
+                .andExpect(status().isOk())
+                .andDo(restDocs.document(
+                        requestHeaders(
+                                headerWithName("Authorization").description("Authorization 헤더")
+                        ),
+                        pathParameters(
+                                parameterWithName("postNumber").description("게시글 번호")
+                        ),
+                        requestFields(
+                                fieldWithPath("content").type(STRING).description("댓글")
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("댓글 작성 시 입력값이 잘못되면 예외가 발생한다")
+    void commentWriteInvalidInputValue() throws Exception {
+        CommentWriteRequest invalidCommentWriteRequest = new CommentWriteRequest("");
+
+        Claims payload = getPayload(createAccessToken());
+
+        given(tokenService.tokenPayload(anyString())).willReturn(payload);
+
+        mockMvc.perform(post("/api/posts/{postNumber}/comments/write", 1)
+                        .header("Authorization", "Bearer access-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidCommentWriteRequest)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("E400001"))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("입력값이 잘못되었습니다."))
+                .andDo(restDocs.document(
+                        requestHeaders(
+                                headerWithName("Authorization").description("Authorization 헤더")
+                        ),
+                        pathParameters(
+                                parameterWithName("postNumber").description("게시글 번호")
+                        ),
+                        requestFields(
+                                fieldWithPath("content").type(STRING).description("댓글")
+                        ),
+                        responseFields(
+                                fieldWithPath("errorCode").type(STRING).description("에러 코드"),
+                                fieldWithPath("status").type(NUMBER).description("상태 코드"),
+                                fieldWithPath("message").type(STRING).description("에러 메세지"),
+                                fieldWithPath("timeStamp").type(STRING).description("에러 발생 시간")
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("댓글 작성 시 게시글을 찾을 수 없으면 예외가 발생한다")
+    void commentWriteNotFoundPost() throws Exception {
+        CommentWriteRequest commentWriteRequest = new CommentWriteRequest("댓글");
+
+        Claims payload = getPayload(createAccessToken());
+
+        given(tokenService.tokenPayload(anyString())).willReturn(payload);
+        willThrow(new NotFoundPostException()).given(commentService).commentWrite(anyLong(), any(CommentWriteRequest.class), anyString());
+
+        mockMvc.perform(post("/api/posts/{postNumber}/comments/write", 1)
+                        .header("Authorization", "Bearer access-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(commentWriteRequest))
+                )
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errorCode").value("E404002"))
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value("게시글을 찾을 수 없습니다."))
+                .andDo(restDocs.document(
+                        requestHeaders(
+                                headerWithName("Authorization").description("Authorization 헤더")
+                        ),
+                        pathParameters(
+                                parameterWithName("postNumber").description("게시글 번호")
+                        ),
+                        requestFields(
+                                fieldWithPath("content").type(STRING).description("댓글")
+                        ),
+                        responseFields(
+                                fieldWithPath("errorCode").type(STRING).description("에러 코드"),
+                                fieldWithPath("status").type(NUMBER).description("상태 코드"),
+                                fieldWithPath("message").type(STRING).description("에러 메세지"),
+                                fieldWithPath("timeStamp").type(STRING).description("에러 발생 시간")
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("댓글 작성 시 회원을 찾을 수 없으면 예외가 발생한다")
+    void commentWriteNotFoundMember() throws Exception {
+        CommentWriteRequest commentWriteRequest = new CommentWriteRequest("댓글");
+
+        Claims payload = getPayload(createAccessToken());
+
+        given(tokenService.tokenPayload(anyString())).willReturn(payload);
+        willThrow(new NotFoundMemberException()).given(commentService).commentWrite(anyLong(), any(CommentWriteRequest.class), anyString());
+
+        mockMvc.perform(post("/api/posts/{postNumber}/comments/write", 1)
+                        .header("Authorization", "Bearer access-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(commentWriteRequest))
+                )
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errorCode").value("E404001"))
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value("회원을 찾을 수 없습니다."))
+                .andDo(restDocs.document(
+                        requestHeaders(
+                                headerWithName("Authorization").description("Authorization 헤더")
+                        ),
+                        pathParameters(
+                                parameterWithName("postNumber").description("게시글 번호")
+                        ),
+                        requestFields(
+                                fieldWithPath("content").type(STRING).description("댓글")
+                        ),
+                        responseFields(
+                                fieldWithPath("errorCode").type(STRING).description("에러 코드"),
+                                fieldWithPath("status").type(NUMBER).description("상태 코드"),
+                                fieldWithPath("message").type(STRING).description("에러 메세지"),
+                                fieldWithPath("timeStamp").type(STRING).description("에러 발생 시간")
+                        )
+                ));
+    }
+
+}

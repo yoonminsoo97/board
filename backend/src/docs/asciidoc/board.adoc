@@ -363,3 +363,66 @@ include::{snippets}/post-controller-test/post-delete-not-post-owner/request-head
 
 include::{snippets}/post-controller-test/post-delete-not-post-owner/http-response.adoc[]
 include::{snippets}/post-controller-test/post-delete-not-post-owner/response-fields.adoc[]
+
+= 댓글 API
+
+== 댓글 작성 요청
+
+=== 성공
+
+==== 댓글 작성
+
+===== 요청
+
+include::{snippets}/comment-controller-test/comment-write/http-request.adoc[]
+include::{snippets}/comment-controller-test/comment-write/path-parameters.adoc[]
+include::{snippets}/comment-controller-test/comment-write/request-headers.adoc[]
+include::{snippets}/comment-controller-test/comment-write/request-fields.adoc[]
+
+===== 응답
+
+include::{snippets}/comment-controller-test/comment-write/http-response.adoc[]
+
+=== 실패
+
+==== 잘못된 입력값
+
+===== 요청
+
+include::{snippets}/comment-controller-test/comment-write-invalid-input-value/http-request.adoc[]
+include::{snippets}/comment-controller-test/comment-write-invalid-input-value/path-parameters.adoc[]
+include::{snippets}/comment-controller-test/comment-write-invalid-input-value/request-headers.adoc[]
+include::{snippets}/comment-controller-test/comment-write-invalid-input-value/request-fields.adoc[]
+
+===== 응답
+
+include::{snippets}/comment-controller-test/comment-write-invalid-input-value/http-response.adoc[]
+include::{snippets}/comment-controller-test/comment-write-invalid-input-value/response-fields.adoc[]
+
+==== 게시글을 찾을 수 없음
+
+===== 요청
+
+include::{snippets}/comment-controller-test/comment-write-not-found-post/http-request.adoc[]
+include::{snippets}/comment-controller-test/comment-write-not-found-post/path-parameters.adoc[]
+include::{snippets}/comment-controller-test/comment-write-not-found-post/request-headers.adoc[]
+include::{snippets}/comment-controller-test/comment-write-not-found-post/request-fields.adoc[]
+
+===== 응답
+
+include::{snippets}/comment-controller-test/comment-write-not-found-post/http-response.adoc[]
+include::{snippets}/comment-controller-test/comment-write-not-found-post/response-fields.adoc[]
+
+==== 회원을 찾을 수 없음
+
+===== 요청
+
+include::{snippets}/comment-controller-test/comment-write-not-found-member/http-request.adoc[]
+include::{snippets}/comment-controller-test/comment-write-not-found-member/path-parameters.adoc[]
+include::{snippets}/comment-controller-test/comment-write-not-found-member/request-headers.adoc[]
+include::{snippets}/comment-controller-test/comment-write-not-found-member/request-fields.adoc[]
+
+===== 응답
+
+include::{snippets}/comment-controller-test/comment-write-not-found-member/http-response.adoc[]
+include::{snippets}/comment-controller-test/comment-write-not-found-member/response-fields.adoc[]
