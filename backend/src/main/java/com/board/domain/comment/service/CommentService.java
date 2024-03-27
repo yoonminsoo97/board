@@ -3,6 +3,7 @@ package com.board.domain.comment.service;
 import com.board.domain.comment.dto.CommentModifyRequest;
 import com.board.domain.comment.dto.CommentWriteRequest;
 import com.board.domain.comment.entity.Comment;
+import com.board.domain.comment.exception.CommentDeleteAccessDeniedException;
 import com.board.domain.comment.exception.CommentModifyAccessDeniedException;
 import com.board.domain.comment.exception.NotFoundCommentException;
 import com.board.domain.comment.repository.CommentRepository;
@@ -48,6 +49,16 @@ public class CommentService {
             throw new CommentModifyAccessDeniedException();
         }
         comment.modify(commentModifyRequest.getContent());
+    }
+
+    @Transactional
+    public void commentDelete(Long postNumber, Long commentNumber, String loginUsername) {
+        Comment comment = commentRepository.findCommentJoinFetchMember(postNumber, commentNumber)
+                .orElseThrow(NotFoundCommentException::new);
+        if (!comment.isOwner(loginUsername)) {
+            throw new CommentDeleteAccessDeniedException();
+        }
+        commentRepository.delete(comment);
     }
 
 }

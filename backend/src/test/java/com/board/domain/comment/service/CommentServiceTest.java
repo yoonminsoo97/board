@@ -3,6 +3,7 @@ package com.board.domain.comment.service;
 import com.board.domain.comment.dto.CommentModifyRequest;
 import com.board.domain.comment.dto.CommentWriteRequest;
 import com.board.domain.comment.entity.Comment;
+import com.board.domain.comment.exception.CommentDeleteAccessDeniedException;
 import com.board.domain.comment.exception.CommentModifyAccessDeniedException;
 import com.board.domain.comment.exception.NotFoundCommentException;
 import com.board.domain.comment.repository.CommentRepository;
@@ -30,6 +31,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.never;
 
@@ -151,13 +153,66 @@ class CommentServiceTest {
     @DisplayName("댓글 수정 시 작성자가 아닌데 수정을 시도하면 예외가 발생한다")
     void commentModifyNotCommentOwner() {
         CommentModifyRequest commentModifyRequest = new CommentModifyRequest("댓글");
+        Comment comment = Comment.builder()
+                .content("댓글")
+                .member(member)
+                .post(post)
+                .build();
 
-        willThrow(new CommentModifyAccessDeniedException()).given(commentRepository).findCommentJoinFetchMember(anyLong(), anyLong());
+        given(commentRepository.findCommentJoinFetchMember(anyLong(), anyLong())).willReturn(Optional.of(comment));
 
-        assertThatThrownBy(() -> commentService.commentModify(1L, 1L, commentModifyRequest, "yoon1234"))
+        assertThatThrownBy(() -> commentService.commentModify(1L, 1L, commentModifyRequest, "unknown"))
                 .isInstanceOf(CommentModifyAccessDeniedException.class);
 
         then(commentRepository).should().findCommentJoinFetchMember(anyLong(), anyLong());
+    }
+
+    @Test
+    @DisplayName("댓글을 삭제한다")
+    void commentDelete() {
+        Comment comment = Comment.builder()
+                .content("댓글")
+                .member(member)
+                .post(post)
+                .build();
+
+        given(commentRepository.findCommentJoinFetchMember(anyLong(), anyLong())).willReturn(Optional.of(comment));
+        willDoNothing().given(commentRepository).delete(any(Comment.class));
+
+        commentService.commentDelete(1L, 1L, "yoon1234");
+
+        then(commentRepository).should().findCommentJoinFetchMember(anyLong(), anyLong());
+        then(commentRepository).should().delete(any(Comment.class));
+    }
+
+    @Test
+    @DisplayName("댓글 삭제 시 댓글을 찾을 수 없으면 예외가 발생한다")
+    void commentDeleteNotFoundComment() {
+        willThrow(new NotFoundCommentException()).given(commentRepository).findCommentJoinFetchMember(anyLong(), anyLong());
+
+        assertThatThrownBy(() -> commentService.commentDelete(1L, 1L, "yoon1234"))
+                .isInstanceOf(NotFoundCommentException.class);
+
+        then(commentRepository).should().findCommentJoinFetchMember(anyLong(), anyLong());
+        then(commentRepository).should(never()).delete(any(Comment.class));
+    }
+
+    @Test
+    @DisplayName("댓글 삭제 시 작성자가 아닌데 삭제를 시도하면 예외가 발생한다")
+    void commentDeleteNotCommentOwner() {
+        Comment comment = Comment.builder()
+                .content("댓글")
+                .member(member)
+                .post(post)
+                .build();
+
+        given(commentRepository.findCommentJoinFetchMember(anyLong(), anyLong())).willReturn(Optional.of(comment));
+
+        assertThatThrownBy(() -> commentService.commentDelete(1L, 1L, "unknown"))
+                .isInstanceOf(CommentDeleteAccessDeniedException.class);
+
+        then(commentRepository).should().findCommentJoinFetchMember(anyLong(), anyLong());
+        then(commentRepository).should(never()).delete(any(Comment.class));
     }
 
 }

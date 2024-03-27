@@ -2,6 +2,7 @@ package com.board.domain.comment.controller;
 
 import com.board.domain.comment.dto.CommentModifyRequest;
 import com.board.domain.comment.dto.CommentWriteRequest;
+import com.board.domain.comment.exception.CommentDeleteAccessDeniedException;
 import com.board.domain.comment.exception.CommentModifyAccessDeniedException;
 import com.board.domain.comment.exception.NotFoundCommentException;
 import com.board.domain.comment.service.CommentService;
@@ -25,12 +26,13 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
 
-import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.put;
 import static org.springframework.restdocs.payload.JsonFieldType.NUMBER;
 import static org.springframework.restdocs.payload.JsonFieldType.STRING;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.delete;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.put;
 import static org.springframework.restdocs.headers.HeaderDocumentation.headerWithName;
 import static org.springframework.restdocs.headers.HeaderDocumentation.requestHeaders;
-import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.restdocs.payload.PayloadDocumentation.requestFields;
 import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
@@ -319,6 +321,90 @@ class CommentControllerTest extends RestDocsTestSupport {
                         ),
                         requestFields(
                                 fieldWithPath("content").type(STRING).description("수정 댓글")
+                        ),
+                        responseFields(
+                                fieldWithPath("errorCode").type(STRING).description("에러 코드"),
+                                fieldWithPath("status").type(NUMBER).description("상태 코드"),
+                                fieldWithPath("message").type(STRING).description("에러 메세지"),
+                                fieldWithPath("timeStamp").type(STRING).description("에러 발생 시간")
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("댓글을 삭제한다")
+    void commentDelete() throws Exception {
+        Claims payload = getPayload(createAccessToken());
+
+        given(tokenService.tokenPayload(anyString())).willReturn(payload);
+        willDoNothing().given(commentService).commentDelete(anyLong(), anyLong(), anyString());
+
+        mockMvc.perform(delete("/api/posts/{postNumber}/comments/{commentNumber}", 1, 1)
+                        .header("Authorization", "Bearer access-token"))
+                .andExpect(status().isOk())
+                .andDo(restDocs.document(
+                        pathParameters(
+                                parameterWithName("postNumber").description("게시글 번호"),
+                                parameterWithName("commentNumber").description("댓글 번호")
+                        ),
+                        requestHeaders(
+                                headerWithName("Authorization").description("Authorization 헤더")
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("댓글 삭제 시 댓글을 찾을 수 없으면 예외가 발생한다")
+    void commentDeleteNotFoundComment() throws Exception {
+        Claims payload = getPayload(createAccessToken());
+
+        given(tokenService.tokenPayload(anyString())).willReturn(payload);
+        willThrow(new NotFoundCommentException()).given(commentService).commentDelete(anyLong(), anyLong(), anyString());
+
+        mockMvc.perform(delete("/api/posts/{postNumber}/comments/{commentNumber}", 1, 1)
+                        .header("Authorization", "Bearer access-token"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errorCode").value("E404003"))
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value("댓글을 찾을 수 없습니다."))
+                .andDo(restDocs.document(
+                        pathParameters(
+                                parameterWithName("postNumber").description("게시글 번호"),
+                                parameterWithName("commentNumber").description("댓글 번호")
+                        ),
+                        requestHeaders(
+                                headerWithName("Authorization").description("Authorization 헤더")
+                        ),
+                        responseFields(
+                                fieldWithPath("errorCode").type(STRING).description("에러 코드"),
+                                fieldWithPath("status").type(NUMBER).description("상태 코드"),
+                                fieldWithPath("message").type(STRING).description("에러 메세지"),
+                                fieldWithPath("timeStamp").type(STRING).description("에러 발생 시간")
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("댓글 삭제 시 작성자가 아닌데 삭제를 시도할 경우 예외가 발생한다")
+    void commentDeleteNotCommentOnwer() throws Exception {
+        Claims payload = getPayload(createAccessToken());
+
+        given(tokenService.tokenPayload(anyString())).willReturn(payload);
+        willThrow(new CommentDeleteAccessDeniedException()).given(commentService).commentDelete(anyLong(), anyLong(), anyString());
+
+        mockMvc.perform(delete("/api/posts/{postNumber}/comments/{commentNumber}", 1, 1)
+                        .header("Authorization", "Bearer access-token"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.errorCode").value("E403004"))
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.message").value("댓글 삭제는 작성자만 할 수 있습니다."))
+                .andDo(restDocs.document(
+                        pathParameters(
+                                parameterWithName("postNumber").description("게시글 번호"),
+                                parameterWithName("commentNumber").description("댓글 번호")
+                        ),
+                        requestHeaders(
+                                headerWithName("Authorization").description("Authorization 헤더")
                         ),
                         responseFields(
                                 fieldWithPath("errorCode").type(STRING).description("에러 코드"),
