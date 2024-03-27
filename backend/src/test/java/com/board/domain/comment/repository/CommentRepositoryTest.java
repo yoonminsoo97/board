@@ -78,4 +78,20 @@ class CommentRepositoryTest {
         assertThat(findComment.getMember().getUsername()).isEqualTo("yoon1234");
     }
 
+    @Test
+    @DisplayName("댓글을 삭제한다")
+    void commentDelete() {
+        Comment comment = Comment.builder()
+                .content("댓글")
+                .member(member)
+                .post(post)
+                .build();
+        Comment saveComment = commentRepository.save(comment);
+        Comment findComment = commentRepository.findCommentJoinFetchMember(post.getId(), saveComment.getId()).get();
+
+        commentRepository.delete(findComment);
+
+        assertThat(commentRepository.findCommentJoinFetchMember(post.getId(), saveComment.getId())).isEmpty();
+    }
+
 }
