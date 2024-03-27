@@ -22,7 +22,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -117,6 +120,25 @@ class CommentServiceTest {
         then(postRepository).should().findById(anyLong());
         then(memberRepository).should().findMemberByUsername(anyString());
         then(commentRepository).should(never()).save(any(Comment.class));
+    }
+
+    @Test
+    @DisplayName("댓글 목록을 조회한다")
+    void commentList() {
+        List<Comment> content = List.of(
+                Comment.builder().content("댓글").member(member).post(post).build(),
+                Comment.builder().content("댓글").member(member).post(post).build(),
+                Comment.builder().content("댓글").member(member).post(post).build(),
+                Comment.builder().content("댓글").member(member).post(post).build(),
+                Comment.builder().content("댓글").member(member).post(post).build()
+        );
+        PageImpl<Comment> commentPage = new PageImpl<>(content);
+
+        given(commentRepository.findCommentsByPostId(any(Pageable.class), anyLong())).willReturn(commentPage);
+
+        commentService.commentList(1L, 1);
+
+        then(commentRepository).should().findCommentsByPostId(any(Pageable.class), anyLong());
     }
 
     @Test
