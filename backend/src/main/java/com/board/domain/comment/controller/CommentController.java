@@ -1,5 +1,6 @@
 package com.board.domain.comment.controller;
 
+import com.board.domain.comment.dto.CommentListResponse;
 import com.board.domain.comment.dto.CommentModifyRequest;
 import com.board.domain.comment.dto.CommentWriteRequest;
 import com.board.domain.comment.service.CommentService;
@@ -12,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -33,6 +35,14 @@ public class CommentController {
                                              @AuthenticationPrincipal String loginUsername) {
         commentService.commentWrite(postNumber, commentWriteRequest, loginUsername);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{postNumber}/comments/page/{pageNumber}")
+    public ResponseEntity<CommentListResponse> commentList(@PathVariable("postNumber") Long postNumber,
+                                                           @PathVariable("pageNumber") int pageNumber) {
+        pageNumber = pageNumber <= 0 ? 0 : pageNumber - 1;
+        CommentListResponse commentListResponse = commentService.commentList(postNumber, pageNumber);
+        return ResponseEntity.ok().body(commentListResponse);
     }
 
     @Secured("ROLE_MEMBER")
