@@ -1,5 +1,7 @@
 package com.board.domain.comment.controller;
 
+import com.board.domain.comment.dto.CommentListItem;
+import com.board.domain.comment.dto.CommentListResponse;
 import com.board.domain.comment.dto.CommentModifyRequest;
 import com.board.domain.comment.dto.CommentWriteRequest;
 import com.board.domain.comment.exception.CommentDeleteAccessDeniedException;
@@ -19,13 +21,20 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
 
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
+import static org.springframework.restdocs.payload.JsonFieldType.ARRAY;
+import static org.springframework.restdocs.payload.JsonFieldType.BOOLEAN;
 import static org.springframework.restdocs.payload.JsonFieldType.NUMBER;
 import static org.springframework.restdocs.payload.JsonFieldType.STRING;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
@@ -185,6 +194,44 @@ class CommentControllerTest extends RestDocsTestSupport {
                                 fieldWithPath("status").type(NUMBER).description("상태 코드"),
                                 fieldWithPath("message").type(STRING).description("에러 메세지"),
                                 fieldWithPath("timeStamp").type(STRING).description("에러 발생 시간")
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("댓글 목록을 조회한다")
+    void commentList() throws Exception {
+        List<CommentListItem> comments = List.of(
+                new CommentListItem(5L, "작성자5", "댓글5", LocalDateTime.now()),
+                new CommentListItem(4L, "작성자4", "댓글4", LocalDateTime.now()),
+                new CommentListItem(3L, "작성자3", "댓글3", LocalDateTime.now()),
+                new CommentListItem(2L, "작성자2", "댓글2", LocalDateTime.now()),
+                new CommentListItem(1L, "작성자1", "댓글1", LocalDateTime.now())
+        );
+        CommentListResponse commentListResponse = new CommentListResponse(comments, 0, 1, 5, false, false, true, true);
+
+        given(commentService.commentList(anyLong(), anyInt())).willReturn(commentListResponse);
+
+        mockMvc.perform(get("/api/posts/{postNumber}/comments/page/{pageNumber}", 1, 1))
+                .andExpect(status().isOk())
+                .andDo(restDocs.document(
+                   pathParameters(
+                           parameterWithName("postNumber").description("게시글 번호"),
+                           parameterWithName("pageNumber").description("댓글 페이지 번호")
+                   ),
+                        responseFields(
+                                fieldWithPath("comments").type(ARRAY).description("댓글 목록"),
+                                fieldWithPath("comments[].commentNum").type(NUMBER).description("댓글 번호"),
+                                fieldWithPath("comments[].writer").type(STRING).description("댓글 작성자"),
+                                fieldWithPath("comments[].content").type(STRING).description("댓글 내용"),
+                                fieldWithPath("comments[].createdAt").type(STRING).description("댓글 작성 시간"),
+                                fieldWithPath("pageNumber").type(NUMBER).description("현재 페이지 번호"),
+                                fieldWithPath("totalElements").type(NUMBER).description("전체 댓글 개수"),
+                                fieldWithPath("totalPages").type(NUMBER).description("전체 페이지 개수"),
+                                fieldWithPath("prev").type(BOOLEAN).description("이전 페이지 여부"),
+                                fieldWithPath("next").type(BOOLEAN).description("다음 페이지 여부"),
+                                fieldWithPath("first").type(BOOLEAN).description("첫째 페이지 여부"),
+                                fieldWithPath("last").type(BOOLEAN).description("마지막 페이지 여부")
                         )
                 ));
     }

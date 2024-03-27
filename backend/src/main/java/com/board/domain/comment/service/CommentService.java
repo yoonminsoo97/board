@@ -1,5 +1,6 @@
 package com.board.domain.comment.service;
 
+import com.board.domain.comment.dto.CommentListResponse;
 import com.board.domain.comment.dto.CommentModifyRequest;
 import com.board.domain.comment.dto.CommentWriteRequest;
 import com.board.domain.comment.entity.Comment;
@@ -16,12 +17,19 @@ import com.board.domain.post.repository.PostRepository;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 public class CommentService {
+
+    private static final int PAGE_SIZE = 10;
+    private static final String PROPERTIES = "id";
 
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
@@ -39,6 +47,13 @@ public class CommentService {
                 .post(post)
                 .build();
         commentRepository.save(comment);
+    }
+
+    @Transactional(readOnly = true)
+    public CommentListResponse commentList(Long postNumber, int pageNumber) {
+        Pageable pageable = PageRequest.of(pageNumber, PAGE_SIZE, Sort.Direction.ASC, PROPERTIES);
+        Page<Comment> commentPage = commentRepository.findCommentsByPostId(pageable, postNumber);
+        return new CommentListResponse(commentPage);
     }
 
     @Transactional

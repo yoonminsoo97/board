@@ -14,6 +14,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -59,6 +65,30 @@ class CommentRepositoryTest {
         Comment saveComment = commentRepository.save(comment);
 
         assertThat(saveComment.getId()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("댓글 목록을 조회한다")
+    void findCommentsByPostId() {
+        List<Comment> commentList = List.of(
+                Comment.builder().content("댓글").member(member).post(post).build(),
+                Comment.builder().content("댓글").member(member).post(post).build(),
+                Comment.builder().content("댓글").member(member).post(post).build(),
+                Comment.builder().content("댓글").member(member).post(post).build(),
+                Comment.builder().content("댓글").member(member).post(post).build()
+        );
+        commentRepository.saveAll(commentList);
+
+        Pageable pageable = PageRequest.of(0, 5, Sort.Direction.ASC, "id");
+        Page<Comment> commentPage = commentRepository.findCommentsByPostId(pageable, post.getId());
+
+        assertThat(commentPage.getNumber()).isEqualTo(0);
+        assertThat(commentPage.getTotalElements()).isEqualTo(5);
+        assertThat(commentPage.getTotalPages()).isEqualTo(1);
+        assertThat(commentPage.hasPrevious()).isFalse();
+        assertThat(commentPage.hasNext()).isFalse();
+        assertThat(commentPage.isFirst()).isTrue();
+        assertThat(commentPage.isLast()).isTrue();
     }
 
     @Test
