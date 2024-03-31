@@ -46,7 +46,7 @@ public class Comment extends BaseEntity {
         this.writer = member.getNickname();
         this.content = content;
         this.member = member;
-        this.post = post;
+        setPost(post);
     }
 
     public void modify(String content) {
@@ -55,6 +55,14 @@ public class Comment extends BaseEntity {
 
     public boolean isOwner(String loginUsername) {
         return member.getUsername().equals(loginUsername);
+    }
+
+    private void setPost(Post post) {
+        if (this.post != null) {
+            this.post.getComments().remove(this);
+        }
+        this.post = post;
+        post.getComments().add(this);
     }
 
 }
