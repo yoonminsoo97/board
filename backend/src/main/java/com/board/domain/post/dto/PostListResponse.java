@@ -1,14 +1,11 @@
 package com.board.domain.post.dto;
 
-import com.board.domain.post.entity.Post;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import org.springframework.data.domain.Page;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Getter
 @AllArgsConstructor
@@ -23,10 +20,8 @@ public class PostListResponse {
     private final boolean first;
     private final boolean last;
 
-    public PostListResponse(Page<Post> postPage) {
-        this.posts = postPage.getContent().stream()
-                .map(PostListItem::new)
-                .collect(Collectors.toList());
+    public PostListResponse(Page<PostListItem> postPage) {
+        this.posts = postPage.getContent();
         this.pageNumber = postPage.getNumber() + 1;
         this.totalPages = postPage.getTotalPages();
         this.totalElements = postPage.getTotalElements();
