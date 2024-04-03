@@ -211,11 +211,11 @@ class PostControllerTest extends RestDocsTestSupport {
     @DisplayName("게시글 목록을 조회한다")
     void postList() throws Exception {
         List<PostListItem> posts = List.of(
-                new PostListItem(5L, "제목5", "작성자5", LocalDateTime.now()),
-                new PostListItem(4L, "제목4", "작성자4", LocalDateTime.now()),
-                new PostListItem(3L, "제목3", "작성자3", LocalDateTime.now()),
-                new PostListItem(2L, "제목2", "작성자2", LocalDateTime.now()),
-                new PostListItem(1L, "제목1", "작성자1", LocalDateTime.now())
+                new PostListItem(5L, "제목5", "작성자5", 0, LocalDateTime.now()),
+                new PostListItem(4L, "제목4", "작성자4", 0, LocalDateTime.now()),
+                new PostListItem(3L, "제목3", "작성자3", 0, LocalDateTime.now()),
+                new PostListItem(2L, "제목2", "작성자2", 0, LocalDateTime.now()),
+                new PostListItem(1L, "제목1", "작성자1", 0, LocalDateTime.now())
         );
         PostListResponse postListResponse = new PostListResponse(posts, 0, 1, 5, false, false, true, true);
 
@@ -233,6 +233,7 @@ class PostControllerTest extends RestDocsTestSupport {
                                 fieldWithPath("posts[].title").type(STRING).description("게시글 제목"),
                                 fieldWithPath("posts[].writer").type(STRING).description("게시글 제목"),
                                 fieldWithPath("posts[].createdAt").type(STRING).description("게시글 제목"),
+                                fieldWithPath("posts[].commentCount").type(NUMBER).description("댓글 개수"),
                                 fieldWithPath("pageNumber").type(NUMBER).description("페이지 번호"),
                                 fieldWithPath("totalPages").type(NUMBER).description("전체 페이지 개수"),
                                 fieldWithPath("totalElements").type(NUMBER).description("전체 게시글 개수"),
