@@ -6,6 +6,7 @@ import com.board.domain.member.repository.MemberRepository;
 import com.board.domain.post.entity.Post;
 import com.board.domain.post.repository.PostRepository;
 import com.board.global.common.config.JpaAuditConfig;
+import com.board.support.config.QuerydslConfig;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -24,7 +25,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-@Import(JpaAuditConfig.class)
+@Import({JpaAuditConfig.class, QuerydslConfig.class})
 class CommentRepositoryTest {
 
     @Autowired
