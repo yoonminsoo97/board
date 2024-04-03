@@ -4,6 +4,7 @@ import com.board.domain.member.entity.Member;
 import com.board.domain.member.repository.MemberRepository;
 import com.board.domain.token.entity.Token;
 import com.board.global.common.config.JpaAuditConfig;
+import com.board.support.config.QuerydslConfig;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +17,7 @@ import org.springframework.context.annotation.Import;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-@Import(JpaAuditConfig.class)
+@Import({JpaAuditConfig.class, QuerydslConfig.class})
 class TokenRepositoryTest {
 
     @Autowired

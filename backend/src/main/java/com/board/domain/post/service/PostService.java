@@ -4,6 +4,7 @@ import com.board.domain.member.entity.Member;
 import com.board.domain.member.exception.NotFoundMemberException;
 import com.board.domain.member.repository.MemberRepository;
 import com.board.domain.post.dto.PostDetailResponse;
+import com.board.domain.post.dto.PostListItem;
 import com.board.domain.post.dto.PostListResponse;
 import com.board.domain.post.dto.PostModifyRequest;
 import com.board.domain.post.dto.PostWriteRequest;
@@ -54,7 +55,7 @@ public class PostService {
     @Transactional
     public PostListResponse postList(int pageNumber) {
         Pageable pageable = PageRequest.of(pageNumber, PAGE_SIZE, Sort.Direction.DESC, PROPERTIES);
-        Page<Post> postPage = postRepository.findAll(pageable);
+        Page<PostListItem> postPage = postRepository.findPosts(pageable);
         return new PostListResponse(postPage);
     }
 

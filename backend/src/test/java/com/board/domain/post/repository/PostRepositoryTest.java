@@ -2,8 +2,10 @@ package com.board.domain.post.repository;
 
 import com.board.domain.member.entity.Member;
 import com.board.domain.member.repository.MemberRepository;
+import com.board.domain.post.dto.PostListItem;
 import com.board.domain.post.entity.Post;
 import com.board.global.common.config.JpaAuditConfig;
+import com.board.support.config.QuerydslConfig;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -22,7 +24,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-@Import(JpaAuditConfig.class)
+@Import({JpaAuditConfig.class, QuerydslConfig.class})
 class PostRepositoryTest {
 
     @Autowired
@@ -103,7 +105,7 @@ class PostRepositoryTest {
         postRepository.saveAll(content);
 
         Pageable pageable = PageRequest.of(0, 10, Sort.Direction.DESC, "id");
-        Page<Post> postPage = postRepository.findAll(pageable);
+        Page<PostListItem> postPage = postRepository.findPosts(pageable);
 
         assertThat(postPage.getNumber()).isEqualTo(0);
         assertThat(postPage.getTotalPages()).isEqualTo(1);

@@ -3,6 +3,7 @@ package com.board.domain.post.service;
 import com.board.domain.member.entity.Member;
 import com.board.domain.member.exception.NotFoundMemberException;
 import com.board.domain.member.repository.MemberRepository;
+import com.board.domain.post.dto.PostListItem;
 import com.board.domain.post.dto.PostModifyRequest;
 import com.board.domain.post.dto.PostWriteRequest;
 import com.board.domain.post.entity.Post;
@@ -22,6 +23,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -121,20 +123,20 @@ class PostServiceTest {
     @Test
     @DisplayName("게시글 목록을 조회한다")
     void postList() {
-        List<Post> content = List.of(
-                Post.builder().title("제목").member(member).build(),
-                Post.builder().title("제목").member(member).build(),
-                Post.builder().title("제목").member(member).build(),
-                Post.builder().title("제목").member(member).build(),
-                Post.builder().title("제목").member(member).build()
+        List<PostListItem> content = List.of(
+                new PostListItem(5L, "제목5", "작성자5", 0, LocalDateTime.now()),
+                new PostListItem(4L, "제목4", "작성자4", 0, LocalDateTime.now()),
+                new PostListItem(3L, "제목3", "작성자3", 0, LocalDateTime.now()),
+                new PostListItem(2L, "제목2", "작성자2", 0, LocalDateTime.now()),
+                new PostListItem(1L, "제목1", "작성자1", 0, LocalDateTime.now())
         );
-        PageImpl<Post> postPage = new PageImpl<>(content);
+        PageImpl<PostListItem> postPage = new PageImpl<>(content);
 
-        given(postRepository.findAll(any(Pageable.class))).willReturn(postPage);
+        given(postRepository.findPosts(any(Pageable.class))).willReturn(postPage);
 
         postService.postList(1);
 
-        then(postRepository).should().findAll(any(Pageable.class));
+        then(postRepository).should().findPosts(any(Pageable.class));
     }
 
     @Test

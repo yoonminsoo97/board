@@ -2,6 +2,7 @@ package com.board.domain.member.repository;
 
 import com.board.domain.member.entity.Member;
 import com.board.global.common.config.JpaAuditConfig;
+import com.board.support.config.QuerydslConfig;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,7 +14,7 @@ import org.springframework.context.annotation.Import;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-@Import(JpaAuditConfig.class)
+@Import({JpaAuditConfig.class, QuerydslConfig.class})
 class MemberRepositoryTest {
 
     @Autowired
