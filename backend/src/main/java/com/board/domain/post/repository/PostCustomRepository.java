@@ -7,5 +7,5 @@ import org.springframework.data.domain.Pageable;
 public interface PostCustomRepository {
 
     Page<PostListItem> findPosts(Pageable pageable);
-
+    Page<PostListItem> findPostsSearch(Pageable pageable, String type, String keyword);
 }

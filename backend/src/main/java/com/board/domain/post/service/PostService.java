@@ -59,6 +59,13 @@ public class PostService {
         return new PostListResponse(postPage);
     }
 
+    @Transactional(readOnly = true)
+    public PostListResponse postListSearch(int page, String type, String keyword) {
+        Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.Direction.DESC, PROPERTIES);
+        Page<PostListItem> postPage = postRepository.findPostsSearch(pageable, type, keyword);
+        return new PostListResponse(postPage);
+    }
+
     @Transactional
     public void postModify(Long postNumber, PostModifyRequest postModifyRequest, String loginUsername) {
         Post post = postRepository.findPostJoinFetch(postNumber)

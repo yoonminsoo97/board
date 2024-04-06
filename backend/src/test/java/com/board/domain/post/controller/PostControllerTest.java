@@ -46,9 +46,10 @@ import static org.springframework.restdocs.headers.HeaderDocumentation.requestHe
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.restdocs.payload.PayloadDocumentation.requestFields;
 import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
-
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
 import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
+import static org.springframework.restdocs.request.RequestDocumentation.queryParameters;
+
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -226,6 +227,50 @@ class PostControllerTest extends RestDocsTestSupport {
                 .andDo(restDocs.document(
                         pathParameters(
                                 parameterWithName("pageNumber").description("페이지 번호")
+                        ),
+                        responseFields(
+                                fieldWithPath("posts").type(ARRAY).description("게시글 목록"),
+                                fieldWithPath("posts[].postNumber").type(NUMBER).description("게시글 번호"),
+                                fieldWithPath("posts[].title").type(STRING).description("게시글 제목"),
+                                fieldWithPath("posts[].writer").type(STRING).description("게시글 제목"),
+                                fieldWithPath("posts[].createdAt").type(STRING).description("게시글 제목"),
+                                fieldWithPath("posts[].commentCount").type(NUMBER).description("댓글 개수"),
+                                fieldWithPath("pageNumber").type(NUMBER).description("페이지 번호"),
+                                fieldWithPath("totalPages").type(NUMBER).description("전체 페이지 개수"),
+                                fieldWithPath("totalElements").type(NUMBER).description("전체 게시글 개수"),
+                                fieldWithPath("prev").type(BOOLEAN).description("이전 페이지 이동 가능 여부"),
+                                fieldWithPath("next").type(BOOLEAN).description("다음 페이지 이동 가능 여부"),
+                                fieldWithPath("first").type(BOOLEAN).description("첫 번째 페이지 여부"),
+                                fieldWithPath("last").type(BOOLEAN).description("마지막 페이지 여부")
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("게시글을 검색한다")
+    void postListSearch() throws Exception {
+        List<PostListItem> posts = List.of(
+                new PostListItem(5L, "제목5", "작성자5", 0, LocalDateTime.now()),
+                new PostListItem(4L, "제목4", "작성자4", 0, LocalDateTime.now()),
+                new PostListItem(3L, "제목3", "작성자3", 0, LocalDateTime.now()),
+                new PostListItem(2L, "제목2", "작성자2", 0, LocalDateTime.now()),
+                new PostListItem(1L, "제목1", "작성자1", 0, LocalDateTime.now())
+        );
+        PostListResponse postListResponse = new PostListResponse(posts, 0, 1, 5, false, false, true, true);
+
+        given(postService.postListSearch(anyInt(), anyString(), anyString())).willReturn(postListResponse);
+
+        mockMvc.perform(get("/api/posts/search")
+                        .param("page", "1")
+                        .param("type", "title")
+                        .param("keyword", "제목")
+                )
+                .andExpect(status().isOk())
+                .andDo(restDocs.document(
+                        queryParameters(
+                                parameterWithName("page").description("페이지 번호"),
+                                parameterWithName("type").description("검색 기준"),
+                                parameterWithName("keyword").description("검색 단어")
                         ),
                         responseFields(
                                 fieldWithPath("posts").type(ARRAY).description("게시글 목록"),

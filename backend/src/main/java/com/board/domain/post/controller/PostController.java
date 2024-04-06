@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -47,6 +48,15 @@ public class PostController {
     public ResponseEntity<PostListResponse> postList(@PathVariable("pageNumber") int pageNumber) {
         pageNumber = pageNumber <= 0 ? 0 : pageNumber - 1;
         PostListResponse postListResponse = postService.postList(pageNumber);
+        return ResponseEntity.ok().body(postListResponse);
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<PostListResponse> postListSearch(@RequestParam("page") int page,
+                                                           @RequestParam("type") String type,
+                                                           @RequestParam("keyword") String keyword) {
+        page = page <= 0 ? 0 : page - 1;
+        PostListResponse postListResponse = postService.postListSearch(page, type, keyword);
         return ResponseEntity.ok().body(postListResponse);
     }
 
