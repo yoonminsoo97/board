@@ -140,6 +140,25 @@ class PostServiceTest {
     }
 
     @Test
+    @DisplayName("게시글을 검색한다")
+    void postListSearch() {
+        List<PostListItem> content = List.of(
+                new PostListItem(5L, "제목5", "작성자5", 0, LocalDateTime.now()),
+                new PostListItem(4L, "제목4", "작성자4", 0, LocalDateTime.now()),
+                new PostListItem(3L, "제목3", "작성자3", 0, LocalDateTime.now()),
+                new PostListItem(2L, "제목2", "작성자2", 0, LocalDateTime.now()),
+                new PostListItem(1L, "제목1", "작성자1", 0, LocalDateTime.now())
+        );
+        PageImpl<PostListItem> postPage = new PageImpl<>(content);
+
+        given(postRepository.findPostsSearch(any(Pageable.class), anyString(), anyString())).willReturn(postPage);
+
+        postService.postListSearch(1, "title", "제목");
+
+        then(postRepository).should().findPostsSearch(any(Pageable.class), anyString(), anyString());
+    }
+
+    @Test
     @DisplayName("게시글을 수정한다")
     void postModify() {
         PostModifyRequest postModifyRequest = new PostModifyRequest("제목", "내용");
