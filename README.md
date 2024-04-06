@@ -15,3 +15,9 @@
 - Querydsl 5.1.0
 - Lombok 1.18.30
 - Jakarta Validation Api 3.0.2
+
+### ERD
+
+<div align="center">
+  <img width="1000" alt="스크린샷 2024-04-06 오후 3 01 07" src="https://github.com/yoonminsoo97/board/assets/163730288/7cb35588-197d-4a61-8258-e88dfcf75deb">
+</div>
