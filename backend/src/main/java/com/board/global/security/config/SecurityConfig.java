@@ -71,6 +71,7 @@ public class SecurityConfig {
                                 "/api/members/username/*",
                                 "/api/posts/*",
                                 "/api/posts/page/*",
+                                "/api/posts/search",
                                 "/api/posts/*/comments/page/*").permitAll()
                         .requestMatchers(HttpMethod.POST,
                                 "/api/members/signup").permitAll()
