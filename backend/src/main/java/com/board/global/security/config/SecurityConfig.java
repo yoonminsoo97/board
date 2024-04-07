@@ -74,7 +74,8 @@ public class SecurityConfig {
                                 "/api/posts/search",
                                 "/api/posts/*/comments/page/*").permitAll()
                         .requestMatchers(HttpMethod.POST,
-                                "/api/members/signup").permitAll()
+                                "/api/members/signup",
+                                "/api/tokens/reissue").permitAll()
                         .requestMatchers(HttpMethod.POST,
                                 "/api/posts/write",
                                 "/api/posts/*/comments/write").hasRole(ROLE_MEMBER)
