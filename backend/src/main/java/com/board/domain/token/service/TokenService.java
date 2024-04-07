@@ -44,6 +44,15 @@ public class TokenService {
         tokenRepository.delete(token.get());
     }
 
+    @Transactional(readOnly = true)
+    public String reIssueAccessToken(String refreshToken) {
+        String subject = jwtUtil.getPayload(refreshToken).getSubject();
+        Token token = tokenRepository.findTokenJoinFetchMember(subject)
+                .orElseThrow(InvalidTokenException::new);
+        Member member = token.getMember();
+        return jwtUtil.createAccessToken(member.getUsername(), member.getNickname(), member.getRole().getAuthority());
+    }
+
     public Claims tokenPayload(String token) {
         return jwtUtil.getPayload(token);
     }
