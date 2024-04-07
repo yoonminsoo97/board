@@ -6,6 +6,9 @@ import com.board.domain.token.exception.InvalidTokenException;
 import com.board.domain.token.repository.TokenRepository;
 import com.board.domain.token.util.JwtUtil;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -94,6 +97,44 @@ class TokenServiceTest {
 
         then(tokenRepository).should().findByMemberUsername(anyString());
         then(tokenRepository).should(never()).delete(any(Token.class));
+    }
+
+    @Test
+    @DisplayName("새로운 Access Token을 발급한다")
+    void tokenReissue() {
+        Token token = Token.builder()
+                .refreshToken("refresh-token")
+                .member(member)
+                .build();
+
+        Claims claims = Jwts.claims()
+                .subject("yoon1234")
+                .build();
+
+        given(jwtUtil.getPayload(anyString())).willReturn(claims);
+        given(tokenRepository.findTokenJoinFetchMember(anyString())).willReturn(Optional.of(token));
+
+        tokenService.reIssueAccessToken("refresh-token");
+
+        then(jwtUtil).should().getPayload(anyString());
+        then(tokenRepository).should().findTokenJoinFetchMember(anyString());
+    }
+
+    @Test
+    @DisplayName("새로운 Access Token 발급 시 Refresh Token이 존재하지 않으면 예외가 발생한다")
+    void tokenReissueNotFoundRefreshToken() {
+        Claims claims = Jwts.claims()
+                .subject("yoon1234")
+                .build();
+
+        given(jwtUtil.getPayload(anyString())).willReturn(claims);
+        given(tokenRepository.findTokenJoinFetchMember(anyString())).willReturn(Optional.empty());
+
+        assertThatThrownBy(() -> tokenService.reIssueAccessToken("refresh-token"))
+                .isInstanceOf(InvalidTokenException.class);
+
+        then(jwtUtil).should().getPayload(anyString());
+        then(tokenRepository).should().findTokenJoinFetchMember(anyString());
     }
 
 }
