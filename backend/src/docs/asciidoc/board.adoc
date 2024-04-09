@@ -1,7 +1,8 @@
-= 게시판
+= 게시판 REST API 문서
 :doctype: book
 :icons: font
 :source-highlighter: highlightjs
+:toc-title: 목차
 :toc: left
 :toclevels: 3
 
@@ -9,481 +10,49 @@
 // :snippets: ./build/generated-snippets
 // endif::[]
 
-= 회원 API
-
-== 닉네임 중복 요청
-
-=== 성공
-
-==== 닉네임 사용 가능
-
-===== 요청
-
-include::{snippets}/member-controller-test/member-nickname-exists/http-request.adoc[]
-include::{snippets}/member-controller-test/member-nickname-exists/path-parameters.adoc[]
-
-===== 응답
-
-include::{snippets}/member-controller-test/member-nickname-exists/http-response.adoc[]
-
-=== 실패
-
-==== 닉네임 중복
-
-===== 요청
-
-include::{snippets}/member-controller-test/member-nickname-exists-duplicate-nickname/http-request.adoc[]
-include::{snippets}/member-controller-test/member-nickname-exists-duplicate-nickname/path-parameters.adoc[]
-
-===== 응답
-
-include::{snippets}/member-controller-test/member-nickname-exists-duplicate-nickname/http-response.adoc[]
-include::{snippets}/member-controller-test/member-nickname-exists-duplicate-nickname/response-fields.adoc[]
-
-== 아이디 중복 요청
-
-=== 성공
-
-==== 아이디 사용 가능
-
-===== 요청
-
-include::{snippets}/member-controller-test/member-username-exists/http-request.adoc[]
-include::{snippets}/member-controller-test/member-username-exists/path-parameters.adoc[]
-
-===== 응답
-
-include::{snippets}/member-controller-test/member-username-exists/http-response.adoc[]
-
-=== 실패
-
-==== 아이디 중복
-
-===== 요청
-
-include::{snippets}/member-controller-test/member-username-exists-duplicate-username/http-request.adoc[]
-include::{snippets}/member-controller-test/member-username-exists-duplicate-username/path-parameters.adoc[]
-
-===== 응답
-
-include::{snippets}/member-controller-test/member-username-exists-duplicate-username/http-response.adoc[]
-include::{snippets}/member-controller-test/member-username-exists-duplicate-username/response-fields.adoc[]
-
-== 회원가입 요청
-
-=== 성공
-
-==== 회원가입 성공
-
-===== 요청
-
-include::{snippets}/member-controller-test/member-signup/http-request.adoc[]
-include::{snippets}/member-controller-test/member-signup/request-fields.adoc[]
-
-===== 응답
-
-include::{snippets}/member-controller-test/member-signup/http-response.adoc[]
-
-=== 실패
-
-==== 잘못된 입력값
-
-===== 요청
-
-include::{snippets}/member-controller-test/member-signup-invalid-input-value/http-request.adoc[]
-include::{snippets}/member-controller-test/member-signup-invalid-input-value/request-fields.adoc[]
-
-===== 응답
-
-include::{snippets}/member-controller-test/member-signup-invalid-input-value/http-response.adoc[]
-include::{snippets}/member-controller-test/member-signup-invalid-input-value/response-fields.adoc[]
-
-==== 비밀번호, 비밀번호 확인 불일치
-
-===== 요청
-
-include::{snippets}/member-controller-test/member-signup-password-mismatch/http-request.adoc[]
-include::{snippets}/member-controller-test/member-signup-password-mismatch/request-fields.adoc[]
-
-===== 응답
-
-include::{snippets}/member-controller-test/member-signup-password-mismatch/response-body.adoc[]
-include::{snippets}/member-controller-test/member-signup-password-mismatch/response-fields.adoc[]
-
-== 로그인 요청
-
-=== 성공
-
-==== Access Token & Refresh Token 응답
-
-===== 요청
-
-include::{snippets}/member-controller-test/member-login/http-request.adoc[]
-include::{snippets}/member-controller-test/member-login/form-parameters.adoc[]
-
-===== 응답
-
-include::{snippets}/member-controller-test/member-login/http-response.adoc[]
-include::{snippets}/member-controller-test/member-login/response-fields.adoc[]
-
-=== 실패
-
-==== 아이디 또는 비밀번호 불일치
-
-===== 요청
-
-include::{snippets}/member-controller-test/member-login-bad-credentials/http-request.adoc[]
-include::{snippets}/member-controller-test/member-login-bad-credentials/form-parameters.adoc[]
-
-===== 응답
-
-include::{snippets}/member-controller-test/member-login-bad-credentials/http-response.adoc[]
-include::{snippets}/member-controller-test/member-login-bad-credentials/response-fields.adoc[]
-
-== 로그아웃 요청
-
-=== 성공
-
-==== 로그아웃 성공
-
-===== 요청
-
-include::{snippets}/member-controller-test/member-logout/http-request.adoc[]
-include::{snippets}/member-controller-test/member-logout/request-headers.adoc[]
-
-===== 응답
-
-=== 실패
-
-==== 데이터베이스에 Refresh Token이 존재하지 않음
-
-===== 요청
-
-include::{snippets}/member-controller-test/member-logout-invalid-token/http-request.adoc[]
-include::{snippets}/member-controller-test/member-logout-invalid-token/request-headers.adoc[]
-
-===== 응답
-
-include::{snippets}/member-controller-test/member-logout-invalid-token/http-response.adoc[]
-include::{snippets}/member-controller-test/member-logout-invalid-token/response-fields.adoc[]
-
-= 게시글 API
-
-== 게시글 작성 요청
-
-=== 성공
-
-==== 게시글 작성 성공
-
-===== 요청
-
-include::{snippets}/post-controller-test/post-write/http-request.adoc[]
-include::{snippets}/post-controller-test/post-write/request-headers.adoc[]
-include::{snippets}/post-controller-test/post-write/request-fields.adoc[]
-
-===== 응답
-
-include::{snippets}/post-controller-test/post-write/http-response.adoc[]
-
-=== 실패
-
-==== 잘못된 입력값
-
-===== 요청
-
-include::{snippets}/post-controller-test/post-write-invalid-input-value/http-request.adoc[]
-include::{snippets}/post-controller-test/post-write-invalid-input-value/request-headers.adoc[]
-include::{snippets}/post-controller-test/post-write-invalid-input-value/request-fields.adoc[]
-
-===== 응답
-
-include::{snippets}/post-controller-test/post-write-invalid-input-value/http-response.adoc[]
-include::{snippets}/post-controller-test/post-write-invalid-input-value/response-fields.adoc[]
-
-==== 존재하지 않는 회원
-
-===== 요청
-
-include::{snippets}/post-controller-test/post-write-not-found-member/http-request.adoc[]
-include::{snippets}/post-controller-test/post-write-not-found-member/request-headers.adoc[]
-include::{snippets}/post-controller-test/post-write-not-found-member/request-fields.adoc[]
-
-===== 응답
-
-include::{snippets}/post-controller-test/post-write-not-found-member/http-response.adoc[]
-include::{snippets}/post-controller-test/post-write-not-found-member/response-fields.adoc[]
-
-== 게시글 상세조회 요청
-
-=== 성공
-
-==== 게시글 상세조회 성공
-
-===== 요청
-
-include::{snippets}/post-controller-test/post-detail/http-request.adoc[]
-include::{snippets}/post-controller-test/post-detail/path-parameters.adoc[]
-
-===== 응답
-
-include::{snippets}/post-controller-test/post-detail/http-response.adoc[]
-include::{snippets}/post-controller-test/post-detail/response-fields.adoc[]
-
-=== 실패
-
-==== 존재하지 않는 게시글
-
-===== 요청
-
-include::{snippets}/post-controller-test/post-detail-not-found-post/http-request.adoc[]
-include::{snippets}/post-controller-test/post-detail-not-found-post/path-parameters.adoc[]
-
-===== 응답
-
-include::{snippets}/post-controller-test/post-detail-not-found-post/http-response.adoc[]
-include::{snippets}/post-controller-test/post-detail-not-found-post/response-fields.adoc[]
-
-== 게시글 목록조회 요청
-
-=== 성공
-
-==== 게시글 목록조회 성공
-
-===== 요청
-
-include::{snippets}/post-controller-test/post-list/http-request.adoc[]
-include::{snippets}/post-controller-test/post-list/path-parameters.adoc[]
-
-===== 응답
-
-include::{snippets}/post-controller-test/post-list/http-response.adoc[]
-include::{snippets}/post-controller-test/post-list/response-fields.adoc[]
-
-== 게시글 수정 요청
-
-=== 성공
-
-==== 게시글 수정 성공
-
-===== 요청
-
-include::{snippets}/post-controller-test/post-modify/http-request.adoc[]
-include::{snippets}/post-controller-test/post-modify/path-parameters.adoc[]
-include::{snippets}/post-controller-test/post-modify/request-headers.adoc[]
-include::{snippets}/post-controller-test/post-modify/request-fields.adoc[]
-
-===== 응답
-
-include::{snippets}/post-controller-test/post-modify/http-response.adoc[]
-
-=== 실패
-
-==== 잘못된 입력값
-
-===== 요청
-
-include::{snippets}/post-controller-test/post-modify-invalid-input-value/http-request.adoc[]
-include::{snippets}/post-controller-test/post-modify-invalid-input-value/path-parameters.adoc[]
-include::{snippets}/post-controller-test/post-modify-invalid-input-value/request-headers.adoc[]
-include::{snippets}/post-controller-test/post-modify-invalid-input-value/request-fields.adoc[]
-
-===== 응답
-
-include::{snippets}/post-controller-test/post-modify-invalid-input-value/http-response.adoc[]
-include::{snippets}/post-controller-test/post-modify-invalid-input-value/response-fields.adoc[]
-
-==== 존재하지 않는 게시글
-
-===== 요청
-
-include::{snippets}/post-controller-test/post-modify-not-found-post/http-request.adoc[]
-include::{snippets}/post-controller-test/post-modify-not-found-post/path-parameters.adoc[]
-include::{snippets}/post-controller-test/post-modify-not-found-post/request-headers.adoc[]
-include::{snippets}/post-controller-test/post-modify-not-found-post/request-fields.adoc[]
-
-===== 응답
-
-include::{snippets}/post-controller-test/post-modify-not-found-post/http-response.adoc[]
-include::{snippets}/post-controller-test/post-modify-not-found-post/response-fields.adoc[]
-
-==== 작성자가 아닌데 수정 시도
-
-===== 요청
-
-include::{snippets}/post-controller-test/post-modify-not-post-owner/http-request.adoc[]
-include::{snippets}/post-controller-test/post-modify-not-post-owner/path-parameters.adoc[]
-include::{snippets}/post-controller-test/post-modify-not-post-owner/request-headers.adoc[]
-include::{snippets}/post-controller-test/post-modify-not-post-owner/request-fields.adoc[]
-
-===== 응답
-
-include::{snippets}/post-controller-test/post-modify-not-post-owner/http-response.adoc[]
-include::{snippets}/post-controller-test/post-modify-not-post-owner/response-fields.adoc[]
-
-== 게시글 삭제 요청
-
-=== 성공
-
-==== 게시글 삭제 성공
-
-===== 요청
-
-include::{snippets}/post-controller-test/post-delete/http-request.adoc[]
-include::{snippets}/post-controller-test/post-delete/path-parameters.adoc[]
-include::{snippets}/post-controller-test/post-delete/request-headers.adoc[]
-
-===== 응답
-
-include::{snippets}/post-controller-test/post-delete/http-response.adoc[]
-
-=== 실패
-
-==== 존재하지 않는 게시글
-
-===== 요청
-
-include::{snippets}/post-controller-test/post-delete-not-found-post/http-request.adoc[]
-include::{snippets}/post-controller-test/post-delete-not-found-post/path-parameters.adoc[]
-include::{snippets}/post-controller-test/post-delete-not-found-post/request-headers.adoc[]
-
-===== 응답
-
-include::{snippets}/post-controller-test/post-delete-not-found-post/http-response.adoc[]
-include::{snippets}/post-controller-test/post-delete-not-found-post/response-fields.adoc[]
-
-==== 작성자가 아닌데 삭제 시도
-
-===== 요청
-
-include::{snippets}/post-controller-test/post-delete-not-post-owner/http-request.adoc[]
-include::{snippets}/post-controller-test/post-delete-not-post-owner/path-parameters.adoc[]
-include::{snippets}/post-controller-test/post-delete-not-post-owner/request-headers.adoc[]
-
-===== 응답
-
-include::{snippets}/post-controller-test/post-delete-not-post-owner/http-response.adoc[]
-include::{snippets}/post-controller-test/post-delete-not-post-owner/response-fields.adoc[]
-
-= 댓글 API
-
-== 댓글 작성 요청
-
-=== 성공
-
-==== 댓글 작성
-
-===== 요청
-
-include::{snippets}/comment-controller-test/comment-write/http-request.adoc[]
-include::{snippets}/comment-controller-test/comment-write/path-parameters.adoc[]
-include::{snippets}/comment-controller-test/comment-write/request-headers.adoc[]
-include::{snippets}/comment-controller-test/comment-write/request-fields.adoc[]
-
-===== 응답
-
-include::{snippets}/comment-controller-test/comment-write/http-response.adoc[]
-
-=== 실패
-
-==== 잘못된 입력값
-
-===== 요청
-
-include::{snippets}/comment-controller-test/comment-write-invalid-input-value/http-request.adoc[]
-include::{snippets}/comment-controller-test/comment-write-invalid-input-value/path-parameters.adoc[]
-include::{snippets}/comment-controller-test/comment-write-invalid-input-value/request-headers.adoc[]
-include::{snippets}/comment-controller-test/comment-write-invalid-input-value/request-fields.adoc[]
-
-===== 응답
-
-include::{snippets}/comment-controller-test/comment-write-invalid-input-value/http-response.adoc[]
-include::{snippets}/comment-controller-test/comment-write-invalid-input-value/response-fields.adoc[]
-
-==== 게시글을 찾을 수 없음
-
-===== 요청
-
-include::{snippets}/comment-controller-test/comment-write-not-found-post/http-request.adoc[]
-include::{snippets}/comment-controller-test/comment-write-not-found-post/path-parameters.adoc[]
-include::{snippets}/comment-controller-test/comment-write-not-found-post/request-headers.adoc[]
-include::{snippets}/comment-controller-test/comment-write-not-found-post/request-fields.adoc[]
-
-===== 응답
-
-include::{snippets}/comment-controller-test/comment-write-not-found-post/http-response.adoc[]
-include::{snippets}/comment-controller-test/comment-write-not-found-post/response-fields.adoc[]
-
-==== 회원을 찾을 수 없음
-
-===== 요청
-
-include::{snippets}/comment-controller-test/comment-write-not-found-member/http-request.adoc[]
-include::{snippets}/comment-controller-test/comment-write-not-found-member/path-parameters.adoc[]
-include::{snippets}/comment-controller-test/comment-write-not-found-member/request-headers.adoc[]
-include::{snippets}/comment-controller-test/comment-write-not-found-member/request-fields.adoc[]
-
-===== 응답
-
-include::{snippets}/comment-controller-test/comment-write-not-found-member/http-response.adoc[]
-include::{snippets}/comment-controller-test/comment-write-not-found-member/response-fields.adoc[]
-
-== 댓글 수정 요청
-
-=== 성공
-
-==== 댓글 수정
-
-===== 요청
-
-include::{snippets}/comment-controller-test/comment-modify/http-request.adoc[]
-include::{snippets}/comment-controller-test/comment-modify/path-parameters.adoc[]
-include::{snippets}/comment-controller-test/comment-modify/request-headers.adoc[]
-include::{snippets}/comment-controller-test/comment-modify/request-fields.adoc[]
-
-===== 응답
-
-include::{snippets}/comment-controller-test/comment-modify/http-response.adoc[]
-
-=== 실패
-
-==== 잘못된 입력값
-
-===== 요청
-
-include::{snippets}/comment-controller-test/comment-modify-invalid-input-value/http-request.adoc[]
-include::{snippets}/comment-controller-test/comment-modify-invalid-input-value/path-parameters.adoc[]
-include::{snippets}/comment-controller-test/comment-modify-invalid-input-value/request-headers.adoc[]
-include::{snippets}/comment-controller-test/comment-modify-invalid-input-value/request-fields.adoc[]
-
-===== 응답
-
-include::{snippets}/comment-controller-test/comment-modify-invalid-input-value/http-response.adoc[]
-include::{snippets}/comment-controller-test/comment-modify-invalid-input-value/response-fields.adoc[]
-
-==== 댓글 찾을 수 없음
-
-===== 요청
-
-include::{snippets}/comment-controller-test/comment-modify-not-found-comment/http-request.adoc[]
-include::{snippets}/comment-controller-test/comment-modify-not-found-comment/path-parameters.adoc[]
-include::{snippets}/comment-controller-test/comment-modify-not-found-comment/request-headers.adoc[]
-include::{snippets}/comment-controller-test/comment-modify-not-found-comment/request-fields.adoc[]
-
-===== 응답
-
-include::{snippets}/comment-controller-test/comment-modify-not-found-comment/http-response.adoc[]
-include::{snippets}/comment-controller-test/comment-modify-not-found-comment/request-fields.adoc[]
-
-==== 작성자 아닌데 수정 시도
-
-===== 요청
-
-include::{snippets}/comment-controller-test/comment-modify-not-comment-owner/http-request.adoc[]
-include::{snippets}/comment-controller-test/comment-modify-not-comment-owner/path-parameters.adoc[]
-include::{snippets}/comment-controller-test/comment-modify-not-comment-owner/request-headers.adoc[]
-include::{snippets}/comment-controller-test/comment-modify-not-comment-owner/request-fields.adoc[]
-
-===== 응답
-
-include::{snippets}/comment-controller-test/comment-modify-not-comment-owner/http-response.adoc[]
-include::{snippets}/comment-controller-test/comment-modify-not-comment-owner/response-fields.adoc[]
+== 1. 개요
+
+=== 1.1. 응답 형식
+
+==== 1.1.1. 에러
+
+[source,json]
+----
+{
+    "errorCode": "E404002",
+    "status": "404",
+    "message": "게시글을 찾을 수 없습니다.",
+    "timeStamp": "2024-04-09T00:00:44.607932"
+}
+----
+
+=== 1.2. 예외 유형
+
+NOTE: *프로젝트에서 발생하는 예외의 상태 코드, 에러 코드, 에러 메시지는 다음과 같습니다.*
+
+[cols="1,1,2"]
+|====
+|*상태 코드*|*에러 코드*|*에러 메시지*
+|400 Bad Request|E400001|입력값이 잘못되었습니다.
+|400 Bad Request|E400002|비밀번호가 일치하지 않습니다.
+|401 Unauthorized|E401001|아이디 또는 비밀번호가 일치하지 않습니다.
+|401 Unauthorized|E401002|토큰이 유효하지 않습니다.
+|401 Unauthorized|E401003|토큰이 만료되었습니다.
+|403 Forbidden|E403001|게시글 수정은 작성자만 할 수 있습니다.
+|403 Forbidden|E403002|게시글 삭제는 작성자만 할 수 있습니다.
+|403 Forbidden|E403003|댓글 수정은 작성자만 할 수 있습니다.
+|403 Forbidden|E403004|댓글 삭제는 작성자만 할 수 있습니다.
+|404 Not Found|E400000|지원하지 않는 예외 유형입니다.
+|404 Not Found|E404001|회원을 찾을 수 없습니다.
+|404 Not Found|E404002|게시글을 찾을 수 없습니다.
+|404 Not Found|E404003|댓글을 찾을 수 없습니다.
+|409 Conflict|E404004|사용 중인 닉네임입니다.
+|409 Conflict|E404005|사용 중인 아이디입니다.
+|====
+
+== 2. API
+
+include::fragments/member.adoc[]
+include::fragments/post.adoc[]
+include::fragments/comment.adoc[]
+include::fragments/token.adoc[]

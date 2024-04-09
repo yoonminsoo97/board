@@ -293,7 +293,7 @@ class MemberControllerTest extends RestDocsTestSupport {
                 .andExpect(status().isOk())
                 .andDo(restDocs.document(
                         requestHeaders(
-                                headerWithName("Authorization").description("Autorization 헤더")
+                                headerWithName("Authorization").description("Access Token")
                         )
                 ));
     }
@@ -316,7 +316,7 @@ class MemberControllerTest extends RestDocsTestSupport {
                 .andExpect(jsonPath("$.message").value("토큰이 유효하지 않습니다."))
                 .andDo(restDocs.document(
                         requestHeaders(
-                                headerWithName("Authorization").description("Autorization 헤더")
+                                headerWithName("Authorization").description("Access Token")
                         ),
                         responseFields(
                                 fieldWithPath("errorCode").type(STRING).description("에러 코드"),
