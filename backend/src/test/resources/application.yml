@@ -1,0 +1,20 @@
+spring:
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: false
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:testdb
+    username: sa
+    password:
+jwt:
+  secret-key: c3ByaW5nLXNlY3VyaXR5LXdpdGgtand0LXNlY3JldC1rZXk=
+  access-token:
+    expire: 300000
+  refresh-token:
+    expire: 86400000

@@ -1,0 +1,12 @@
+=== 2.4. 토큰
+
+==== 2.4.1 토큰 재발급
+
+===== 요청
+
+include::{snippets}/token-controller-test/re-issue-access-token/http-request.adoc[]
+include::{snippets}/token-controller-test/re-issue-access-token/request-headers.adoc[]
+
+===== 응답
+
+include::{snippets}/token-controller-test/re-issue-access-token/http-response.adoc[]

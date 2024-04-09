@@ -1,0 +1,58 @@
+= 게시판 REST API 문서
+:doctype: book
+:icons: font
+:source-highlighter: highlightjs
+:toc-title: 목차
+:toc: left
+:toclevels: 3
+
+// ifndef::snippets[]
+// :snippets: ./build/generated-snippets
+// endif::[]
+
+== 1. 개요
+
+=== 1.1. 응답 형식
+
+==== 1.1.1. 에러
+
+[source,json]
+----
+{
+    "errorCode": "E404002",
+    "status": "404",
+    "message": "게시글을 찾을 수 없습니다.",
+    "timeStamp": "2024-04-09T00:00:44.607932"
+}
+----
+
+=== 1.2. 예외 유형
+
+NOTE: *프로젝트에서 발생하는 예외의 상태 코드, 에러 코드, 에러 메시지는 다음과 같습니다.*
+
+[cols="1,1,2"]
+|====
+|*상태 코드*|*에러 코드*|*에러 메시지*
+|400 Bad Request|E400001|입력값이 잘못되었습니다.
+|400 Bad Request|E400002|비밀번호가 일치하지 않습니다.
+|401 Unauthorized|E401001|아이디 또는 비밀번호가 일치하지 않습니다.
+|401 Unauthorized|E401002|토큰이 유효하지 않습니다.
+|401 Unauthorized|E401003|토큰이 만료되었습니다.
+|403 Forbidden|E403001|게시글 수정은 작성자만 할 수 있습니다.
+|403 Forbidden|E403002|게시글 삭제는 작성자만 할 수 있습니다.
+|403 Forbidden|E403003|댓글 수정은 작성자만 할 수 있습니다.
+|403 Forbidden|E403004|댓글 삭제는 작성자만 할 수 있습니다.
+|404 Not Found|E400000|지원하지 않는 예외 유형입니다.
+|404 Not Found|E404001|회원을 찾을 수 없습니다.
+|404 Not Found|E404002|게시글을 찾을 수 없습니다.
+|404 Not Found|E404003|댓글을 찾을 수 없습니다.
+|409 Conflict|E404004|사용 중인 닉네임입니다.
+|409 Conflict|E404005|사용 중인 아이디입니다.
+|====
+
+== 2. API
+
+include::fragments/member.adoc[]
+include::fragments/post.adoc[]
+include::fragments/comment.adoc[]
+include::fragments/token.adoc[]
