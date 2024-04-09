@@ -75,7 +75,7 @@ class CommentControllerTest extends RestDocsTestSupport {
                 .andExpect(status().isOk())
                 .andDo(restDocs.document(
                         requestHeaders(
-                                headerWithName("Authorization").description("Authorization 헤더")
+                                headerWithName("Authorization").description("Access Token")
                         ),
                         pathParameters(
                                 parameterWithName("postNumber").description("게시글 번호")
@@ -105,7 +105,7 @@ class CommentControllerTest extends RestDocsTestSupport {
                 .andExpect(jsonPath("$.message").value("입력값이 잘못되었습니다."))
                 .andDo(restDocs.document(
                         requestHeaders(
-                                headerWithName("Authorization").description("Authorization 헤더")
+                                headerWithName("Authorization").description("Access Token")
                         ),
                         pathParameters(
                                 parameterWithName("postNumber").description("게시글 번호")
@@ -143,7 +143,7 @@ class CommentControllerTest extends RestDocsTestSupport {
                 .andExpect(jsonPath("$.message").value("게시글을 찾을 수 없습니다."))
                 .andDo(restDocs.document(
                         requestHeaders(
-                                headerWithName("Authorization").description("Authorization 헤더")
+                                headerWithName("Authorization").description("Access Token")
                         ),
                         pathParameters(
                                 parameterWithName("postNumber").description("게시글 번호")
@@ -181,7 +181,7 @@ class CommentControllerTest extends RestDocsTestSupport {
                 .andExpect(jsonPath("$.message").value("회원을 찾을 수 없습니다."))
                 .andDo(restDocs.document(
                         requestHeaders(
-                                headerWithName("Authorization").description("Authorization 헤더")
+                                headerWithName("Authorization").description("Access Token")
                         ),
                         pathParameters(
                                 parameterWithName("postNumber").description("게시글 번호")
@@ -257,7 +257,7 @@ class CommentControllerTest extends RestDocsTestSupport {
                                 parameterWithName("commentNumber").description("댓글 번호")
                         ),
                         requestHeaders(
-                                headerWithName("Authorization").description("Authorization 헤더")
+                                headerWithName("Authorization").description("Access Token")
                         ),
                         requestFields(
                                 fieldWithPath("content").type(STRING).description("수정 댓글")
@@ -288,7 +288,7 @@ class CommentControllerTest extends RestDocsTestSupport {
                                 parameterWithName("commentNumber").description("댓글 번호")
                         ),
                         requestHeaders(
-                                headerWithName("Authorization").description("Authorization 헤더")
+                                headerWithName("Authorization").description("Access Token")
                         ),
                         requestFields(
                                 fieldWithPath("content").type(STRING).description("수정 댓글")
@@ -326,7 +326,7 @@ class CommentControllerTest extends RestDocsTestSupport {
                                 parameterWithName("commentNumber").description("댓글 번호")
                         ),
                         requestHeaders(
-                                headerWithName("Authorization").description("Authorization 헤더")
+                                headerWithName("Authorization").description("Access Token")
                         ),
                         requestFields(
                                 fieldWithPath("content").type(STRING).description("수정 댓글")
@@ -364,7 +364,7 @@ class CommentControllerTest extends RestDocsTestSupport {
                                 parameterWithName("commentNumber").description("댓글 번호")
                         ),
                         requestHeaders(
-                                headerWithName("Authorization").description("Authorization 헤더")
+                                headerWithName("Authorization").description("Access Token")
                         ),
                         requestFields(
                                 fieldWithPath("content").type(STRING).description("수정 댓글")
@@ -395,7 +395,7 @@ class CommentControllerTest extends RestDocsTestSupport {
                                 parameterWithName("commentNumber").description("댓글 번호")
                         ),
                         requestHeaders(
-                                headerWithName("Authorization").description("Authorization 헤더")
+                                headerWithName("Authorization").description("Access Token")
                         )
                 ));
     }
@@ -420,7 +420,7 @@ class CommentControllerTest extends RestDocsTestSupport {
                                 parameterWithName("commentNumber").description("댓글 번호")
                         ),
                         requestHeaders(
-                                headerWithName("Authorization").description("Authorization 헤더")
+                                headerWithName("Authorization").description("Access Token")
                         ),
                         responseFields(
                                 fieldWithPath("errorCode").type(STRING).description("에러 코드"),
@@ -451,7 +451,7 @@ class CommentControllerTest extends RestDocsTestSupport {
                                 parameterWithName("commentNumber").description("댓글 번호")
                         ),
                         requestHeaders(
-                                headerWithName("Authorization").description("Authorization 헤더")
+                                headerWithName("Authorization").description("Access Token")
                         ),
                         responseFields(
                                 fieldWithPath("errorCode").type(STRING).description("에러 코드"),

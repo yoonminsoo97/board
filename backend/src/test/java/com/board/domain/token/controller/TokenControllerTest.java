@@ -39,7 +39,7 @@ class TokenControllerTest extends RestDocsTestSupport {
                 .andExpect(content().string("new-access-token"))
                 .andDo(restDocs.document(
                         requestHeaders(
-                                headerWithName("Authorization").description("Refresh Token 헤더")
+                                headerWithName("Authorization").description("Refresh Token")
                         )
                 ));
     }

@@ -77,7 +77,7 @@ class PostControllerTest extends RestDocsTestSupport {
                 .andExpect(status().isOk())
                 .andDo(restDocs.document(
                         requestHeaders(
-                                headerWithName("Authorization").description("Authorization 헤더")
+                                headerWithName("Authorization").description("Access Token")
                         ),
                         requestFields(
                                 fieldWithPath("title").type(STRING).description("제목"),
@@ -107,7 +107,7 @@ class PostControllerTest extends RestDocsTestSupport {
                 .andExpect(jsonPath("$.message").value("입력값이 잘못되었습니다."))
                 .andDo(restDocs.document(
                         requestHeaders(
-                                headerWithName("Authorization").description("Authorization 헤더")
+                                headerWithName("Authorization").description("Access Token")
                         ),
                         requestFields(
                                 fieldWithPath("title").type(STRING).description("제목"),
@@ -143,7 +143,7 @@ class PostControllerTest extends RestDocsTestSupport {
                 .andExpect(jsonPath("$.message").value("회원을 찾을 수 없습니다."))
                 .andDo(restDocs.document(
                         requestHeaders(
-                                headerWithName("Authorization").description("Authorization 헤더")
+                                headerWithName("Authorization").description("Access Token")
                         ),
                         requestFields(
                                 fieldWithPath("title").type(STRING).description("제목"),
@@ -308,7 +308,7 @@ class PostControllerTest extends RestDocsTestSupport {
                 .andExpect(status().isOk())
                 .andDo(restDocs.document(
                         requestHeaders(
-                                headerWithName("Authorization").description("Authorization 헤더")
+                                headerWithName("Authorization").description("Access Token")
                         ),
                         pathParameters(
                                 parameterWithName("postNumber").description("게시글 번호")
@@ -341,7 +341,7 @@ class PostControllerTest extends RestDocsTestSupport {
                 .andExpect(jsonPath("$.message").value("입력값이 잘못되었습니다."))
                 .andDo(restDocs.document(
                         requestHeaders(
-                                headerWithName("Authorization").description("Authorization 헤더")
+                                headerWithName("Authorization").description("Access Token")
                         ),
                         pathParameters(
                                 parameterWithName("postNumber").description("게시글 번호")
@@ -380,7 +380,7 @@ class PostControllerTest extends RestDocsTestSupport {
                 .andExpect(jsonPath("$.message").value("게시글을 찾을 수 없습니다."))
                 .andDo(restDocs.document(
                         requestHeaders(
-                                headerWithName("Authorization").description("Authorization 헤더")
+                                headerWithName("Authorization").description("Access Token")
                         ),
                         pathParameters(
                                 parameterWithName("postNumber").description("게시글 번호")
@@ -419,7 +419,7 @@ class PostControllerTest extends RestDocsTestSupport {
                 .andExpect(jsonPath("$.message").value("게시글 수정은 작성자만 할 수 있습니다."))
                 .andDo(restDocs.document(
                         requestHeaders(
-                                headerWithName("Authorization").description("Authorization 헤더")
+                                headerWithName("Authorization").description("Access Token")
                         ),
                         pathParameters(
                                 parameterWithName("postNumber").description("게시글 번호")
@@ -452,7 +452,7 @@ class PostControllerTest extends RestDocsTestSupport {
                 .andExpect(status().isOk())
                 .andDo(restDocs.document(
                         requestHeaders(
-                                headerWithName("Authorization").description("Authorization 헤더")
+                                headerWithName("Authorization").description("Access Token")
                         ),
                         pathParameters(
                                 parameterWithName("postNumber").description("게시글 번호")
@@ -478,7 +478,7 @@ class PostControllerTest extends RestDocsTestSupport {
                 .andExpect(jsonPath("$.message").value("게시글을 찾을 수 없습니다."))
                 .andDo(restDocs.document(
                         requestHeaders(
-                                headerWithName("Authorization").description("Authorization 헤더")
+                                headerWithName("Authorization").description("Access Token")
                         ),
                         pathParameters(
                                 parameterWithName("postNumber").description("게시글 번호")
@@ -510,7 +510,7 @@ class PostControllerTest extends RestDocsTestSupport {
                 .andExpect(jsonPath("$.message").value("게시글 삭제는 작성자만 할 수 있습니다."))
                 .andDo(restDocs.document(
                         requestHeaders(
-                                headerWithName("Authorization").description("Authorization 헤더")
+                                headerWithName("Authorization").description("Access Token")
                         ),
                         pathParameters(
                                 parameterWithName("postNumber").description("게시글 번호")
