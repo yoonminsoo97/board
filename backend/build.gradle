@@ -89,6 +89,7 @@ tasks.named('asciidoctor') {
     doFirst {
         delete file('src/main/resources/static/docs')
     }
+    baseDirFollowsSourceFile()
 }
 
 task copyDocument(type: Copy) {
