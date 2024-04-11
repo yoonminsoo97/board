@@ -222,11 +222,13 @@ class PostControllerTest extends RestDocsTestSupport {
 
         given(postService.postList(anyInt())).willReturn(postListResponse);
 
-        mockMvc.perform(get("/api/posts/page/{pageNumber}", 1))
+        mockMvc.perform(get("/api/posts")
+                        .param("page", "1")
+                )
                 .andExpect(status().isOk())
                 .andDo(restDocs.document(
-                        pathParameters(
-                                parameterWithName("pageNumber").description("페이지 번호")
+                        queryParameters(
+                                parameterWithName("page").description("페이지 번호")
                         ),
                         responseFields(
                                 fieldWithPath("posts").type(ARRAY).description("게시글 목록"),
