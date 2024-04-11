@@ -44,8 +44,8 @@ public class PostController {
         return ResponseEntity.ok().body(postDetailResponse);
     }
 
-    @GetMapping("/page/{pageNumber}")
-    public ResponseEntity<PostListResponse> postList(@PathVariable("pageNumber") int pageNumber) {
+    @GetMapping
+    public ResponseEntity<PostListResponse> postList(@RequestParam(value = "page", defaultValue = "0") int pageNumber) {
         pageNumber = pageNumber <= 0 ? 0 : pageNumber - 1;
         PostListResponse postListResponse = postService.postList(pageNumber);
         return ResponseEntity.ok().body(postListResponse);

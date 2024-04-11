@@ -70,7 +70,7 @@ public class SecurityConfig {
                                 "/api/members/nickname/*",
                                 "/api/members/username/*",
                                 "/api/posts/*",
-                                "/api/posts/page/*",
+                                "/api/posts",
                                 "/api/posts/search",
                                 "/api/posts/*/comments/page/*").permitAll()
                         .requestMatchers(HttpMethod.POST,
