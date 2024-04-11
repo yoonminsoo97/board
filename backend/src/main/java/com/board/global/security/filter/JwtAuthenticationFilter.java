@@ -78,7 +78,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         POST_DETAIL("GET", "/api/posts/*"),
         POST_LIST("GET", "/api/posts"),
         POST_LIST_SEARCH("GET", "/api/posts/search"),
-        COMMENT_LIST("GET", "/api/posts/*/comments/page/*"),
+        COMMENT_LIST("GET", "/api/posts/*/comments"),
         REISSUE_ACCESS_TOKEN("POST", "/api/tokens/reissue");
 
         private final String method;

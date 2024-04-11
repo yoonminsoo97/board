@@ -72,7 +72,7 @@ public class SecurityConfig {
                                 "/api/posts/*",
                                 "/api/posts",
                                 "/api/posts/search",
-                                "/api/posts/*/comments/page/*").permitAll()
+                                "/api/posts/*/comments").permitAll()
                         .requestMatchers(HttpMethod.POST,
                                 "/api/members/signup",
                                 "/api/tokens/reissue").permitAll()

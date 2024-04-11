@@ -48,6 +48,7 @@ import static org.springframework.restdocs.payload.PayloadDocumentation.response
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
 import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
 
+import static org.springframework.restdocs.request.RequestDocumentation.queryParameters;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -212,13 +213,17 @@ class CommentControllerTest extends RestDocsTestSupport {
 
         given(commentService.commentList(anyLong(), anyInt())).willReturn(commentListResponse);
 
-        mockMvc.perform(get("/api/posts/{postNumber}/comments/page/{pageNumber}", 1, 1))
+        mockMvc.perform(get("/api/posts/{postNumber}/comments", 1)
+                        .param("page", "1")
+                )
                 .andExpect(status().isOk())
                 .andDo(restDocs.document(
-                   pathParameters(
-                           parameterWithName("postNumber").description("게시글 번호"),
-                           parameterWithName("pageNumber").description("댓글 페이지 번호")
-                   ),
+                        pathParameters(
+                                parameterWithName("postNumber").description("게시글 번호")
+                        ),
+                        queryParameters(
+                                parameterWithName("page").description("페이지 번호")
+                        ),
                         responseFields(
                                 fieldWithPath("comments").type(ARRAY).description("댓글 목록"),
                                 fieldWithPath("comments[].commentNum").type(NUMBER).description("댓글 번호"),

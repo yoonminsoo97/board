@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -37,11 +38,11 @@ public class CommentController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/{postNumber}/comments/page/{pageNumber}")
+    @GetMapping("/{postNumber}/comments")
     public ResponseEntity<CommentListResponse> commentList(@PathVariable("postNumber") Long postNumber,
-                                                           @PathVariable("pageNumber") int pageNumber) {
-        pageNumber = pageNumber <= 0 ? 0 : pageNumber - 1;
-        CommentListResponse commentListResponse = commentService.commentList(postNumber, pageNumber);
+                                                           @RequestParam(value = "page", defaultValue = "0") int page) {
+        page = page <= 0 ? 0 : page - 1;
+        CommentListResponse commentListResponse = commentService.commentList(postNumber, page);
         return ResponseEntity.ok().body(commentListResponse);
     }
 
