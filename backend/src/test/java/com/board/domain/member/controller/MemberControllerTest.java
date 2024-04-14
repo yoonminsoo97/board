@@ -12,8 +12,6 @@ import com.board.global.security.dto.AuthPrincipal;
 
 import com.board.support.RestDocsTestSupport;
 
-import io.jsonwebtoken.Claims;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -28,20 +26,18 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
 
-import static org.springframework.restdocs.payload.JsonFieldType.NUMBER;
 import static org.springframework.restdocs.payload.JsonFieldType.STRING;
 import static org.springframework.restdocs.headers.HeaderDocumentation.headerWithName;
 import static org.springframework.restdocs.headers.HeaderDocumentation.requestHeaders;
-import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
-import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.restdocs.payload.PayloadDocumentation.requestFields;
 import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
 import static org.springframework.restdocs.request.RequestDocumentation.formParameters;
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
 import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
 
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -58,10 +54,15 @@ class MemberControllerTest extends RestDocsTestSupport {
 
         mockMvc.perform(get("/api/members/nickname/{nickname}", "yoonkun"))
                 .andExpect(status().isOk())
-                .andExpect(content().string("ok"))
+                .andExpect(jsonPath("$.message").value("success"))
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.result").isEmpty())
                 .andDo(restDocs.document(
                         pathParameters(
                                 parameterWithName("nickname").description("닉네임")
+                        ),
+                        responseFields(
+                                commonSuccessResponse()
                         )
                 ));
     }
@@ -73,18 +74,18 @@ class MemberControllerTest extends RestDocsTestSupport {
 
         mockMvc.perform(get("/api/members/nickname/{nickname}", "yoonkun"))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.errorCode").value("E409001"))
+                .andExpect(jsonPath("$.message").value("fail"))
                 .andExpect(jsonPath("$.status").value(409))
-                .andExpect(jsonPath("$.message").value("사용 중인 닉네임입니다."))
+                .andExpect(jsonPath("$.result.path").value("/api/members/nickname/yoonkun"))
+                .andExpect(jsonPath("$.result.error.code").value("E409001"))
+                .andExpect(jsonPath("$.result.error.message").value("사용 중인 닉네임입니다."))
+                .andExpect(jsonPath("$.result.error.fieldErrors").isEmpty())
                 .andDo(restDocs.document(
                         pathParameters(
                                 parameterWithName("nickname").description("닉네임")
                         ),
                         responseFields(
-                                fieldWithPath("errorCode").type(STRING).description("에러 코드"),
-                                fieldWithPath("status").type(NUMBER).description("상태 코드"),
-                                fieldWithPath("message").type(STRING).description("에러 메세지"),
-                                fieldWithPath("timeStamp").type(STRING).description("에러 발생 시간")
+                                commonErrorResponse()
                         )
                 ));
     }
@@ -96,10 +97,15 @@ class MemberControllerTest extends RestDocsTestSupport {
 
         mockMvc.perform(get("/api/members/username/{username}", "yoon1234"))
                 .andExpect(status().isOk())
-                .andExpect(content().string("ok"))
+                .andExpect(jsonPath("$.message").value("success"))
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.result").isEmpty())
                 .andDo(restDocs.document(
                         pathParameters(
                                 parameterWithName("username").description("아이디")
+                        ),
+                        responseFields(
+                                commonSuccessResponse()
                         )
                 ));
     }
@@ -111,18 +117,18 @@ class MemberControllerTest extends RestDocsTestSupport {
 
         mockMvc.perform(get("/api/members/username/{username}", "yoon1234"))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.errorCode").value("E409002"))
+                .andExpect(jsonPath("$.message").value("fail"))
                 .andExpect(jsonPath("$.status").value(409))
-                .andExpect(jsonPath("$.message").value("사용 중인 아이디입니다."))
+                .andExpect(jsonPath("$.result.path").value("/api/members/username/yoon1234"))
+                .andExpect(jsonPath("$.result.error.code").value("E409002"))
+                .andExpect(jsonPath("$.result.error.message").value("사용 중인 아이디입니다."))
+                .andExpect(jsonPath("$.result.error.fieldErrors").isEmpty())
                 .andDo(restDocs.document(
                         pathParameters(
                                 parameterWithName("username").description("아이디")
                         ),
                         responseFields(
-                                fieldWithPath("errorCode").type(STRING).description("에러 코드"),
-                                fieldWithPath("status").type(NUMBER).description("상태 코드"),
-                                fieldWithPath("message").type(STRING).description("에러 메세지"),
-                                fieldWithPath("timeStamp").type(STRING).description("에러 발생 시간")
+                                commonErrorResponse()
                         )
                 ));
     }
@@ -139,31 +145,9 @@ class MemberControllerTest extends RestDocsTestSupport {
                         .content(objectMapper.writeValueAsString(memberSignupRequest))
                 )
                 .andExpect(status().isOk())
-                .andDo(restDocs.document(
-                        requestFields(
-                                fieldWithPath("nickname").type(STRING).description("닉네임"),
-                                fieldWithPath("username").type(STRING).description("아이디"),
-                                fieldWithPath("password").type(STRING).description("비밀번호"),
-                                fieldWithPath("passwordConfirm").type(STRING).description("비밀번호 확인")
-                        )
-                ));
-    }
-
-    @Test
-    @DisplayName("회원가입 시 입력값이 잘못되면 예외가 발생한다")
-    void memberSignupInvalidInputValue() throws Exception {
-        MemberSignupRequest invalidMemberSignupRequest = new MemberSignupRequest("", "", "12345678", "12345678");
-
-        willDoNothing().given(memberService).memberSignup(any(MemberSignupRequest.class));
-
-        mockMvc.perform(post("/api/members/signup")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidMemberSignupRequest))
-                )
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errorCode").value("E400001"))
-                .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.message").value("입력값이 잘못되었습니다."))
+                .andExpect(jsonPath("$.message").value("success"))
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.result").isEmpty())
                 .andDo(restDocs.document(
                         requestFields(
                                 fieldWithPath("nickname").type(STRING).description("닉네임"),
@@ -172,11 +156,45 @@ class MemberControllerTest extends RestDocsTestSupport {
                                 fieldWithPath("passwordConfirm").type(STRING).description("비밀번호 확인")
                         ),
                         responseFields(
-                                fieldWithPath("errorCode").type(STRING).description("에러 코드"),
-                                fieldWithPath("status").type(NUMBER).description("상태 코드"),
-                                fieldWithPath("message").type(STRING).description("에러 메세지"),
-                                fieldWithPath("timeStamp").type(STRING).description("에러 발생 시간")
+                                commonSuccessResponse()
                         )
+                ));
+    }
+
+    @Test
+    @DisplayName("회원가입 시 아이디를 입력하지 않으면 예외가 발생한다")
+    void memberSignupInvalidInputValue() throws Exception {
+        MemberSignupRequest invalidMemberSignupRequest = new MemberSignupRequest("yoonkun", "", "12345678", "12345678");
+
+        willDoNothing().given(memberService).memberSignup(any(MemberSignupRequest.class));
+
+        mockMvc.perform(post("/api/members/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidMemberSignupRequest))
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("fail"))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.result.path").value("/api/members/signup"))
+                .andExpect(jsonPath("$.result.error.code").value("E400001"))
+                .andExpect(jsonPath("$.result.error.message").value("입력값이 잘못되었습니다."))
+                .andExpect(jsonPath("$.result.error.fieldErrors[0].field").value("username"))
+                .andExpect(jsonPath("$.result.error.fieldErrors[0].input").value(""))
+                .andExpect(jsonPath("$.result.error.fieldErrors[0].message").value("아이디를 입력해 주세요."))
+                .andDo(restDocs.document(
+                        requestFields(
+                                fieldWithPath("nickname").type(STRING).description("닉네임"),
+                                fieldWithPath("username").type(STRING).description("아이디"),
+                                fieldWithPath("password").type(STRING).description("비밀번호"),
+                                fieldWithPath("passwordConfirm").type(STRING).description("비밀번호 확인")
+                        ),
+                        responseFields(
+                                commonErrorResponse())
+                                .and(
+                                        fieldWithPath("result.error.fieldErrors[].field").description(STRING).description("필드명"),
+                                        fieldWithPath("result.error.fieldErrors[].input").description(STRING).description("입력값"),
+                                        fieldWithPath("result.error.fieldErrors[].message").description(STRING).description("메시지")
+                                )
                 ));
     }
 
@@ -192,9 +210,12 @@ class MemberControllerTest extends RestDocsTestSupport {
                         .content(objectMapper.writeValueAsString(memberSignupRequest))
                 )
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errorCode").value("E400002"))
+                .andExpect(jsonPath("$.message").value("fail"))
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.message").value("비밀번호가 일치하지 않습니다."))
+                .andExpect(jsonPath("$.result.path").value("/api/members/signup"))
+                .andExpect(jsonPath("$.result.error.code").value("E400002"))
+                .andExpect(jsonPath("$.result.error.message").value("비밀번호가 일치하지 않습니다."))
+                .andExpect(jsonPath("$.result.error.fieldErrors").isEmpty())
                 .andDo(restDocs.document(
                         requestFields(
                                 fieldWithPath("nickname").type(STRING).description("닉네임"),
@@ -203,10 +224,7 @@ class MemberControllerTest extends RestDocsTestSupport {
                                 fieldWithPath("passwordConfirm").type(STRING).description("비밀번호 확인")
                         ),
                         responseFields(
-                                fieldWithPath("errorCode").type(STRING).description("에러 코드"),
-                                fieldWithPath("status").type(NUMBER).description("상태 코드"),
-                                fieldWithPath("message").type(STRING).description("에러 메세지"),
-                                fieldWithPath("timeStamp").type(STRING).description("에러 발생 시간")
+                                commonErrorResponse()
                         )
                 ));
     }
@@ -230,17 +248,21 @@ class MemberControllerTest extends RestDocsTestSupport {
                         .param("password", "12345678")
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accessToken").value("access-token"))
-                .andExpect(jsonPath("$.refreshToken").value("refresh-token"))
+                .andExpect(jsonPath("$.message").value("success"))
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.result.accessToken").value("access-token"))
+                .andExpect(jsonPath("$.result.refreshToken").value("refresh-token"))
                 .andDo(restDocs.document(
                         formParameters(
                                 parameterWithName("username").description("아이디"),
                                 parameterWithName("password").description("비밀번호")
                         ),
                         responseFields(
-                                fieldWithPath("accessToken").type(STRING).description("액세스 토큰"),
-                                fieldWithPath("refreshToken").type(STRING).description("리프레시 토큰")
-                        )
+                                commonSuccessResponse())
+                                .and(
+                                        fieldWithPath("result.accessToken").type(STRING).description("액세스 토큰"),
+                                        fieldWithPath("result.refreshToken").type(STRING).description("리프레시 토큰")
+                                )
                 ));
     }
 
@@ -261,19 +283,19 @@ class MemberControllerTest extends RestDocsTestSupport {
                         .param("password", "87654321")
                 )
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.errorCode").value("E401001"))
+                .andExpect(jsonPath("$.message").value("fail"))
                 .andExpect(jsonPath("$.status").value(401))
-                .andExpect(jsonPath("$.message").value("아이디 또는 비밀번호가 일치하지 않습니다."))
+                .andExpect(jsonPath("$.result.path").value("/api/members/login"))
+                .andExpect(jsonPath("$.result.error.code").value("E401001"))
+                .andExpect(jsonPath("$.result.error.message").value("아이디 또는 비밀번호가 일치하지 않습니다."))
+                .andExpect(jsonPath("$.result.error.fieldErrors").isEmpty())
                 .andDo(restDocs.document(
                         formParameters(
                                 parameterWithName("username").description("아이디"),
                                 parameterWithName("password").description("비밀번호")
                         ),
                         responseFields(
-                                fieldWithPath("errorCode").type(STRING).description("에러 코드"),
-                                fieldWithPath("status").type(NUMBER).description("상태 코드"),
-                                fieldWithPath("message").type(STRING).description("에러 메세지"),
-                                fieldWithPath("timeStamp").type(STRING).description("에러 발생 시간")
+                                commonErrorResponse()
                         )
                 ));
     }
@@ -281,19 +303,22 @@ class MemberControllerTest extends RestDocsTestSupport {
     @Test
     @DisplayName("로그아웃을 한다")
     void memberLogout() throws Exception {
-        String accessToken = createAccessToken();
-        Claims payload = getPayload(accessToken);
-
-        given(tokenService.tokenPayload(anyString())).willReturn(payload);
+        given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
         willDoNothing().given(tokenService).tokenDelete(anyString());
 
         mockMvc.perform(post("/api/members/logout")
                         .header("Authorization", "Bearer access-token")
                 )
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("success"))
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.result").isEmpty())
                 .andDo(restDocs.document(
                         requestHeaders(
-                                headerWithName("Authorization").description("Access Token")
+                                headerWithName("Authorization").description("액세스 토큰")
+                        ),
+                        responseFields(
+                                commonSuccessResponse()
                         )
                 ));
     }
@@ -301,28 +326,25 @@ class MemberControllerTest extends RestDocsTestSupport {
     @Test
     @DisplayName("로그아웃 시 Refresh Token이 존재하지 않으면 예외가 발생한다")
     void memberLogoutInvalidToken() throws Exception {
-        String accessToken = createAccessToken();
-        Claims payload = getPayload(accessToken);
-
-        given(tokenService.tokenPayload(anyString())).willReturn(payload);
+        given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
         willThrow(new InvalidTokenException()).given(tokenService).tokenDelete(anyString());
 
         mockMvc.perform(post("/api/members/logout")
                         .header("Authorization", "Bearer access-token")
                 )
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.errorCode").value("E401002"))
+                .andExpect(jsonPath("$.message").value("fail"))
                 .andExpect(jsonPath("$.status").value(401))
-                .andExpect(jsonPath("$.message").value("토큰이 유효하지 않습니다."))
+                .andExpect(jsonPath("$.result.path").value("/api/members/logout"))
+                .andExpect(jsonPath("$.result.error.code").value("E401002"))
+                .andExpect(jsonPath("$.result.error.message").value("토큰이 유효하지 않습니다."))
+                .andExpect(jsonPath("$.result.error.fieldErrors").isEmpty())
                 .andDo(restDocs.document(
                         requestHeaders(
-                                headerWithName("Authorization").description("Access Token")
+                                headerWithName("Authorization").description("액세스 토큰")
                         ),
                         responseFields(
-                                fieldWithPath("errorCode").type(STRING).description("에러 코드"),
-                                fieldWithPath("status").type(NUMBER).description("상태 코드"),
-                                fieldWithPath("message").type(STRING).description("에러 메세지"),
-                                fieldWithPath("timeStamp").type(STRING).description("에러 발생 시간")
+                                commonErrorResponse()
                         )
                 ));
     }
