@@ -1,7 +1,8 @@
 package com.board.global.security.handler;
 
+import com.board.global.common.dto.ApiResponse;
 import com.board.global.error.ErrorType;
-import com.board.global.error.dto.ErrorResponse;
+import com.board.global.common.dto.ErrorResponse;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -14,6 +15,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
+import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 
@@ -30,10 +32,18 @@ public class MemberLoginFailureHandler implements AuthenticationFailureHandler {
         if (exception instanceof BadCredentialsException) {
             errorType = ErrorType.BAD_CREDENTIALS;
         }
-        ErrorResponse errorResponse = ErrorResponse.of(errorType);
+        ErrorResponse errorResponse = ErrorResponse.of(errorType, requestPath(request));
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        response.setStatus(errorResponse.getStatus());
-        objectMapper.writeValue(response.getOutputStream(), errorResponse);
+        response.setStatus(errorType.getStatus());
+        objectMapper.writeValue(response.getOutputStream(), ApiResponse.fail(errorType.getStatus(), errorResponse));
+    }
+
+    private String requestPath(HttpServletRequest request) {
+        String queryString = request.getQueryString();
+        if (StringUtils.hasText(queryString)) {
+            return request.getRequestURI() + "?" + queryString;
+        }
+        return request.getRequestURI();
     }
 
 }

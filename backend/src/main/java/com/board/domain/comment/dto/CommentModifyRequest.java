@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CommentModifyRequest {
 
-    @NotBlank
+    @NotBlank(message = "내용을 입력해 주세요.")
     private String content;
 
 }

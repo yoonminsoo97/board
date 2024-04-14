@@ -2,6 +2,7 @@ package com.board.global.security.handler;
 
 import com.board.domain.token.dto.TokenResponse;
 import com.board.domain.token.service.TokenService;
+import com.board.global.common.dto.ApiResponse;
 import com.board.global.security.dto.AuthPrincipal;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -32,7 +33,7 @@ public class MemberLoginSuccessHandler implements AuthenticationSuccessHandler {
         TokenResponse tokenResponse = tokenService.tokenSave(authPrincipal.getMember());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setStatus(HttpStatus.OK.value());
-        objectMapper.writeValue(response.getOutputStream(), tokenResponse);
+        objectMapper.writeValue(response.getOutputStream(), ApiResponse.success(tokenResponse));
     }
 
 }

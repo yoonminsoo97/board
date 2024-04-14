@@ -107,7 +107,7 @@ public class SecurityConfig {
 
     @Bean
     public LogoutSuccessHandler logoutSuccessHandler() {
-        return new MemberLogoutSuccessHandler(tokenService);
+        return new MemberLogoutSuccessHandler(objectMapper, tokenService);
     }
 
     @Bean

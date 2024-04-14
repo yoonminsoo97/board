@@ -1,7 +1,8 @@
 package com.board.global.security.handler;
 
+import com.board.global.common.dto.ApiResponse;
 import com.board.global.error.ErrorType;
-import com.board.global.error.dto.ErrorResponse;
+import com.board.global.common.dto.ErrorResponse;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 
@@ -25,12 +27,20 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
     public void commence(HttpServletRequest request,
                          HttpServletResponse response,
                          AuthenticationException authException) throws IOException {
-        String errorCode = authException.getMessage();
-        ErrorType errorType = ErrorType.of(errorCode);
-        ErrorResponse errorResponse = ErrorResponse.of(errorType);
+        final String errorCode = authException.getMessage();
+        final ErrorType errorType = ErrorType.of(errorCode);
+        final ErrorResponse errorResponse = ErrorResponse.of(errorType, requestPath(request));
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        response.setStatus(errorResponse.getStatus());
-        objectMapper.writeValue(response.getOutputStream(), errorResponse);
+        response.setStatus(errorType.getStatus());
+        objectMapper.writeValue(response.getOutputStream(), ApiResponse.fail(errorType.getStatus(), errorResponse));
+    }
+
+    private String requestPath(HttpServletRequest request) {
+        String queryString = request.getQueryString();
+        if (StringUtils.hasText(queryString)) {
+            return request.getRequestURI() + "?" + queryString;
+        }
+        return request.getRequestURI();
     }
 
 }
