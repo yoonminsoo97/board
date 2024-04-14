@@ -1,6 +1,7 @@
 package com.board.domain.token.controller;
 
 import com.board.domain.token.service.TokenService;
+import com.board.global.common.dto.ApiResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -19,10 +20,10 @@ public class TokenController {
     private final TokenService tokenService;
 
     @PostMapping(value = "/reissue", headers = "Authorization")
-    public ResponseEntity<String> reIssueAccessToken(@RequestHeader("Authorization") String header) {
+    public ResponseEntity<ApiResponse<String>> reIssueAccessToken(@RequestHeader("Authorization") String header) {
         String refreshToken = extractRefreshToken(header);
         String accessToken = tokenService.reIssueAccessToken(refreshToken);
-        return ResponseEntity.ok().body(accessToken);
+        return ResponseEntity.ok().body(ApiResponse.success(accessToken));
     }
 
     private String extractRefreshToken(String header) {

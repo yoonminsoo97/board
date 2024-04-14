@@ -70,9 +70,9 @@ public class SecurityConfig {
                                 "/api/members/nickname/*",
                                 "/api/members/username/*",
                                 "/api/posts/*",
-                                "/api/posts/page/*",
+                                "/api/posts",
                                 "/api/posts/search",
-                                "/api/posts/*/comments/page/*").permitAll()
+                                "/api/posts/*/comments").permitAll()
                         .requestMatchers(HttpMethod.POST,
                                 "/api/members/signup",
                                 "/api/tokens/reissue").permitAll()
@@ -107,7 +107,7 @@ public class SecurityConfig {
 
     @Bean
     public LogoutSuccessHandler logoutSuccessHandler() {
-        return new MemberLogoutSuccessHandler(tokenService);
+        return new MemberLogoutSuccessHandler(objectMapper, tokenService);
     }
 
     @Bean
