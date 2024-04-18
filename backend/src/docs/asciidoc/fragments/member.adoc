@@ -86,3 +86,21 @@ include::{snippets}/member-controller-test/member-logout/http-response.adoc[]
 ===== 401 Unauthorized
 
 include::{snippets}/member-controller-test/member-logout-invalid-token/http-response.adoc[]
+
+=== 2.6. 프로필 조회
+
+==== 요청
+
+include::{snippets}/member-controller-test/member-profile/http-request.adoc[]
+include::{snippets}/member-controller-test/member-profile/request-headers.adoc[]
+
+==== 응답
+
+===== 200 OK
+
+include::{snippets}/member-controller-test/member-profile/http-response.adoc[]
+include::{snippets}/member-controller-test/member-profile/response-fields.adoc[]
+
+===== 404 Not Found
+
+include::{snippets}/member-controller-test/member-profile-not-found-member/http-response.adoc[]

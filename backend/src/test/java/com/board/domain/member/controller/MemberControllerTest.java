@@ -1,9 +1,11 @@
 package com.board.domain.member.controller;
 
+import com.board.domain.member.dto.MemberProfileResponse;
 import com.board.domain.member.dto.MemberSignupRequest;
 import com.board.domain.member.entity.Member;
 import com.board.domain.member.exception.DuplicateNicknameException;
 import com.board.domain.member.exception.DuplicateUsernameException;
+import com.board.domain.member.exception.NotFoundMemberException;
 import com.board.domain.member.exception.PasswordMismatchException;
 import com.board.domain.member.service.MemberService;
 import com.board.domain.token.dto.TokenResponse;
@@ -338,6 +340,61 @@ class MemberControllerTest extends RestDocsTestSupport {
                 .andExpect(jsonPath("$.result.path").value("/api/members/logout"))
                 .andExpect(jsonPath("$.result.error.code").value("E401002"))
                 .andExpect(jsonPath("$.result.error.message").value("토큰이 유효하지 않습니다."))
+                .andExpect(jsonPath("$.result.error.fieldErrors").isEmpty())
+                .andDo(restDocs.document(
+                        requestHeaders(
+                                headerWithName("Authorization").description("액세스 토큰")
+                        ),
+                        responseFields(
+                                commonErrorResponse()
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("회원 정보를 조회한다")
+    void memberProfile() throws Exception {
+        MemberProfileResponse memberProfileResponse = new MemberProfileResponse("yoonkun", "yoon1234");
+
+        given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
+        given(memberService.memberProfile(anyString())).willReturn(memberProfileResponse);
+
+        mockMvc.perform(get("/api/members/profile")
+                        .header("Authorization", "Bearer access-token")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("success"))
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.result.nickname").value("yoonkun"))
+                .andExpect(jsonPath("$.result.username").value("yoon1234"))
+                .andDo(restDocs.document(
+                        requestHeaders(
+                                headerWithName("Authorization").description("액세스 토큰")
+                        ),
+                        responseFields(
+                                commonSuccessResponse())
+                                .and(
+                                        fieldWithPath("result.nickname").type(STRING).description("회원 닉네임"),
+                                        fieldWithPath("result.username").type(STRING).description("회원 아이디")
+                                )
+                ));
+    }
+
+    @Test
+    @DisplayName("회원 정보 조회 시 회원을 찾을 수 없으면 예외가 발생한다")
+    void memberProfileNotFoundMember() throws Exception {
+        given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
+        willThrow(new NotFoundMemberException()).given(memberService).memberProfile(anyString());
+
+        mockMvc.perform(get("/api/members/profile")
+                        .header("Authorization", "Bearer access-token")
+                )
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("fail"))
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.result.path").value("/api/members/profile"))
+                .andExpect(jsonPath("$.result.error.code").value("E404001"))
+                .andExpect(jsonPath("$.result.error.message").value("회원을 찾을 수 없습니다."))
                 .andExpect(jsonPath("$.result.error.fieldErrors").isEmpty())
                 .andDo(restDocs.document(
                         requestHeaders(

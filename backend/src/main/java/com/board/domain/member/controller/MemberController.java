@@ -1,5 +1,6 @@
 package com.board.domain.member.controller;
 
+import com.board.domain.member.dto.MemberProfileResponse;
 import com.board.domain.member.dto.MemberSignupRequest;
 import com.board.domain.member.service.MemberService;
 import com.board.global.common.dto.ApiResponse;
@@ -9,6 +10,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -39,6 +42,13 @@ public class MemberController {
     public ResponseEntity<ApiResponse<Void>> memberSignup(@RequestBody @Valid MemberSignupRequest memberSignupRequest) {
         memberService.memberSignup(memberSignupRequest);
         return ResponseEntity.ok().body(ApiResponse.success());
+    }
+
+    @Secured("ROLE_MEMBER")
+    @GetMapping("/profile")
+    public ResponseEntity<ApiResponse<MemberProfileResponse>> memberProfile(@AuthenticationPrincipal String username) {
+        MemberProfileResponse memberProfileResponse = memberService.memberProfile(username);
+        return ResponseEntity.ok().body(ApiResponse.success(memberProfileResponse));
     }
 
 }

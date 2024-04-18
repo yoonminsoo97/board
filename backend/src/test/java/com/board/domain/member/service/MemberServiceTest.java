@@ -4,6 +4,7 @@ import com.board.domain.member.dto.MemberSignupRequest;
 import com.board.domain.member.entity.Member;
 import com.board.domain.member.exception.DuplicateNicknameException;
 import com.board.domain.member.exception.DuplicateUsernameException;
+import com.board.domain.member.exception.NotFoundMemberException;
 import com.board.domain.member.exception.PasswordMismatchException;
 import com.board.domain.member.repository.MemberRepository;
 
@@ -18,12 +19,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.Optional;
+
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
@@ -129,6 +133,32 @@ class MemberServiceTest {
         then(memberRepository).should().existsMemberByUsername(anyString());
         then(passwordEncoder).should(never()).encode(anyString());
         then(memberRepository).should(never()).save(any(Member.class));
+    }
+
+    @Test
+    @DisplayName("회원 정보를 조회한다")
+    void memberProfile() {
+        Member member = Member.builder()
+                .nickname("yoonkun")
+                .username("yoon1234")
+                .build();
+
+        given(memberRepository.findMemberByUsername(anyString())).willReturn(Optional.of(member));
+
+        memberService.memberProfile("yoon1234");
+
+        then(memberRepository).should().findMemberByUsername(anyString());
+    }
+
+    @Test
+    @DisplayName("회원 정보 조회 시 회원을 찾을 수 없으면 예외가 발생한다")
+    void memberProfileNotFoundMember() {
+        willThrow(new NotFoundMemberException()).given(memberRepository).findMemberByUsername(anyString());
+
+        assertThatThrownBy(() -> memberService.memberProfile("yoon1234"))
+                .isInstanceOf(NotFoundMemberException.class);
+
+        then(memberRepository).should().findMemberByUsername(anyString());
     }
 
 }
