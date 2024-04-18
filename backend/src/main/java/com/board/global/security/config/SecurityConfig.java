@@ -76,6 +76,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST,
                                 "/api/members/signup",
                                 "/api/tokens/reissue").permitAll()
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/members/profile").hasRole(ROLE_MEMBER)
                         .requestMatchers(HttpMethod.POST,
                                 "/api/posts/write",
                                 "/api/posts/*/comments/write").hasRole(ROLE_MEMBER)
