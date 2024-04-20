@@ -8,6 +8,7 @@ import com.board.domain.member.exception.DuplicateUsernameException;
 import com.board.domain.member.exception.NotFoundMemberException;
 import com.board.domain.member.exception.PasswordMismatchException;
 import com.board.domain.member.repository.MemberRepository;
+import com.board.domain.post.service.PostService;
 
 import lombok.RequiredArgsConstructor;
 

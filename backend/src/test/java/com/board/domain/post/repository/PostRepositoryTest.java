@@ -156,4 +156,28 @@ class PostRepositoryTest {
         assertThat(postRepository.findPostJoinFetch(savePost.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("특정 회원이 작성한 게시글 목록을 조회한다")
+    void findPostsFromMember() {
+        List<Post> content = List.of(
+                Post.builder().title("독수리").content("내용").member(member).build(),
+                Post.builder().title("기러기").content("내용").member(member).build(),
+                Post.builder().title("호랑이").content("내용").member(member).build(),
+                Post.builder().title("거북이").content("내용").member(member).build(),
+                Post.builder().title("코끼리").content("내용").member(member).build()
+        );
+        postRepository.saveAll(content);
+
+        Pageable pageable = PageRequest.of(0, 10, Sort.Direction.DESC, "id");
+        Page<PostListItem> postPage = postRepository.findPostsFromMember(pageable, "yoon1234");
+
+        assertThat(postPage.getNumber()).isEqualTo(0);
+        assertThat(postPage.getTotalPages()).isEqualTo(1);
+        assertThat(postPage.getTotalElements()).isEqualTo(5);
+        assertThat(postPage.hasPrevious()).isFalse();
+        assertThat(postPage.hasNext()).isFalse();
+        assertThat(postPage.isFirst()).isTrue();
+        assertThat(postPage.isLast()).isTrue();
+    }
+
 }

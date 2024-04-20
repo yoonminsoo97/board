@@ -254,4 +254,23 @@ class PostServiceTest {
         then(postRepository).should(never()).delete(any(Post.class));
     }
 
+    @Test
+    @DisplayName("특정 회원이 작성한 게시글 목록을 조회한다")
+    void postListFromMember() {
+        List<PostListItem> content = List.of(
+                new PostListItem(5L, "제목5", "작성자5", 0, LocalDateTime.now()),
+                new PostListItem(4L, "제목4", "작성자4", 0, LocalDateTime.now()),
+                new PostListItem(3L, "제목3", "작성자3", 0, LocalDateTime.now()),
+                new PostListItem(2L, "제목2", "작성자2", 0, LocalDateTime.now()),
+                new PostListItem(1L, "제목1", "작성자1", 0, LocalDateTime.now())
+        );
+        PageImpl<PostListItem> postPage = new PageImpl<>(content);
+
+        given(postRepository.findPostsFromMember(any(Pageable.class), anyString())).willReturn(postPage);
+
+        postService.postListFromMember(0, "yoon1234");
+
+        then(postRepository).should().findPostsFromMember(any(Pageable.class), anyString());
+    }
+
 }
