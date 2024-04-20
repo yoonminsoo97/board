@@ -119,3 +119,18 @@ include::{snippets}/member-controller-test/member-profile-post-list/request-head
 
 include::{snippets}/member-controller-test/member-profile-post-list/http-response.adoc[]
 include::{snippets}/member-controller-test/member-profile-post-list/response-fields.adoc[]
+
+=== 2.8. 내가 작성한 댓글 조회
+
+==== 요청
+
+include::{snippets}/member-controller-test/member-profile-comment-list/http-request.adoc[]
+include::{snippets}/member-controller-test/member-profile-comment-list/query-parameters.adoc[]
+include::{snippets}/member-controller-test/member-profile-comment-list/request-headers.adoc[]
+
+==== 응답
+
+===== 200 OK
+
+include::{snippets}/member-controller-test/member-profile-comment-list/http-response.adoc[]
+include::{snippets}/member-controller-test/member-profile-comment-list/response-fields.adoc[]
