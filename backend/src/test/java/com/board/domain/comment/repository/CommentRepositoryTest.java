@@ -125,4 +125,28 @@ class CommentRepositoryTest {
         assertThat(commentRepository.findCommentJoinFetchMember(post.getId(), saveComment.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("특정 회원이 작성한 댓글 목록을 조회한다")
+    void findCommentsByMemberUsername() {
+        List<Comment> commentList = List.of(
+                Comment.builder().content("댓글").member(member).post(post).build(),
+                Comment.builder().content("댓글").member(member).post(post).build(),
+                Comment.builder().content("댓글").member(member).post(post).build(),
+                Comment.builder().content("댓글").member(member).post(post).build(),
+                Comment.builder().content("댓글").member(member).post(post).build()
+        );
+        commentRepository.saveAll(commentList);
+
+        Pageable pageable = PageRequest.of(0, 5, Sort.Direction.ASC, "id");
+        Page<Comment> commentPage = commentRepository.findCommentsByMemberUsername(pageable, member.getUsername());
+
+        assertThat(commentPage.getNumber()).isEqualTo(0);
+        assertThat(commentPage.getTotalElements()).isEqualTo(5);
+        assertThat(commentPage.getTotalPages()).isEqualTo(1);
+        assertThat(commentPage.hasPrevious()).isFalse();
+        assertThat(commentPage.hasNext()).isFalse();
+        assertThat(commentPage.isFirst()).isTrue();
+        assertThat(commentPage.isLast()).isTrue();
+    }
+
 }

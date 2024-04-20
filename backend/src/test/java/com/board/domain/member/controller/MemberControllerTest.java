@@ -1,5 +1,8 @@
 package com.board.domain.member.controller;
 
+import com.board.domain.comment.dto.CommentListItem;
+import com.board.domain.comment.dto.CommentListResponse;
+import com.board.domain.comment.service.CommentService;
 import com.board.domain.member.dto.MemberProfileResponse;
 import com.board.domain.member.dto.MemberSignupRequest;
 import com.board.domain.member.entity.Member;
@@ -62,6 +65,9 @@ class MemberControllerTest extends RestDocsTestSupport {
 
     @MockBean
     private PostService postService;
+
+    @MockBean
+    private CommentService commentService;
 
     @Test
     @DisplayName("닉네임 중복 확인을 한다")
@@ -466,6 +472,61 @@ class MemberControllerTest extends RestDocsTestSupport {
                                         fieldWithPath("result.posts[].writer").type(STRING).description("게시글 제목"),
                                         fieldWithPath("result.posts[].commentCount").type(NUMBER).description("댓글 개수"),
                                         fieldWithPath("result.posts[].createdAt").type(STRING).description("게시글 제목"),
+                                        fieldWithPath("result.pageNumber").type(NUMBER).description("페이지 번호"),
+                                        fieldWithPath("result.totalPages").type(NUMBER).description("전체 페이지 개수"),
+                                        fieldWithPath("result.totalElements").type(NUMBER).description("전체 게시글 개수"),
+                                        fieldWithPath("result.prev").type(BOOLEAN).description("이전 페이지 이동 가능 여부"),
+                                        fieldWithPath("result.next").type(BOOLEAN).description("다음 페이지 이동 가능 여부"),
+                                        fieldWithPath("result.first").type(BOOLEAN).description("첫 번째 페이지 여부"),
+                                        fieldWithPath("result.last").type(BOOLEAN).description("마지막 페이지 여부")
+                                )
+                ));
+    }
+
+    @Test
+    @DisplayName("회원정보에서 작성한 댓글 목록을 조회한다")
+    void memberProfileCommentList() throws Exception {
+        List<CommentListItem> comments = List.of(
+                new CommentListItem(1L, "작성자", "댓글",  LocalDateTime.of(2024, 6, 17, 0, 0))
+        );
+        CommentListResponse commentListResponse = new CommentListResponse(comments, 1, 1, 1, false, false, true, true);
+
+        given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
+        given(commentService.commentListFromMember(anyInt(), anyString())).willReturn(commentListResponse);
+
+        mockMvc.perform(get("/api/members/profile/comments")
+                        .header("Authorization", "Bearer access-token")
+                        .param("page", "1")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("success"))
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.result.comments[0].commentNum").value(1))
+                .andExpect(jsonPath("$.result.comments[0].writer").value("작성자"))
+                .andExpect(jsonPath("$.result.comments[0].content").value("댓글"))
+                .andExpect(jsonPath("$.result.comments[0].createdAt").value("2024.06.17"))
+                .andExpect(jsonPath("$.result.pageNumber").value(1))
+                .andExpect(jsonPath("$.result.totalPages").value(1))
+                .andExpect(jsonPath("$.result.totalElements").value(1))
+                .andExpect(jsonPath("$.result.prev").value(false))
+                .andExpect(jsonPath("$.result.next").value(false))
+                .andExpect(jsonPath("$.result.first").value(true))
+                .andExpect(jsonPath("$.result.last").value(true))
+                .andDo(restDocs.document(
+                        queryParameters(
+                                parameterWithName("page").description("페이지 번호")
+                        ),
+                        requestHeaders(
+                                headerWithName("Authorization").description("액세스 토큰")
+                        ),
+                        responseFields(
+                                commonSuccessResponse())
+                                .and(
+                                        fieldWithPath("result.comments").type(ARRAY).description("댓글 목록"),
+                                        fieldWithPath("result.comments[].commentNum").type(NUMBER).description("댓글 번호"),
+                                        fieldWithPath("result.comments[].writer").type(STRING).description("댓글 작성자"),
+                                        fieldWithPath("result.comments[].content").type(STRING).description("댓글 내용"),
+                                        fieldWithPath("result.comments[].createdAt").type(STRING).description("댓글 작성일"),
                                         fieldWithPath("result.pageNumber").type(NUMBER).description("페이지 번호"),
                                         fieldWithPath("result.totalPages").type(NUMBER).description("전체 페이지 개수"),
                                         fieldWithPath("result.totalElements").type(NUMBER).description("전체 게시글 개수"),
