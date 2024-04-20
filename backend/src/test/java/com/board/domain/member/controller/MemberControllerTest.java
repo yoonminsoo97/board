@@ -8,6 +8,9 @@ import com.board.domain.member.exception.DuplicateUsernameException;
 import com.board.domain.member.exception.NotFoundMemberException;
 import com.board.domain.member.exception.PasswordMismatchException;
 import com.board.domain.member.service.MemberService;
+import com.board.domain.post.dto.PostListItem;
+import com.board.domain.post.dto.PostListResponse;
+import com.board.domain.post.service.PostService;
 import com.board.domain.token.dto.TokenResponse;
 import com.board.domain.token.exception.InvalidTokenException;
 import com.board.global.security.dto.AuthPrincipal;
@@ -22,12 +25,19 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
 
+import static org.springframework.restdocs.payload.JsonFieldType.ARRAY;
+import static org.springframework.restdocs.payload.JsonFieldType.BOOLEAN;
+import static org.springframework.restdocs.payload.JsonFieldType.NUMBER;
 import static org.springframework.restdocs.payload.JsonFieldType.STRING;
 import static org.springframework.restdocs.headers.HeaderDocumentation.headerWithName;
 import static org.springframework.restdocs.headers.HeaderDocumentation.requestHeaders;
@@ -40,6 +50,7 @@ import static org.springframework.restdocs.request.RequestDocumentation.formPara
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
 import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
 
+import static org.springframework.restdocs.request.RequestDocumentation.queryParameters;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -48,6 +59,9 @@ class MemberControllerTest extends RestDocsTestSupport {
 
     @MockBean
     private MemberService memberService;
+
+    @MockBean
+    private PostService postService;
 
     @Test
     @DisplayName("닉네임 중복 확인을 한다")
@@ -403,6 +417,63 @@ class MemberControllerTest extends RestDocsTestSupport {
                         responseFields(
                                 commonErrorResponse()
                         )
+                ));
+    }
+
+    @Test
+    @DisplayName("회원 정보에서 작성한 게시글 목록을 조회한다")
+    void memberProfilePostList() throws Exception {
+        List<PostListItem> posts = List.of(
+                new PostListItem(1L, "제목", "작성자", 5, LocalDateTime.of(2024, 6, 17, 0, 0))
+        );
+        PostListResponse postListResponse = new PostListResponse(posts, 1, 1, 1, false, false, true, true);
+
+        given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
+        given(postService.postListFromMember(anyInt(), anyString())).willReturn(postListResponse);
+
+        mockMvc.perform(get("/api/members/profile/posts")
+                        .param("page", "1")
+                        .header("Authorization", "Bearer access-token")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("success"))
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.result.posts[0].postNumber").value(1))
+                .andExpect(jsonPath("$.result.posts[0].title").value("제목"))
+                .andExpect(jsonPath("$.result.posts[0].writer").value("작성자"))
+                .andExpect(jsonPath("$.result.posts[0].commentCount").value(5))
+                .andExpect(jsonPath("$.result.posts[0].createdAt").value("2024.06.17"))
+                .andExpect(jsonPath("$.result.pageNumber").value(1))
+                .andExpect(jsonPath("$.result.totalPages").value(1))
+                .andExpect(jsonPath("$.result.totalElements").value(1))
+                .andExpect(jsonPath("$.result.prev").value(false))
+                .andExpect(jsonPath("$.result.next").value(false))
+                .andExpect(jsonPath("$.result.first").value(true))
+                .andExpect(jsonPath("$.result.last").value(true))
+                .andDo(restDocs.document(
+                        queryParameters(
+                                parameterWithName("page").description("페이지 번호")
+                        ),
+                        requestHeaders(
+                                headerWithName("Authorization").description("액세스 토큰")
+                        ),
+                        responseFields(
+                                commonSuccessResponse())
+                                .and(
+                                        fieldWithPath("result.posts").type(ARRAY).description("게시글 목록"),
+                                        fieldWithPath("result.posts[].postNumber").type(NUMBER).description("게시글 번호"),
+                                        fieldWithPath("result.posts[].title").type(STRING).description("게시글 제목"),
+                                        fieldWithPath("result.posts[].writer").type(STRING).description("게시글 제목"),
+                                        fieldWithPath("result.posts[].commentCount").type(NUMBER).description("댓글 개수"),
+                                        fieldWithPath("result.posts[].createdAt").type(STRING).description("게시글 제목"),
+                                        fieldWithPath("result.pageNumber").type(NUMBER).description("페이지 번호"),
+                                        fieldWithPath("result.totalPages").type(NUMBER).description("전체 페이지 개수"),
+                                        fieldWithPath("result.totalElements").type(NUMBER).description("전체 게시글 개수"),
+                                        fieldWithPath("result.prev").type(BOOLEAN).description("이전 페이지 이동 가능 여부"),
+                                        fieldWithPath("result.next").type(BOOLEAN).description("다음 페이지 이동 가능 여부"),
+                                        fieldWithPath("result.first").type(BOOLEAN).description("첫 번째 페이지 여부"),
+                                        fieldWithPath("result.last").type(BOOLEAN).description("마지막 페이지 여부")
+                                )
                 ));
     }
 
