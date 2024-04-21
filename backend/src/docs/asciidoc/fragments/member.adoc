@@ -134,3 +134,25 @@ include::{snippets}/member-controller-test/member-profile-comment-list/request-h
 
 include::{snippets}/member-controller-test/member-profile-comment-list/http-response.adoc[]
 include::{snippets}/member-controller-test/member-profile-comment-list/response-fields.adoc[]
+
+=== 2.9. 닉네임 변경
+
+==== 요청
+
+include::{snippets}/member-controller-test/member-nickname-change/http-request.adoc[]
+include::{snippets}/member-controller-test/member-nickname-change/request-headers.adoc[]
+include::{snippets}/member-controller-test/member-nickname-change/request-fields.adoc[]
+
+==== 응답
+
+===== 200 OK
+
+include::{snippets}/member-controller-test/member-nickname-change/http-response.adoc[]
+
+===== 400 Bad Request
+
+include::{snippets}/member-controller-test/member-nickname-change-invalid-input-value/http-response.adoc[]
+
+===== 409 Conflict
+
+include::{snippets}/member-controller-test/member-nickname-change-duplicate-nickname/http-response.adoc[]
