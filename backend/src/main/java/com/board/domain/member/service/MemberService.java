@@ -1,5 +1,6 @@
 package com.board.domain.member.service;
 
+import com.board.domain.member.dto.MemberNicknameRequest;
 import com.board.domain.member.dto.MemberProfileResponse;
 import com.board.domain.member.dto.MemberSignupRequest;
 import com.board.domain.member.entity.Member;
@@ -8,7 +9,6 @@ import com.board.domain.member.exception.DuplicateUsernameException;
 import com.board.domain.member.exception.NotFoundMemberException;
 import com.board.domain.member.exception.PasswordMismatchException;
 import com.board.domain.member.repository.MemberRepository;
-import com.board.domain.post.service.PostService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -58,6 +58,14 @@ public class MemberService {
         Member member = memberRepository.findMemberByUsername(username)
                 .orElseThrow(NotFoundMemberException::new);
         return new MemberProfileResponse(member);
+    }
+
+    @Transactional
+    public void memberNicknameChange(MemberNicknameRequest memberNicknameRequest, String username) {
+        memberNicknameExists(memberNicknameRequest.getNickname());
+        Member member = memberRepository.findMemberByUsername(username)
+                .orElseThrow(NotFoundMemberException::new);
+        member.changeNickname(memberNicknameRequest.getNickname());
     }
 
 }
