@@ -4,6 +4,7 @@ import com.board.domain.comment.dto.CommentListItem;
 import com.board.domain.comment.dto.CommentListResponse;
 import com.board.domain.comment.service.CommentService;
 import com.board.domain.member.dto.MemberNicknameRequest;
+import com.board.domain.member.dto.MemberPasswordRequest;
 import com.board.domain.member.dto.MemberProfileResponse;
 import com.board.domain.member.dto.MemberSignupRequest;
 import com.board.domain.member.entity.Member;
@@ -39,6 +40,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
 
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.put;
 import static org.springframework.restdocs.payload.JsonFieldType.ARRAY;
 import static org.springframework.restdocs.payload.JsonFieldType.BOOLEAN;
 import static org.springframework.restdocs.payload.JsonFieldType.NUMBER;
@@ -633,6 +635,148 @@ class MemberControllerTest extends RestDocsTestSupport {
                         ),
                         requestFields(
                                 fieldWithPath("nickname").type(STRING).description("변경할 닉네임")
+                        ),
+                        responseFields(
+                                commonErrorResponse()
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("회원 비밀번호를 변경한다")
+    void memberPasswordChange() throws Exception {
+        MemberPasswordRequest memberPasswordRequest = new MemberPasswordRequest("12345678", "87654321", "87654321");
+
+        given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
+        willDoNothing().given(memberService).memberPasswordChange(any(MemberPasswordRequest.class), anyString());
+
+        mockMvc.perform(put("/api/members/profile/password")
+                        .header("Authorization", "Bearer access-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(memberPasswordRequest))
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("success"))
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.result").isEmpty())
+                .andDo(restDocs.document(
+                        requestHeaders(
+                                headerWithName("Authorization").description("액세스 토큰")
+                        ),
+                        requestFields(
+                                fieldWithPath("curPassword").type(STRING).description("현재 사용 중인 비밀번호"),
+                                fieldWithPath("newPassword").type(STRING).description("새로운 비밀번호"),
+                                fieldWithPath("newPasswordConfirm").type(STRING).description("새로운 비밀번호 확인")
+                        ),
+                        responseFields(
+                                commonSuccessResponse()
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("회원 비밀번호 변경 시 입력값이 잘못되면 예외가 발생한다")
+    void memberPasswordChangeInvalidInputValue() throws Exception {
+        MemberPasswordRequest invalidMemberPasswordRequest = new MemberPasswordRequest("12345678", "", "87654321");
+
+        given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
+
+        mockMvc.perform(put("/api/members/profile/password")
+                        .header("Authorization", "Bearer access-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidMemberPasswordRequest))
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("fail"))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.result.path").value("/api/members/profile/password"))
+                .andExpect(jsonPath("$.result.error.code").value("E400001"))
+                .andExpect(jsonPath("$.result.error.message").value("입력값이 잘못되었습니다."))
+                .andExpect(jsonPath("$.result.error.fieldErrors[0].field").value("newPassword"))
+                .andExpect(jsonPath("$.result.error.fieldErrors[0].input").value(""))
+                .andExpect(jsonPath("$.result.error.fieldErrors[0].message").value("새로운 비밀번호를 입력해 주세요."))
+                .andDo(restDocs.document(
+                        requestHeaders(
+                                headerWithName("Authorization").description("액세스 토큰")
+                        ),
+                        requestFields(
+                                fieldWithPath("curPassword").type(STRING).description("현재 사용 중인 비밀번호"),
+                                fieldWithPath("newPassword").type(STRING).description("새로운 비밀번호"),
+                                fieldWithPath("newPasswordConfirm").type(STRING).description("새로운 비밀번호 확인")
+                        ),
+                        responseFields(
+                                commonErrorResponse())
+                                .and(
+                                        fieldWithPath("result.error.fieldErrors[].field").description(STRING).description("필드명"),
+                                        fieldWithPath("result.error.fieldErrors[].input").description(STRING).description("입력값"),
+                                        fieldWithPath("result.error.fieldErrors[].message").description(STRING).description("메시지")
+                                )
+                ));
+    }
+
+    @Test
+    @DisplayName("회원 비밀번호 변경 시 현재 비밀번호가 일치하지 않으면 예외가 발생한다")
+    void memberPasswordChangeMismatchCurPassword() throws Exception {
+        MemberPasswordRequest memberPasswordRequest = new MemberPasswordRequest("12345678", "87654321", "87654321");
+
+        given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
+        willThrow(new PasswordMismatchException()).given(memberService).memberPasswordChange(any(MemberPasswordRequest.class), anyString());
+
+        mockMvc.perform(put("/api/members/profile/password")
+                        .header("Authorization", "Bearer access-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(memberPasswordRequest))
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("fail"))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.result.path").value("/api/members/profile/password"))
+                .andExpect(jsonPath("$.result.error.code").value("E400002"))
+                .andExpect(jsonPath("$.result.error.message").value("비밀번호가 일치하지 않습니다."))
+                .andExpect(jsonPath("$.result.error.fieldErrors").isEmpty())
+                .andDo(restDocs.document(
+                        requestHeaders(
+                                headerWithName("Authorization").description("액세스 토큰")
+                        ),
+                        requestFields(
+                                fieldWithPath("curPassword").type(STRING).description("현재 사용 중인 비밀번호"),
+                                fieldWithPath("newPassword").type(STRING).description("새로운 비밀번호"),
+                                fieldWithPath("newPasswordConfirm").type(STRING).description("새로운 비밀번호 확인")
+                        ),
+                        responseFields(
+                                commonErrorResponse()
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("회원 비밀번호 변경 시 새로운 비밀번호가 일치하지 않으면 예외가 발생한다")
+    void memberPasswordChangeMismatchNewPassword() throws Exception {
+        MemberPasswordRequest memberPasswordRequest = new MemberPasswordRequest("12345678", "87654321", "87654320");
+
+        given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
+        willThrow(new PasswordMismatchException()).given(memberService).memberPasswordChange(any(MemberPasswordRequest.class), anyString());
+
+        mockMvc.perform(put("/api/members/profile/password")
+                        .header("Authorization", "Bearer access-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(memberPasswordRequest))
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("fail"))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.result.path").value("/api/members/profile/password"))
+                .andExpect(jsonPath("$.result.error.code").value("E400002"))
+                .andExpect(jsonPath("$.result.error.message").value("비밀번호가 일치하지 않습니다."))
+                .andExpect(jsonPath("$.result.error.fieldErrors").isEmpty())
+                .andDo(restDocs.document(
+                        requestHeaders(
+                                headerWithName("Authorization").description("액세스 토큰")
+                        ),
+                        requestFields(
+                                fieldWithPath("curPassword").type(STRING).description("현재 사용 중인 비밀번호"),
+                                fieldWithPath("newPassword").type(STRING).description("새로운 비밀번호"),
+                                fieldWithPath("newPasswordConfirm").type(STRING).description("새로운 비밀번호 확인")
                         ),
                         responseFields(
                                 commonErrorResponse()
