@@ -156,3 +156,27 @@ include::{snippets}/member-controller-test/member-nickname-change-invalid-input-
 ===== 409 Conflict
 
 include::{snippets}/member-controller-test/member-nickname-change-duplicate-nickname/http-response.adoc[]
+
+=== 2.10. 비밀번호 변경
+
+==== 요청
+
+include::{snippets}/member-controller-test/member-password-change/http-request.adoc[]
+include::{snippets}/member-controller-test/member-password-change/request-headers.adoc[]
+include::{snippets}/member-controller-test/member-password-change/request-fields.adoc[]
+
+==== 응답
+
+===== 200 OK
+
+include::{snippets}/member-controller-test/member-password-change/http-response.adoc[]
+
+===== 400 Bad Request
+
+====== 값을 입력하지 않는 경우
+
+include::{snippets}/member-controller-test/member-password-change-invalid-input-value/http-response.adoc[]
+
+====== 현재 사용 중인 비밀번호 or 변경할 비밀번호가 일치하지 않는 경우
+
+include::{snippets}/member-controller-test/member-password-change-mismatch-cur-password/http-response.adoc[]
