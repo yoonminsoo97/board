@@ -2,6 +2,7 @@ package com.board.domain.member.controller;
 
 import com.board.domain.comment.dto.CommentListResponse;
 import com.board.domain.comment.service.CommentService;
+import com.board.domain.member.dto.MemberNicknameRequest;
 import com.board.domain.member.dto.MemberProfileResponse;
 import com.board.domain.member.dto.MemberSignupRequest;
 import com.board.domain.member.service.MemberService;
@@ -74,6 +75,14 @@ public class MemberController {
         page = page <= 0 ? 0 : page - 1;
         CommentListResponse commentListResponse = commentService.commentListFromMember(page, username);
         return ResponseEntity.ok().body(ApiResponse.success(commentListResponse));
+    }
+
+    @Secured("ROLE_MEMBER")
+    @GetMapping("/profile/nickname")
+    public ResponseEntity<ApiResponse<Void>> memberNicknameChange(@RequestBody @Valid MemberNicknameRequest memberNicknameRequest,
+                                                                  @AuthenticationPrincipal String username) {
+        memberService.memberNicknameChange(memberNicknameRequest, username);
+        return ResponseEntity.ok(ApiResponse.success());
     }
 
 }
