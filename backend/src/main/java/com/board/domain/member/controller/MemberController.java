@@ -3,6 +3,7 @@ package com.board.domain.member.controller;
 import com.board.domain.comment.dto.CommentListResponse;
 import com.board.domain.comment.service.CommentService;
 import com.board.domain.member.dto.MemberNicknameRequest;
+import com.board.domain.member.dto.MemberPasswordRequest;
 import com.board.domain.member.dto.MemberProfileResponse;
 import com.board.domain.member.dto.MemberSignupRequest;
 import com.board.domain.member.service.MemberService;
@@ -20,6 +21,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -83,6 +85,14 @@ public class MemberController {
                                                                   @AuthenticationPrincipal String username) {
         memberService.memberNicknameChange(memberNicknameRequest, username);
         return ResponseEntity.ok(ApiResponse.success());
+    }
+
+    @Secured("ROLE_MEMBER")
+    @PutMapping("/profile/password")
+    public ResponseEntity<ApiResponse<Void>> memberPasswordChange(@RequestBody @Valid MemberPasswordRequest memberPasswordRequest,
+                                                                  @AuthenticationPrincipal String username) {
+        memberService.memberPasswordChange(memberPasswordRequest, username);
+        return ResponseEntity.ok().body(ApiResponse.success());
     }
 
 }

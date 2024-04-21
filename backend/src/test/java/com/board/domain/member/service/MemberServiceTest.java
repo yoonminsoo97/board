@@ -1,6 +1,7 @@
 package com.board.domain.member.service;
 
 import com.board.domain.member.dto.MemberNicknameRequest;
+import com.board.domain.member.dto.MemberPasswordRequest;
 import com.board.domain.member.dto.MemberSignupRequest;
 import com.board.domain.member.entity.Member;
 import com.board.domain.member.exception.DuplicateNicknameException;
@@ -168,6 +169,7 @@ class MemberServiceTest {
         Member member = Member.builder()
                 .nickname("yoonkun")
                 .username("yoon1234")
+                .password("12345678")
                 .build();
         MemberNicknameRequest memberNicknameRequest = new MemberNicknameRequest("newNickname");
 
@@ -207,6 +209,77 @@ class MemberServiceTest {
 
         then(memberRepository).should().existsMemberByNickname(anyString());
         then(memberRepository).should().findMemberByUsername(anyString());
+    }
+
+    @Test
+    @DisplayName("회원 비밀번호를 변경한다")
+    void memberPasswordChange() {
+        Member member = Member.builder()
+                .nickname("yoonkun")
+                .username("yoon1234")
+                .password(new BCryptPasswordEncoder().encode("12345678"))
+                .build();
+        MemberPasswordRequest memberPasswordRequest = new MemberPasswordRequest("12345678", "87654321", "87654321");
+
+        given(memberRepository.findMemberByUsername(anyString())).willReturn(Optional.of(member));
+        given(passwordEncoder.matches(anyString(), anyString())).willReturn(true);
+
+        memberService.memberPasswordChange(memberPasswordRequest, "yoon1234");
+
+        then(memberRepository).should().findMemberByUsername(anyString());
+        then(passwordEncoder).should().matches(anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("회원 비밀번호 변경 시 회원을 찾을 수 없으면 예외가 발생한다")
+    void memberPasswordChangeNotFoundMember() {
+        MemberPasswordRequest memberPasswordRequest = new MemberPasswordRequest("12345678", "87654321", "87654321");
+
+        willThrow(new NotFoundMemberException()).given(memberRepository).findMemberByUsername(anyString());
+
+        assertThatThrownBy(() -> memberService.memberPasswordChange(memberPasswordRequest, "yoon"))
+                .isInstanceOf(NotFoundMemberException.class);
+
+        then(memberRepository).should().findMemberByUsername(anyString());
+        then(passwordEncoder).should(never()).matches(anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("회원 비밀번호 변경 시 현재 비밀번호가 일치하지 않으면 예외가 발생한다")
+    void memberPasswordChangeMismatchCurPassword() {
+        Member member = Member.builder()
+                .nickname("yoonkun")
+                .username("yoon1234")
+                .password("12345678")
+                .build();
+        MemberPasswordRequest memberPasswordRequest = new MemberPasswordRequest("12345679", "87654321", "87654321");
+
+        given(memberRepository.findMemberByUsername(anyString())).willReturn(Optional.of(member));
+
+        assertThatThrownBy(() -> memberService.memberPasswordChange(memberPasswordRequest, "yoon"))
+                .isInstanceOf(PasswordMismatchException.class);
+
+        then(memberRepository).should().findMemberByUsername(anyString());
+        then(passwordEncoder).should().matches(anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("회원 비밀번호 변경 시 새로운 비밀번호가 일치하지 않으면 예외가 발생한다")
+    void memberPasswordChangeMismatchNewPassword() {
+        Member member = Member.builder()
+                .nickname("yoonkun")
+                .username("yoon1234")
+                .password("12345678")
+                .build();
+        MemberPasswordRequest memberPasswordRequest = new MemberPasswordRequest("12345678", "87654320", "87654321");
+
+        given(memberRepository.findMemberByUsername(anyString())).willReturn(Optional.of(member));
+
+        assertThatThrownBy(() -> memberService.memberPasswordChange(memberPasswordRequest, "yoon"))
+                .isInstanceOf(PasswordMismatchException.class);
+
+        then(memberRepository).should().findMemberByUsername(anyString());
+        then(passwordEncoder).should().matches(anyString(), anyString());
     }
 
 }
