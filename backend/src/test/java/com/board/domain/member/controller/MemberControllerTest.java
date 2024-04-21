@@ -3,6 +3,7 @@ package com.board.domain.member.controller;
 import com.board.domain.comment.dto.CommentListItem;
 import com.board.domain.comment.dto.CommentListResponse;
 import com.board.domain.comment.service.CommentService;
+import com.board.domain.member.dto.MemberNicknameRequest;
 import com.board.domain.member.dto.MemberProfileResponse;
 import com.board.domain.member.dto.MemberSignupRequest;
 import com.board.domain.member.entity.Member;
@@ -184,7 +185,7 @@ class MemberControllerTest extends RestDocsTestSupport {
     }
 
     @Test
-    @DisplayName("회원가입 시 아이디를 입력하지 않으면 예외가 발생한다")
+    @DisplayName("회원가입 시 입력값이 잘못되면 예외가 발생한다")
     void memberSignupInvalidInputValue() throws Exception {
         MemberSignupRequest invalidMemberSignupRequest = new MemberSignupRequest("yoonkun", "", "12345678", "12345678");
 
@@ -487,7 +488,7 @@ class MemberControllerTest extends RestDocsTestSupport {
     @DisplayName("회원정보에서 작성한 댓글 목록을 조회한다")
     void memberProfileCommentList() throws Exception {
         List<CommentListItem> comments = List.of(
-                new CommentListItem(1L, "작성자", "댓글",  LocalDateTime.of(2024, 6, 17, 0, 0))
+                new CommentListItem(1L, "작성자", "댓글", LocalDateTime.of(2024, 6, 17, 0, 0))
         );
         CommentListResponse commentListResponse = new CommentListResponse(comments, 1, 1, 1, false, false, true, true);
 
@@ -535,6 +536,107 @@ class MemberControllerTest extends RestDocsTestSupport {
                                         fieldWithPath("result.first").type(BOOLEAN).description("첫 번째 페이지 여부"),
                                         fieldWithPath("result.last").type(BOOLEAN).description("마지막 페이지 여부")
                                 )
+                ));
+    }
+
+    @Test
+    @DisplayName("회원 닉네임을 변경한다")
+    void memberNicknameChange() throws Exception {
+        MemberNicknameRequest memberNicknameRequest = new MemberNicknameRequest("newNickname");
+
+        given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
+        willDoNothing().given(memberService).memberNicknameChange(any(MemberNicknameRequest.class), anyString());
+
+        mockMvc.perform(get("/api/members/profile/nickname")
+                        .header("Authorization", "Bearer access-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(memberNicknameRequest))
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("success"))
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.result").isEmpty())
+                .andDo(restDocs.document(
+                        requestHeaders(
+                                headerWithName("Authorization").description("액세스 토큰")
+                        ),
+                        requestFields(
+                                fieldWithPath("nickname").type(STRING).description("변경할 닉네임")
+                        ),
+                        responseFields(
+                                commonSuccessResponse()
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("회원 닉네임 변경 시 입력값이 잘못되면 예외가 발생한다")
+    void memberNicknameChangeInvalidInputValue() throws Exception {
+        MemberNicknameRequest invalidMemberNicknameRequest = new MemberNicknameRequest("");
+
+        given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
+
+        mockMvc.perform(get("/api/members/profile/nickname")
+                        .header("Authorization", "Bearer access-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidMemberNicknameRequest))
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("fail"))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.result.path").value("/api/members/profile/nickname"))
+                .andExpect(jsonPath("$.result.error.code").value("E400001"))
+                .andExpect(jsonPath("$.result.error.message").value("입력값이 잘못되었습니다."))
+                .andExpect(jsonPath("$.result.error.fieldErrors[0].field").value("nickname"))
+                .andExpect(jsonPath("$.result.error.fieldErrors[0].input").value(""))
+                .andExpect(jsonPath("$.result.error.fieldErrors[0].message").value("닉네임을 입력해 주세요."))
+                .andDo(restDocs.document(
+                        requestHeaders(
+                                headerWithName("Authorization").description("액세스 토큰")
+                        ),
+                        requestFields(
+                                fieldWithPath("nickname").type(STRING).description("변경할 닉네임")
+                        ),
+                        responseFields(
+                                commonErrorResponse())
+                                .and(
+                                        fieldWithPath("result.error.fieldErrors[].field").description(STRING).description("필드명"),
+                                        fieldWithPath("result.error.fieldErrors[].input").description(STRING).description("입력값"),
+                                        fieldWithPath("result.error.fieldErrors[].message").description(STRING).description("메시지")
+                                )
+                ));
+    }
+
+    @Test
+    @DisplayName("회원 닉네임 변경 시 닉네임이 중복되면 예외가 발생한다")
+    void memberNicknameChangeDuplicateNickname() throws Exception {
+        MemberNicknameRequest memberNicknameRequest = new MemberNicknameRequest("newNickname");
+
+        given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
+        willThrow(new DuplicateNicknameException()).given(memberService).memberNicknameChange(any(MemberNicknameRequest.class), anyString());
+
+        mockMvc.perform(get("/api/members/profile/nickname")
+                        .header("Authorization", "Bearer access-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(memberNicknameRequest))
+                )
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("fail"))
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.result.path").value("/api/members/profile/nickname"))
+                .andExpect(jsonPath("$.result.error.code").value("E409001"))
+                .andExpect(jsonPath("$.result.error.message").value("사용 중인 닉네임입니다."))
+                .andExpect(jsonPath("$.result.error.fieldErrors").isEmpty())
+                .andDo(restDocs.document(
+                        requestHeaders(
+                                headerWithName("Authorization").description("액세스 토큰")
+                        ),
+                        requestFields(
+                                fieldWithPath("nickname").type(STRING).description("변경할 닉네임")
+                        ),
+                        responseFields(
+                                commonErrorResponse()
+                        )
                 ));
     }
 

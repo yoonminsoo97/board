@@ -1,5 +1,6 @@
 package com.board.domain.member.service;
 
+import com.board.domain.member.dto.MemberNicknameRequest;
 import com.board.domain.member.dto.MemberSignupRequest;
 import com.board.domain.member.entity.Member;
 import com.board.domain.member.exception.DuplicateNicknameException;
@@ -158,6 +159,53 @@ class MemberServiceTest {
         assertThatThrownBy(() -> memberService.memberProfile("yoon1234"))
                 .isInstanceOf(NotFoundMemberException.class);
 
+        then(memberRepository).should().findMemberByUsername(anyString());
+    }
+
+    @Test
+    @DisplayName("회원 닉네임을 변경한다")
+    void memberNicknameChange() {
+        Member member = Member.builder()
+                .nickname("yoonkun")
+                .username("yoon1234")
+                .build();
+        MemberNicknameRequest memberNicknameRequest = new MemberNicknameRequest("newNickname");
+
+        given(memberRepository.existsMemberByNickname(anyString())).willReturn(false);
+        given(memberRepository.findMemberByUsername(anyString())).willReturn(Optional.of(member));
+
+        memberService.memberNicknameChange(memberNicknameRequest, "yoon1234");
+
+        then(memberRepository).should().existsMemberByNickname(anyString());
+        then(memberRepository).should().findMemberByUsername(anyString());
+    }
+
+    @Test
+    @DisplayName("회원 닉네임 변경 시 닉네임이 중복되면 예외가 발생한다")
+    void memberNicknameChangeDuplicateNickname() {
+        MemberNicknameRequest memberNicknameRequest = new MemberNicknameRequest("newNickname");
+
+        given(memberRepository.existsMemberByNickname(anyString())).willReturn(true);
+
+        assertThatThrownBy(() -> memberService.memberNicknameChange(memberNicknameRequest, "yoon1234"))
+                .isInstanceOf(DuplicateNicknameException.class);
+
+        then(memberRepository).should().existsMemberByNickname(anyString());
+        then(memberRepository).should(never()).findMemberByUsername(anyString());
+    }
+
+    @Test
+    @DisplayName("회원 닉네임 변경 시 회원을 찾을 수 없으면 예외가 발생한다")
+    void memberNicknameNotFoundMember() {
+        MemberNicknameRequest memberNicknameRequest = new MemberNicknameRequest("newNickname");
+
+        given(memberRepository.existsMemberByNickname(anyString())).willReturn(false);
+        willThrow(new NotFoundMemberException()).given(memberRepository).findMemberByUsername(anyString());
+
+        assertThatThrownBy(() -> memberService.memberNicknameChange(memberNicknameRequest, "yoon1234"))
+                .isInstanceOf(NotFoundMemberException.class);
+
+        then(memberRepository).should().existsMemberByNickname(anyString());
         then(memberRepository).should().findMemberByUsername(anyString());
     }
 
