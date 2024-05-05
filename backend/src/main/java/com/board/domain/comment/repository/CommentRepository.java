@@ -16,5 +16,6 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     Optional<Comment> findCommentJoinFetchMember(@Param("postId") Long postId, @Param("commentId") Long commentId);
 
     Page<Comment> findCommentsByPostId(Pageable pageable, Long postId);
+    Page<Comment> findCommentsByMemberUsername(Pageable pageable, String username);
 
 }

@@ -70,6 +70,30 @@ public class PostCustomRepositoryImpl implements PostCustomRepository {
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
     }
 
+    @Override
+    public Page<PostListItem> findPostsFromMember(Pageable pageable, String username) {
+        List<PostListItem> content = jpaQueryFactory
+                .select(constructor(PostListItem.class,
+                        post.id,
+                        post.title,
+                        post.writer,
+                        comment.count().intValue(),
+                        post.createdAt))
+                .from(post)
+                .leftJoin(post.comments, comment)
+                .groupBy(post.id)
+                .orderBy(post.id.desc())
+                .having(post.member.username.eq(username))
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+        JPAQuery<Long> countQuery = jpaQueryFactory
+                .select(post.count())
+                .from(post)
+                .where();
+        return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
+    }
+
     private BooleanExpression contanins(String type, String keyword) {
         if (type.equals("title")) {
             return post.title.contains(keyword);

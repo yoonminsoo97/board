@@ -1,9 +1,12 @@
 package com.board.domain.member.service;
 
+import com.board.domain.member.dto.MemberNicknameRequest;
+import com.board.domain.member.dto.MemberPasswordRequest;
 import com.board.domain.member.dto.MemberSignupRequest;
 import com.board.domain.member.entity.Member;
 import com.board.domain.member.exception.DuplicateNicknameException;
 import com.board.domain.member.exception.DuplicateUsernameException;
+import com.board.domain.member.exception.NotFoundMemberException;
 import com.board.domain.member.exception.PasswordMismatchException;
 import com.board.domain.member.repository.MemberRepository;
 
@@ -18,12 +21,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.Optional;
+
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
@@ -129,6 +135,151 @@ class MemberServiceTest {
         then(memberRepository).should().existsMemberByUsername(anyString());
         then(passwordEncoder).should(never()).encode(anyString());
         then(memberRepository).should(never()).save(any(Member.class));
+    }
+
+    @Test
+    @DisplayName("회원 정보를 조회한다")
+    void memberProfile() {
+        Member member = Member.builder()
+                .nickname("yoonkun")
+                .username("yoon1234")
+                .build();
+
+        given(memberRepository.findMemberByUsername(anyString())).willReturn(Optional.of(member));
+
+        memberService.memberProfile("yoon1234");
+
+        then(memberRepository).should().findMemberByUsername(anyString());
+    }
+
+    @Test
+    @DisplayName("회원 정보 조회 시 회원을 찾을 수 없으면 예외가 발생한다")
+    void memberProfileNotFoundMember() {
+        willThrow(new NotFoundMemberException()).given(memberRepository).findMemberByUsername(anyString());
+
+        assertThatThrownBy(() -> memberService.memberProfile("yoon1234"))
+                .isInstanceOf(NotFoundMemberException.class);
+
+        then(memberRepository).should().findMemberByUsername(anyString());
+    }
+
+    @Test
+    @DisplayName("회원 닉네임을 변경한다")
+    void memberNicknameChange() {
+        Member member = Member.builder()
+                .nickname("yoonkun")
+                .username("yoon1234")
+                .password("12345678")
+                .build();
+        MemberNicknameRequest memberNicknameRequest = new MemberNicknameRequest("newNickname");
+
+        given(memberRepository.existsMemberByNickname(anyString())).willReturn(false);
+        given(memberRepository.findMemberByUsername(anyString())).willReturn(Optional.of(member));
+
+        memberService.memberNicknameChange(memberNicknameRequest, "yoon1234");
+
+        then(memberRepository).should().existsMemberByNickname(anyString());
+        then(memberRepository).should().findMemberByUsername(anyString());
+    }
+
+    @Test
+    @DisplayName("회원 닉네임 변경 시 닉네임이 중복되면 예외가 발생한다")
+    void memberNicknameChangeDuplicateNickname() {
+        MemberNicknameRequest memberNicknameRequest = new MemberNicknameRequest("newNickname");
+
+        given(memberRepository.existsMemberByNickname(anyString())).willReturn(true);
+
+        assertThatThrownBy(() -> memberService.memberNicknameChange(memberNicknameRequest, "yoon1234"))
+                .isInstanceOf(DuplicateNicknameException.class);
+
+        then(memberRepository).should().existsMemberByNickname(anyString());
+        then(memberRepository).should(never()).findMemberByUsername(anyString());
+    }
+
+    @Test
+    @DisplayName("회원 닉네임 변경 시 회원을 찾을 수 없으면 예외가 발생한다")
+    void memberNicknameNotFoundMember() {
+        MemberNicknameRequest memberNicknameRequest = new MemberNicknameRequest("newNickname");
+
+        given(memberRepository.existsMemberByNickname(anyString())).willReturn(false);
+        willThrow(new NotFoundMemberException()).given(memberRepository).findMemberByUsername(anyString());
+
+        assertThatThrownBy(() -> memberService.memberNicknameChange(memberNicknameRequest, "yoon1234"))
+                .isInstanceOf(NotFoundMemberException.class);
+
+        then(memberRepository).should().existsMemberByNickname(anyString());
+        then(memberRepository).should().findMemberByUsername(anyString());
+    }
+
+    @Test
+    @DisplayName("회원 비밀번호를 변경한다")
+    void memberPasswordChange() {
+        Member member = Member.builder()
+                .nickname("yoonkun")
+                .username("yoon1234")
+                .password(new BCryptPasswordEncoder().encode("12345678"))
+                .build();
+        MemberPasswordRequest memberPasswordRequest = new MemberPasswordRequest("12345678", "87654321", "87654321");
+
+        given(memberRepository.findMemberByUsername(anyString())).willReturn(Optional.of(member));
+        given(passwordEncoder.matches(anyString(), anyString())).willReturn(true);
+
+        memberService.memberPasswordChange(memberPasswordRequest, "yoon1234");
+
+        then(memberRepository).should().findMemberByUsername(anyString());
+        then(passwordEncoder).should().matches(anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("회원 비밀번호 변경 시 회원을 찾을 수 없으면 예외가 발생한다")
+    void memberPasswordChangeNotFoundMember() {
+        MemberPasswordRequest memberPasswordRequest = new MemberPasswordRequest("12345678", "87654321", "87654321");
+
+        willThrow(new NotFoundMemberException()).given(memberRepository).findMemberByUsername(anyString());
+
+        assertThatThrownBy(() -> memberService.memberPasswordChange(memberPasswordRequest, "yoon"))
+                .isInstanceOf(NotFoundMemberException.class);
+
+        then(memberRepository).should().findMemberByUsername(anyString());
+        then(passwordEncoder).should(never()).matches(anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("회원 비밀번호 변경 시 현재 비밀번호가 일치하지 않으면 예외가 발생한다")
+    void memberPasswordChangeMismatchCurPassword() {
+        Member member = Member.builder()
+                .nickname("yoonkun")
+                .username("yoon1234")
+                .password("12345678")
+                .build();
+        MemberPasswordRequest memberPasswordRequest = new MemberPasswordRequest("12345679", "87654321", "87654321");
+
+        given(memberRepository.findMemberByUsername(anyString())).willReturn(Optional.of(member));
+
+        assertThatThrownBy(() -> memberService.memberPasswordChange(memberPasswordRequest, "yoon"))
+                .isInstanceOf(PasswordMismatchException.class);
+
+        then(memberRepository).should().findMemberByUsername(anyString());
+        then(passwordEncoder).should().matches(anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("회원 비밀번호 변경 시 새로운 비밀번호가 일치하지 않으면 예외가 발생한다")
+    void memberPasswordChangeMismatchNewPassword() {
+        Member member = Member.builder()
+                .nickname("yoonkun")
+                .username("yoon1234")
+                .password("12345678")
+                .build();
+        MemberPasswordRequest memberPasswordRequest = new MemberPasswordRequest("12345678", "87654320", "87654321");
+
+        given(memberRepository.findMemberByUsername(anyString())).willReturn(Optional.of(member));
+
+        assertThatThrownBy(() -> memberService.memberPasswordChange(memberPasswordRequest, "yoon"))
+                .isInstanceOf(PasswordMismatchException.class);
+
+        then(memberRepository).should().findMemberByUsername(anyString());
+        then(passwordEncoder).should().matches(anyString(), anyString());
     }
 
 }

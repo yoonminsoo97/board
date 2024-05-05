@@ -86,4 +86,11 @@ public class PostService {
         postRepository.delete(post);
     }
 
+    @Transactional(readOnly = true)
+    public PostListResponse postListFromMember(int page, String username) {
+        Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.Direction.DESC, PROPERTIES);
+        Page<PostListItem> postPage = postRepository.findPostsFromMember(pageable, username);
+        return new PostListResponse(postPage);
+    }
+
 }

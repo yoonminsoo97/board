@@ -1,9 +1,13 @@
 package com.board.domain.member.service;
 
+import com.board.domain.member.dto.MemberNicknameRequest;
+import com.board.domain.member.dto.MemberPasswordRequest;
+import com.board.domain.member.dto.MemberProfileResponse;
 import com.board.domain.member.dto.MemberSignupRequest;
 import com.board.domain.member.entity.Member;
 import com.board.domain.member.exception.DuplicateNicknameException;
 import com.board.domain.member.exception.DuplicateUsernameException;
+import com.board.domain.member.exception.NotFoundMemberException;
 import com.board.domain.member.exception.PasswordMismatchException;
 import com.board.domain.member.repository.MemberRepository;
 
@@ -48,6 +52,42 @@ public class MemberService {
                 .password(enocoded)
                 .build();
         memberRepository.save(member);
+    }
+
+    @Transactional(readOnly = true)
+    public MemberProfileResponse memberProfile(String username) {
+        Member member = memberRepository.findMemberByUsername(username)
+                .orElseThrow(NotFoundMemberException::new);
+        return new MemberProfileResponse(member);
+    }
+
+    @Transactional
+    public void memberNicknameChange(MemberNicknameRequest memberNicknameRequest, String username) {
+        memberNicknameExists(memberNicknameRequest.getNickname());
+        Member member = memberRepository.findMemberByUsername(username)
+                .orElseThrow(NotFoundMemberException::new);
+        member.changeNickname(memberNicknameRequest.getNickname());
+    }
+
+    @Transactional
+    public void memberPasswordChange(MemberPasswordRequest memberPasswordRequest, String username) {
+        Member member = memberRepository.findMemberByUsername(username)
+                .orElseThrow(NotFoundMemberException::new);
+        if (notMatchCurPassword(memberPasswordRequest.getCurPassword(), member.getPassword())) {
+            throw new PasswordMismatchException();
+        }
+        if (notMatchNewPassword(memberPasswordRequest.getNewPassword(), memberPasswordRequest.getNewPasswordConfirm())) {
+            throw new PasswordMismatchException();
+        }
+        member.changePassword(memberPasswordRequest.getNewPassword());
+    }
+
+    private boolean notMatchCurPassword(String curRawPassword, String curEncodedPassword) {
+        return !passwordEncoder.matches(curRawPassword, curEncodedPassword);
+    }
+
+    private boolean notMatchNewPassword(String newPassword, String newPasswordConfirm) {
+        return !newPassword.equals(newPasswordConfirm);
     }
 
 }

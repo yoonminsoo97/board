@@ -1,11 +1,21 @@
 package com.board.domain.member.controller;
 
+import com.board.domain.comment.dto.CommentListItem;
+import com.board.domain.comment.dto.CommentListResponse;
+import com.board.domain.comment.service.CommentService;
+import com.board.domain.member.dto.MemberNicknameRequest;
+import com.board.domain.member.dto.MemberPasswordRequest;
+import com.board.domain.member.dto.MemberProfileResponse;
 import com.board.domain.member.dto.MemberSignupRequest;
 import com.board.domain.member.entity.Member;
 import com.board.domain.member.exception.DuplicateNicknameException;
 import com.board.domain.member.exception.DuplicateUsernameException;
+import com.board.domain.member.exception.NotFoundMemberException;
 import com.board.domain.member.exception.PasswordMismatchException;
 import com.board.domain.member.service.MemberService;
+import com.board.domain.post.dto.PostListItem;
+import com.board.domain.post.dto.PostListResponse;
+import com.board.domain.post.service.PostService;
 import com.board.domain.token.dto.TokenResponse;
 import com.board.domain.token.exception.InvalidTokenException;
 import com.board.global.security.dto.AuthPrincipal;
@@ -20,12 +30,20 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
 
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.put;
+import static org.springframework.restdocs.payload.JsonFieldType.ARRAY;
+import static org.springframework.restdocs.payload.JsonFieldType.BOOLEAN;
+import static org.springframework.restdocs.payload.JsonFieldType.NUMBER;
 import static org.springframework.restdocs.payload.JsonFieldType.STRING;
 import static org.springframework.restdocs.headers.HeaderDocumentation.headerWithName;
 import static org.springframework.restdocs.headers.HeaderDocumentation.requestHeaders;
@@ -38,6 +56,7 @@ import static org.springframework.restdocs.request.RequestDocumentation.formPara
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
 import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
 
+import static org.springframework.restdocs.request.RequestDocumentation.queryParameters;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -46,6 +65,12 @@ class MemberControllerTest extends RestDocsTestSupport {
 
     @MockBean
     private MemberService memberService;
+
+    @MockBean
+    private PostService postService;
+
+    @MockBean
+    private CommentService commentService;
 
     @Test
     @DisplayName("닉네임 중복 확인을 한다")
@@ -162,7 +187,7 @@ class MemberControllerTest extends RestDocsTestSupport {
     }
 
     @Test
-    @DisplayName("회원가입 시 아이디를 입력하지 않으면 예외가 발생한다")
+    @DisplayName("회원가입 시 입력값이 잘못되면 예외가 발생한다")
     void memberSignupInvalidInputValue() throws Exception {
         MemberSignupRequest invalidMemberSignupRequest = new MemberSignupRequest("yoonkun", "", "12345678", "12345678");
 
@@ -342,6 +367,416 @@ class MemberControllerTest extends RestDocsTestSupport {
                 .andDo(restDocs.document(
                         requestHeaders(
                                 headerWithName("Authorization").description("액세스 토큰")
+                        ),
+                        responseFields(
+                                commonErrorResponse()
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("회원 정보를 조회한다")
+    void memberProfile() throws Exception {
+        MemberProfileResponse memberProfileResponse = new MemberProfileResponse("yoonkun", "yoon1234");
+
+        given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
+        given(memberService.memberProfile(anyString())).willReturn(memberProfileResponse);
+
+        mockMvc.perform(get("/api/members/profile")
+                        .header("Authorization", "Bearer access-token")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("success"))
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.result.nickname").value("yoonkun"))
+                .andExpect(jsonPath("$.result.username").value("yoon1234"))
+                .andDo(restDocs.document(
+                        requestHeaders(
+                                headerWithName("Authorization").description("액세스 토큰")
+                        ),
+                        responseFields(
+                                commonSuccessResponse())
+                                .and(
+                                        fieldWithPath("result.nickname").type(STRING).description("회원 닉네임"),
+                                        fieldWithPath("result.username").type(STRING).description("회원 아이디")
+                                )
+                ));
+    }
+
+    @Test
+    @DisplayName("회원 정보 조회 시 회원을 찾을 수 없으면 예외가 발생한다")
+    void memberProfileNotFoundMember() throws Exception {
+        given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
+        willThrow(new NotFoundMemberException()).given(memberService).memberProfile(anyString());
+
+        mockMvc.perform(get("/api/members/profile")
+                        .header("Authorization", "Bearer access-token")
+                )
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("fail"))
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.result.path").value("/api/members/profile"))
+                .andExpect(jsonPath("$.result.error.code").value("E404001"))
+                .andExpect(jsonPath("$.result.error.message").value("회원을 찾을 수 없습니다."))
+                .andExpect(jsonPath("$.result.error.fieldErrors").isEmpty())
+                .andDo(restDocs.document(
+                        requestHeaders(
+                                headerWithName("Authorization").description("액세스 토큰")
+                        ),
+                        responseFields(
+                                commonErrorResponse()
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("회원 정보에서 작성한 게시글 목록을 조회한다")
+    void memberProfilePostList() throws Exception {
+        List<PostListItem> posts = List.of(
+                new PostListItem(1L, "제목", "작성자", 5, LocalDateTime.of(2024, 6, 17, 0, 0))
+        );
+        PostListResponse postListResponse = new PostListResponse(posts, 1, 1, 1, false, false, true, true);
+
+        given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
+        given(postService.postListFromMember(anyInt(), anyString())).willReturn(postListResponse);
+
+        mockMvc.perform(get("/api/members/profile/posts")
+                        .param("page", "1")
+                        .header("Authorization", "Bearer access-token")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("success"))
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.result.posts[0].postNumber").value(1))
+                .andExpect(jsonPath("$.result.posts[0].title").value("제목"))
+                .andExpect(jsonPath("$.result.posts[0].writer").value("작성자"))
+                .andExpect(jsonPath("$.result.posts[0].commentCount").value(5))
+                .andExpect(jsonPath("$.result.posts[0].createdAt").value("2024.06.17"))
+                .andExpect(jsonPath("$.result.pageNumber").value(1))
+                .andExpect(jsonPath("$.result.totalPages").value(1))
+                .andExpect(jsonPath("$.result.totalElements").value(1))
+                .andExpect(jsonPath("$.result.prev").value(false))
+                .andExpect(jsonPath("$.result.next").value(false))
+                .andExpect(jsonPath("$.result.first").value(true))
+                .andExpect(jsonPath("$.result.last").value(true))
+                .andDo(restDocs.document(
+                        queryParameters(
+                                parameterWithName("page").description("페이지 번호")
+                        ),
+                        requestHeaders(
+                                headerWithName("Authorization").description("액세스 토큰")
+                        ),
+                        responseFields(
+                                commonSuccessResponse())
+                                .and(
+                                        fieldWithPath("result.posts").type(ARRAY).description("게시글 목록"),
+                                        fieldWithPath("result.posts[].postNumber").type(NUMBER).description("게시글 번호"),
+                                        fieldWithPath("result.posts[].title").type(STRING).description("게시글 제목"),
+                                        fieldWithPath("result.posts[].writer").type(STRING).description("게시글 제목"),
+                                        fieldWithPath("result.posts[].commentCount").type(NUMBER).description("댓글 개수"),
+                                        fieldWithPath("result.posts[].createdAt").type(STRING).description("게시글 제목"),
+                                        fieldWithPath("result.pageNumber").type(NUMBER).description("페이지 번호"),
+                                        fieldWithPath("result.totalPages").type(NUMBER).description("전체 페이지 개수"),
+                                        fieldWithPath("result.totalElements").type(NUMBER).description("전체 게시글 개수"),
+                                        fieldWithPath("result.prev").type(BOOLEAN).description("이전 페이지 이동 가능 여부"),
+                                        fieldWithPath("result.next").type(BOOLEAN).description("다음 페이지 이동 가능 여부"),
+                                        fieldWithPath("result.first").type(BOOLEAN).description("첫 번째 페이지 여부"),
+                                        fieldWithPath("result.last").type(BOOLEAN).description("마지막 페이지 여부")
+                                )
+                ));
+    }
+
+    @Test
+    @DisplayName("회원정보에서 작성한 댓글 목록을 조회한다")
+    void memberProfileCommentList() throws Exception {
+        List<CommentListItem> comments = List.of(
+                new CommentListItem(1L, "작성자", "댓글", LocalDateTime.of(2024, 6, 17, 0, 0))
+        );
+        CommentListResponse commentListResponse = new CommentListResponse(comments, 1, 1, 1, false, false, true, true);
+
+        given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
+        given(commentService.commentListFromMember(anyInt(), anyString())).willReturn(commentListResponse);
+
+        mockMvc.perform(get("/api/members/profile/comments")
+                        .header("Authorization", "Bearer access-token")
+                        .param("page", "1")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("success"))
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.result.comments[0].commentNum").value(1))
+                .andExpect(jsonPath("$.result.comments[0].writer").value("작성자"))
+                .andExpect(jsonPath("$.result.comments[0].content").value("댓글"))
+                .andExpect(jsonPath("$.result.comments[0].createdAt").value("2024.06.17"))
+                .andExpect(jsonPath("$.result.pageNumber").value(1))
+                .andExpect(jsonPath("$.result.totalPages").value(1))
+                .andExpect(jsonPath("$.result.totalElements").value(1))
+                .andExpect(jsonPath("$.result.prev").value(false))
+                .andExpect(jsonPath("$.result.next").value(false))
+                .andExpect(jsonPath("$.result.first").value(true))
+                .andExpect(jsonPath("$.result.last").value(true))
+                .andDo(restDocs.document(
+                        queryParameters(
+                                parameterWithName("page").description("페이지 번호")
+                        ),
+                        requestHeaders(
+                                headerWithName("Authorization").description("액세스 토큰")
+                        ),
+                        responseFields(
+                                commonSuccessResponse())
+                                .and(
+                                        fieldWithPath("result.comments").type(ARRAY).description("댓글 목록"),
+                                        fieldWithPath("result.comments[].commentNum").type(NUMBER).description("댓글 번호"),
+                                        fieldWithPath("result.comments[].writer").type(STRING).description("댓글 작성자"),
+                                        fieldWithPath("result.comments[].content").type(STRING).description("댓글 내용"),
+                                        fieldWithPath("result.comments[].createdAt").type(STRING).description("댓글 작성일"),
+                                        fieldWithPath("result.pageNumber").type(NUMBER).description("페이지 번호"),
+                                        fieldWithPath("result.totalPages").type(NUMBER).description("전체 페이지 개수"),
+                                        fieldWithPath("result.totalElements").type(NUMBER).description("전체 게시글 개수"),
+                                        fieldWithPath("result.prev").type(BOOLEAN).description("이전 페이지 이동 가능 여부"),
+                                        fieldWithPath("result.next").type(BOOLEAN).description("다음 페이지 이동 가능 여부"),
+                                        fieldWithPath("result.first").type(BOOLEAN).description("첫 번째 페이지 여부"),
+                                        fieldWithPath("result.last").type(BOOLEAN).description("마지막 페이지 여부")
+                                )
+                ));
+    }
+
+    @Test
+    @DisplayName("회원 닉네임을 변경한다")
+    void memberNicknameChange() throws Exception {
+        MemberNicknameRequest memberNicknameRequest = new MemberNicknameRequest("newNickname");
+
+        given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
+        willDoNothing().given(memberService).memberNicknameChange(any(MemberNicknameRequest.class), anyString());
+
+        mockMvc.perform(get("/api/members/profile/nickname")
+                        .header("Authorization", "Bearer access-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(memberNicknameRequest))
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("success"))
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.result").isEmpty())
+                .andDo(restDocs.document(
+                        requestHeaders(
+                                headerWithName("Authorization").description("액세스 토큰")
+                        ),
+                        requestFields(
+                                fieldWithPath("nickname").type(STRING).description("변경할 닉네임")
+                        ),
+                        responseFields(
+                                commonSuccessResponse()
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("회원 닉네임 변경 시 입력값이 잘못되면 예외가 발생한다")
+    void memberNicknameChangeInvalidInputValue() throws Exception {
+        MemberNicknameRequest invalidMemberNicknameRequest = new MemberNicknameRequest("");
+
+        given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
+
+        mockMvc.perform(get("/api/members/profile/nickname")
+                        .header("Authorization", "Bearer access-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidMemberNicknameRequest))
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("fail"))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.result.path").value("/api/members/profile/nickname"))
+                .andExpect(jsonPath("$.result.error.code").value("E400001"))
+                .andExpect(jsonPath("$.result.error.message").value("입력값이 잘못되었습니다."))
+                .andExpect(jsonPath("$.result.error.fieldErrors[0].field").value("nickname"))
+                .andExpect(jsonPath("$.result.error.fieldErrors[0].input").value(""))
+                .andExpect(jsonPath("$.result.error.fieldErrors[0].message").value("닉네임을 입력해 주세요."))
+                .andDo(restDocs.document(
+                        requestHeaders(
+                                headerWithName("Authorization").description("액세스 토큰")
+                        ),
+                        requestFields(
+                                fieldWithPath("nickname").type(STRING).description("변경할 닉네임")
+                        ),
+                        responseFields(
+                                commonErrorResponse())
+                                .and(
+                                        fieldWithPath("result.error.fieldErrors[].field").description(STRING).description("필드명"),
+                                        fieldWithPath("result.error.fieldErrors[].input").description(STRING).description("입력값"),
+                                        fieldWithPath("result.error.fieldErrors[].message").description(STRING).description("메시지")
+                                )
+                ));
+    }
+
+    @Test
+    @DisplayName("회원 닉네임 변경 시 닉네임이 중복되면 예외가 발생한다")
+    void memberNicknameChangeDuplicateNickname() throws Exception {
+        MemberNicknameRequest memberNicknameRequest = new MemberNicknameRequest("newNickname");
+
+        given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
+        willThrow(new DuplicateNicknameException()).given(memberService).memberNicknameChange(any(MemberNicknameRequest.class), anyString());
+
+        mockMvc.perform(get("/api/members/profile/nickname")
+                        .header("Authorization", "Bearer access-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(memberNicknameRequest))
+                )
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("fail"))
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.result.path").value("/api/members/profile/nickname"))
+                .andExpect(jsonPath("$.result.error.code").value("E409001"))
+                .andExpect(jsonPath("$.result.error.message").value("사용 중인 닉네임입니다."))
+                .andExpect(jsonPath("$.result.error.fieldErrors").isEmpty())
+                .andDo(restDocs.document(
+                        requestHeaders(
+                                headerWithName("Authorization").description("액세스 토큰")
+                        ),
+                        requestFields(
+                                fieldWithPath("nickname").type(STRING).description("변경할 닉네임")
+                        ),
+                        responseFields(
+                                commonErrorResponse()
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("회원 비밀번호를 변경한다")
+    void memberPasswordChange() throws Exception {
+        MemberPasswordRequest memberPasswordRequest = new MemberPasswordRequest("12345678", "87654321", "87654321");
+
+        given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
+        willDoNothing().given(memberService).memberPasswordChange(any(MemberPasswordRequest.class), anyString());
+
+        mockMvc.perform(put("/api/members/profile/password")
+                        .header("Authorization", "Bearer access-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(memberPasswordRequest))
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("success"))
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.result").isEmpty())
+                .andDo(restDocs.document(
+                        requestHeaders(
+                                headerWithName("Authorization").description("액세스 토큰")
+                        ),
+                        requestFields(
+                                fieldWithPath("curPassword").type(STRING).description("현재 사용 중인 비밀번호"),
+                                fieldWithPath("newPassword").type(STRING).description("새로운 비밀번호"),
+                                fieldWithPath("newPasswordConfirm").type(STRING).description("새로운 비밀번호 확인")
+                        ),
+                        responseFields(
+                                commonSuccessResponse()
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("회원 비밀번호 변경 시 입력값이 잘못되면 예외가 발생한다")
+    void memberPasswordChangeInvalidInputValue() throws Exception {
+        MemberPasswordRequest invalidMemberPasswordRequest = new MemberPasswordRequest("12345678", "", "87654321");
+
+        given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
+
+        mockMvc.perform(put("/api/members/profile/password")
+                        .header("Authorization", "Bearer access-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidMemberPasswordRequest))
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("fail"))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.result.path").value("/api/members/profile/password"))
+                .andExpect(jsonPath("$.result.error.code").value("E400001"))
+                .andExpect(jsonPath("$.result.error.message").value("입력값이 잘못되었습니다."))
+                .andExpect(jsonPath("$.result.error.fieldErrors[0].field").value("newPassword"))
+                .andExpect(jsonPath("$.result.error.fieldErrors[0].input").value(""))
+                .andExpect(jsonPath("$.result.error.fieldErrors[0].message").value("새로운 비밀번호를 입력해 주세요."))
+                .andDo(restDocs.document(
+                        requestHeaders(
+                                headerWithName("Authorization").description("액세스 토큰")
+                        ),
+                        requestFields(
+                                fieldWithPath("curPassword").type(STRING).description("현재 사용 중인 비밀번호"),
+                                fieldWithPath("newPassword").type(STRING).description("새로운 비밀번호"),
+                                fieldWithPath("newPasswordConfirm").type(STRING).description("새로운 비밀번호 확인")
+                        ),
+                        responseFields(
+                                commonErrorResponse())
+                                .and(
+                                        fieldWithPath("result.error.fieldErrors[].field").description(STRING).description("필드명"),
+                                        fieldWithPath("result.error.fieldErrors[].input").description(STRING).description("입력값"),
+                                        fieldWithPath("result.error.fieldErrors[].message").description(STRING).description("메시지")
+                                )
+                ));
+    }
+
+    @Test
+    @DisplayName("회원 비밀번호 변경 시 현재 비밀번호가 일치하지 않으면 예외가 발생한다")
+    void memberPasswordChangeMismatchCurPassword() throws Exception {
+        MemberPasswordRequest memberPasswordRequest = new MemberPasswordRequest("12345678", "87654321", "87654321");
+
+        given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
+        willThrow(new PasswordMismatchException()).given(memberService).memberPasswordChange(any(MemberPasswordRequest.class), anyString());
+
+        mockMvc.perform(put("/api/members/profile/password")
+                        .header("Authorization", "Bearer access-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(memberPasswordRequest))
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("fail"))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.result.path").value("/api/members/profile/password"))
+                .andExpect(jsonPath("$.result.error.code").value("E400002"))
+                .andExpect(jsonPath("$.result.error.message").value("비밀번호가 일치하지 않습니다."))
+                .andExpect(jsonPath("$.result.error.fieldErrors").isEmpty())
+                .andDo(restDocs.document(
+                        requestHeaders(
+                                headerWithName("Authorization").description("액세스 토큰")
+                        ),
+                        requestFields(
+                                fieldWithPath("curPassword").type(STRING).description("현재 사용 중인 비밀번호"),
+                                fieldWithPath("newPassword").type(STRING).description("새로운 비밀번호"),
+                                fieldWithPath("newPasswordConfirm").type(STRING).description("새로운 비밀번호 확인")
+                        ),
+                        responseFields(
+                                commonErrorResponse()
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("회원 비밀번호 변경 시 새로운 비밀번호가 일치하지 않으면 예외가 발생한다")
+    void memberPasswordChangeMismatchNewPassword() throws Exception {
+        MemberPasswordRequest memberPasswordRequest = new MemberPasswordRequest("12345678", "87654321", "87654320");
+
+        given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
+        willThrow(new PasswordMismatchException()).given(memberService).memberPasswordChange(any(MemberPasswordRequest.class), anyString());
+
+        mockMvc.perform(put("/api/members/profile/password")
+                        .header("Authorization", "Bearer access-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(memberPasswordRequest))
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("fail"))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.result.path").value("/api/members/profile/password"))
+                .andExpect(jsonPath("$.result.error.code").value("E400002"))
+                .andExpect(jsonPath("$.result.error.message").value("비밀번호가 일치하지 않습니다."))
+                .andExpect(jsonPath("$.result.error.fieldErrors").isEmpty())
+                .andDo(restDocs.document(
+                        requestHeaders(
+                                headerWithName("Authorization").description("액세스 토큰")
+                        ),
+                        requestFields(
+                                fieldWithPath("curPassword").type(STRING).description("현재 사용 중인 비밀번호"),
+                                fieldWithPath("newPassword").type(STRING).description("새로운 비밀번호"),
+                                fieldWithPath("newPasswordConfirm").type(STRING).description("새로운 비밀번호 확인")
                         ),
                         responseFields(
                                 commonErrorResponse()

@@ -76,4 +76,11 @@ public class CommentService {
         commentRepository.delete(comment);
     }
 
+    @Transactional(readOnly = true)
+    public CommentListResponse commentListFromMember(int page, String username) {
+        Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.Direction.ASC, PROPERTIES);
+        Page<Comment> commentPage = commentRepository.findCommentsByMemberUsername(pageable, username);
+        return new CommentListResponse(commentPage);
+    }
+
 }
