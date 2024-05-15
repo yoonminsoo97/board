@@ -81,3 +81,31 @@ include::{snippets}/comment-controller-test/comment-delete-not-comment-onwer/htt
 ===== 404 Not Found
 
 include::{snippets}/comment-controller-test/comment-delete-not-found-comment/http-response.adoc[]
+
+=== 4.5. 대댓글 작성
+
+==== 요청
+
+include::{snippets}/reply-controller-test/reply-write/http-request.adoc[]
+include::{snippets}/reply-controller-test/reply-write/path-parameters.adoc[]
+include::{snippets}/reply-controller-test/reply-write/request-headers.adoc[]
+include::{snippets}/reply-controller-test/reply-write/request-fields.adoc[]
+
+==== 응답
+
+===== 200 OK
+
+include::{snippets}/reply-controller-test/reply-write/http-response.adoc[]
+
+===== 400 Bad Request
+
+include::{snippets}/reply-controller-test/reply-write-invalid-input-value/http-response.adoc[]
+
+===== 404 Not Found
+
+====== 존재하지 않는 회원
+
+include::{snippets}/reply-controller-test/reply-write-not-found-member/http-response.adoc[]
+
+====== 존재하지 않는 댓글
+include::{snippets}/reply-controller-test/reply-write-not-found-comment/http-response.adoc[]
