@@ -4,6 +4,7 @@ import com.board.domain.member.entity.Member;
 import com.board.domain.post.entity.Post;
 import com.board.global.common.entity.BaseEntity;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -38,26 +39,32 @@ public class Comment extends BaseEntity {
     private String content;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id")
+    @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "post_id")
+    @JoinColumn(name = "post_id", nullable = false)
     private Post post;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reference_id")
     private Comment reference;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "reference")
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "reference", cascade = CascadeType.PERSIST)
     private List<Comment> replies = new ArrayList<>();
 
     @Builder
-    public Comment(String content, Member member, Post post) {
+    public Comment(String content, Member member, Post post, Comment reference) {
         this.writer = member.getNickname();
         this.content = content;
         this.member = member;
+        this.reference = reference;
         setPost(post);
+    }
+
+    public void addReply(Comment reply) {
+        reply.getReplies().add(this);
+        this.replies.add(reply);
     }
 
     public void modify(String content) {

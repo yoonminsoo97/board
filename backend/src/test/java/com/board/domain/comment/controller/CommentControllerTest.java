@@ -164,10 +164,122 @@ class CommentControllerTest extends RestDocsTestSupport {
     }
 
     @Test
+    @DisplayName("대댓글을 작성한다")
+    void replyWrite() throws Exception {
+        CommentWriteRequest replyWriteRequest = new CommentWriteRequest("대댓글");
+
+        given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
+        willDoNothing().given(commentService).replyWrite(anyLong(), anyLong(), any(CommentWriteRequest.class), anyString());
+
+        mockMvc.perform(post("/api/posts/{postId}/comments/{commentId}/replies", 1, 1)
+                        .header("Authorization", "Bearer access-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(replyWriteRequest))
+                )
+                .andExpect(jsonPath("$.message").value("success"))
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.result").isEmpty())
+                .andDo(restDocs.document(
+                        requestHeaders(
+                                headerWithName("Authorization").description("액세스 토큰")
+                        ),
+                        pathParameters(
+                                parameterWithName("postId").description("게시글 번호"),
+                                parameterWithName("commentId").description("댓글 번호")
+                        ),
+                        requestFields(
+                                fieldWithPath("content").type(STRING).description("대댓글")
+                        ),
+                        responseFields(
+                                commonSuccessResponse()
+                        )
+                ));
+
+    }
+
+    @Test
+    @DisplayName("대댓글 작성 시 입력값이 잘못되면 예외가 발생한다")
+    void replyWriteInvalidInputValue() throws Exception {
+        CommentWriteRequest invalidReplyWriteRequest = new CommentWriteRequest("");
+
+        given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
+
+        mockMvc.perform(post("/api/posts/{postId}/comments/{commentId}/replies", 1, 1)
+                        .header("Authorization", "Bearer access-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidReplyWriteRequest))
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("fail"))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.result.path").value("/api/posts/1/comments/1/replies"))
+                .andExpect(jsonPath("$.result.error.code").value("E400001"))
+                .andExpect(jsonPath("$.result.error.message").value("입력값이 잘못되었습니다."))
+                .andExpect(jsonPath("$.result.error.fieldErrors[0].field").value("content"))
+                .andExpect(jsonPath("$.result.error.fieldErrors[0].input").value(""))
+                .andExpect(jsonPath("$.result.error.fieldErrors[0].message").value("내용을 입력해 주세요."))
+                .andDo(restDocs.document(
+                        requestHeaders(
+                                headerWithName("Authorization").description("액세스 토큰")
+                        ),
+                        pathParameters(
+                                parameterWithName("postId").description("게시글 번호"),
+                                parameterWithName("commentId").description("댓글 번호")
+                        ),
+                        requestFields(
+                                fieldWithPath("content").type(STRING).description("대댓글")
+                        ),
+                        responseFields(
+                                commonErrorResponse())
+                                .and(
+                                        fieldWithPath("result.error.fieldErrors[].field").description(STRING).description("필드명"),
+                                        fieldWithPath("result.error.fieldErrors[].input").description(STRING).description("입력값"),
+                                        fieldWithPath("result.error.fieldErrors[].message").description(STRING).description("메시지")
+                                )
+                ));
+    }
+
+    @Test
+    @DisplayName("대댓글 작성 시 댓글을 찾을 수 없으면 예외가 발생한다")
+    void replyWriteNotFoundComment() throws Exception {
+        CommentWriteRequest replyWriteRequest = new CommentWriteRequest("대댓글");
+
+        given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
+        willThrow(new NotFoundCommentException()).given(commentService).replyWrite(anyLong(), anyLong(), any(CommentWriteRequest.class), anyString());
+
+        mockMvc.perform(post("/api/posts/{postId}/comments/{commentId}/replies", 1, 1)
+                        .header("Authorization", "Bearer access-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(replyWriteRequest))
+                )
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.result.path").value("/api/posts/1/comments/1/replies"))
+                .andExpect(jsonPath("$.result.error.code").value("E404003"))
+                .andExpect(jsonPath("$.result.error.message").value("댓글을 찾을 수 없습니다."))
+                .andExpect(jsonPath("$.result.error.fieldErrors").isEmpty())
+                .andDo(restDocs.document(
+                        requestHeaders(
+                                headerWithName("Authorization").description("액세스 토큰")
+                        ),
+                        pathParameters(
+                                parameterWithName("postId").description("게시글 번호"),
+                                parameterWithName("commentId").description("댓글 번호")
+                        ),
+                        requestFields(
+                                fieldWithPath("content").type(STRING).description("대댓글")
+                        ),
+                        responseFields(
+                                commonErrorResponse()
+                        )
+                ));
+    }
+
+    @Test
     @DisplayName("댓글 목록을 조회한다")
     void commentList() throws Exception {
         List<CommentListItem> comments = List.of(
-                new CommentListItem(1L, "작성자", "댓글",  LocalDateTime.of(2024, 6, 17, 0, 0))
+                new CommentListItem(1L, "작성자", "댓글", LocalDateTime.of(2024, 6, 17, 0, 0))
         );
         CommentListResponse commentListResponse = new CommentListResponse(comments, 1, 1, 1, false, false, true, true);
 
