@@ -258,4 +258,60 @@ class CommentServiceTest {
         then(commentRepository).should().findCommentsByMemberUsername(any(Pageable.class), anyString());
     }
 
+    @Test
+    @DisplayName("대댓글을 작성한다")
+    void replyWrite() {
+        Comment comment = Comment.builder()
+                .content("댓글")
+                .member(member)
+                .post(post)
+                .build();
+
+        CommentWriteRequest replyWriteRequest = new CommentWriteRequest("대댓글");
+
+        given(commentRepository.findCommentByPostIdAndCommentId(anyLong(), anyLong())).willReturn(Optional.of(comment));
+        given(memberRepository.findMemberByUsername(anyString())).willReturn(Optional.of(member));
+
+        commentService.replyWrite(1L, 1L, replyWriteRequest, "yoon1234");
+
+        then(commentRepository).should().findCommentByPostIdAndCommentId(anyLong(), anyLong());
+        then(memberRepository).should().findMemberByUsername(anyString());
+
+    }
+
+    @Test
+    @DisplayName("대댓글 작성 시 댓글을 찾을 수 없으면 예외가 발생한다")
+    void replyWriteNotFoundComment() {
+        CommentWriteRequest replyWriteRequest = new CommentWriteRequest("대댓글");
+
+        willThrow(new NotFoundCommentException()).given(commentRepository).findCommentByPostIdAndCommentId(anyLong(), anyLong());
+
+        assertThatThrownBy(() -> commentService.replyWrite(1L, 1L, replyWriteRequest, "yoon1234"))
+                .isInstanceOf(NotFoundCommentException.class);
+
+        then(commentRepository).should().findCommentByPostIdAndCommentId(anyLong(), anyLong());
+        then(memberRepository).should(never()).findMemberByUsername(anyString());
+    }
+
+    @Test
+    @DisplayName("대댓글 작성 시 회원을 찾을 수 없으면 예외가 발생한다")
+    void replyWriteNotFoundMember() {
+        Comment comment = Comment.builder()
+                .content("댓글")
+                .member(member)
+                .post(post)
+                .build();
+
+        CommentWriteRequest replyWriteRequest = new CommentWriteRequest("대댓글");
+
+        given(commentRepository.findCommentByPostIdAndCommentId(anyLong(), anyLong())).willReturn(Optional.of(comment));
+        willThrow(new NotFoundMemberException()).given(memberRepository).findMemberByUsername(anyString());
+
+        assertThatThrownBy(() -> commentService.replyWrite(1L, 1L, replyWriteRequest, "yoon1234"))
+                .isInstanceOf(NotFoundMemberException.class);
+
+        then(commentRepository).should().findCommentByPostIdAndCommentId(anyLong(), anyLong());
+        then(memberRepository).should().findMemberByUsername(anyString());
+    }
+
 }
