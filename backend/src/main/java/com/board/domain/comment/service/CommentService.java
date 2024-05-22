@@ -49,6 +49,21 @@ public class CommentService {
         commentRepository.save(comment);
     }
 
+    @Transactional
+    public void replyWrite(Long postId, Long commentId, CommentWriteRequest commentWriteRequest, String username) {
+        Comment comment = commentRepository.findCommentByPostIdAndCommentId(postId, commentId)
+                .orElseThrow(NotFoundCommentException::new);
+        Member member = memberRepository.findMemberByUsername(username)
+                .orElseThrow(NotFoundMemberException::new);
+        Comment reply = Comment.builder()
+                .content(commentWriteRequest.getContent())
+                .member(member)
+                .post(comment.getPost())
+                .reference(comment)
+                .build();
+        comment.addReply(reply);
+    }
+
     @Transactional(readOnly = true)
     public CommentListResponse commentList(Long postNumber, int pageNumber) {
         Pageable pageable = PageRequest.of(pageNumber, PAGE_SIZE, Sort.Direction.ASC, PROPERTIES);
