@@ -31,5 +31,6 @@
 ### # ERD
 
 <div align="center">
-  <img width="1000" alt="스크린샷 2024-04-06 오후 3 01 07" src="https://github.com/yoonminsoo97/board/assets/163730288/7cb35588-197d-4a61-8258-e88dfcf75deb">
+  <img width="900" alt="게시판_ERD" src="https://github.com/yoonminsoo97/board/assets/163730288/67f50a12-484c-4bef-9a11-c06c5c78a650">
 </div>
+
