@@ -59,6 +59,7 @@ include::{snippets}/comment-controller-test/comment-modify-not-comment-owner/htt
 ===== 404 Not Found
 
 include::{snippets}/comment-controller-test/comment-modify-not-found-comment/http-response.adoc[]
+include::{snippets}/comment-controller-test/comment-modify-already-delete-comment/http-response.adoc[]
 
 === 4.4. 댓글 삭제
 
@@ -81,6 +82,7 @@ include::{snippets}/comment-controller-test/comment-delete-not-comment-onwer/htt
 ===== 404 Not Found
 
 include::{snippets}/comment-controller-test/comment-delete-not-found-comment/http-response.adoc[]
+include::{snippets}/comment-controller-test/comment-delete-already-delete-comment/http-response.adoc[]
 
 === 4.5. 대댓글 작성
 
