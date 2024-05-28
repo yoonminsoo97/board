@@ -4,6 +4,7 @@ import com.board.domain.comment.dto.CommentListResponse;
 import com.board.domain.comment.dto.CommentModifyRequest;
 import com.board.domain.comment.dto.CommentWriteRequest;
 import com.board.domain.comment.entity.Comment;
+import com.board.domain.comment.exception.AlreadyDeleteCommentException;
 import com.board.domain.comment.exception.CommentDeleteAccessDeniedException;
 import com.board.domain.comment.exception.CommentModifyAccessDeniedException;
 import com.board.domain.comment.exception.NotFoundCommentException;
@@ -78,6 +79,9 @@ public class CommentService {
         if (!comment.isOwner(loginUsername)) {
             throw new CommentModifyAccessDeniedException();
         }
+        if (comment.isDelete()) {
+            throw new AlreadyDeleteCommentException();
+        }
         comment.modify(commentModifyRequest.getContent());
     }
 
@@ -88,7 +92,10 @@ public class CommentService {
         if (!comment.isOwner(loginUsername)) {
             throw new CommentDeleteAccessDeniedException();
         }
-        commentRepository.delete(comment);
+        if (comment.isDelete()) {
+            throw new AlreadyDeleteCommentException();
+        }
+        comment.delete();
     }
 
     @Transactional(readOnly = true)
