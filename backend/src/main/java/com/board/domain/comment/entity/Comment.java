@@ -38,6 +38,9 @@ public class Comment extends BaseEntity {
     @Column(nullable = false)
     private String content;
 
+    @Column(nullable = false)
+    private boolean delete;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
@@ -59,6 +62,7 @@ public class Comment extends BaseEntity {
         this.content = content;
         this.member = member;
         this.reference = reference;
+        this.delete = false;
         setPost(post);
     }
 
@@ -69,6 +73,10 @@ public class Comment extends BaseEntity {
 
     public void modify(String content) {
         this.content = content;
+    }
+
+    public void delete() {
+        this.delete = true;
     }
 
     public boolean isOwner(String loginUsername) {
