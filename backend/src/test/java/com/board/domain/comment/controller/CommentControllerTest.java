@@ -4,6 +4,7 @@ import com.board.domain.comment.dto.CommentListItem;
 import com.board.domain.comment.dto.CommentListResponse;
 import com.board.domain.comment.dto.CommentModifyRequest;
 import com.board.domain.comment.dto.CommentWriteRequest;
+import com.board.domain.comment.exception.AlreadyDeleteCommentException;
 import com.board.domain.comment.exception.CommentDeleteAccessDeniedException;
 import com.board.domain.comment.exception.CommentModifyAccessDeniedException;
 import com.board.domain.comment.exception.NotFoundCommentException;
@@ -477,6 +478,42 @@ class CommentControllerTest extends RestDocsTestSupport {
     }
 
     @Test
+    @DisplayName("이미 삭제된 댓글에 수정을 시도할 경우 예외가 발생한다")
+    void commentModifyAlreadyDeleteComment() throws Exception {
+        CommentModifyRequest commentModifyRequest = new CommentModifyRequest("댓글");
+
+        given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
+        willThrow(new AlreadyDeleteCommentException()).given(commentService).commentModify(anyLong(), anyLong(), any(CommentModifyRequest.class), anyString());
+
+        mockMvc.perform(put("/api/posts/{postNumber}/comments/{commentNumber}", 1, 1)
+                        .header("Authorization", "Bearer access-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(commentModifyRequest))
+                )
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.result.path").value("/api/posts/1/comments/1"))
+                .andExpect(jsonPath("$.result.error.code").value("E404004"))
+                .andExpect(jsonPath("$.result.error.message").value("이미 삭제된 댓글입니다."))
+                .andExpect(jsonPath("$.result.error.fieldErrors").isEmpty())
+                .andDo(restDocs.document(
+                        pathParameters(
+                                parameterWithName("postNumber").description("게시글 번호"),
+                                parameterWithName("commentNumber").description("댓글 번호")
+                        ),
+                        requestHeaders(
+                                headerWithName("Authorization").description("Access Token")
+                        ),
+                        requestFields(
+                                fieldWithPath("content").type(STRING).description("수정 댓글")
+                        ),
+                        responseFields(
+                                commonErrorResponse()
+                        )
+                ));
+    }
+
+    @Test
     @DisplayName("댓글을 삭제한다")
     void commentDelete() throws Exception {
         given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
@@ -543,6 +580,34 @@ class CommentControllerTest extends RestDocsTestSupport {
                 .andExpect(jsonPath("$.result.path").value("/api/posts/1/comments/1"))
                 .andExpect(jsonPath("$.result.error.code").value("E403004"))
                 .andExpect(jsonPath("$.result.error.message").value("댓글 삭제는 작성자만 할 수 있습니다."))
+                .andExpect(jsonPath("$.result.error.fieldErrors").isEmpty())
+                .andDo(restDocs.document(
+                        pathParameters(
+                                parameterWithName("postNumber").description("게시글 번호"),
+                                parameterWithName("commentNumber").description("댓글 번호")
+                        ),
+                        requestHeaders(
+                                headerWithName("Authorization").description("액세스 토큰")
+                        ),
+                        responseFields(
+                                commonErrorResponse()
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("이미 삭제된 댓글에 삭제를 시도할 경우 예외가 발생한다")
+    void commentDeleteAlreadyDeleteComment() throws Exception {
+        given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
+        willThrow(new AlreadyDeleteCommentException()).given(commentService).commentDelete(anyLong(), anyLong(), anyString());
+
+        mockMvc.perform(delete("/api/posts/{postNumber}/comments/{commentNumber}", 1, 1)
+                        .header("Authorization", "Bearer access-token"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.result.path").value("/api/posts/1/comments/1"))
+                .andExpect(jsonPath("$.result.error.code").value("E404004"))
+                .andExpect(jsonPath("$.result.error.message").value("이미 삭제된 댓글입니다."))
                 .andExpect(jsonPath("$.result.error.fieldErrors").isEmpty())
                 .andDo(restDocs.document(
                         pathParameters(

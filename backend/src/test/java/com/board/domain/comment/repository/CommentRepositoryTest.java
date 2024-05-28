@@ -120,9 +120,9 @@ class CommentRepositoryTest {
         Comment saveComment = commentRepository.save(comment);
         Comment findComment = commentRepository.findCommentJoinFetchMember(post.getId(), saveComment.getId()).get();
 
-        commentRepository.delete(findComment);
+        findComment.delete();
 
-        assertThat(commentRepository.findCommentJoinFetchMember(post.getId(), saveComment.getId())).isEmpty();
+        assertThat(findComment.isDelete()).isTrue();
     }
 
     @Test
