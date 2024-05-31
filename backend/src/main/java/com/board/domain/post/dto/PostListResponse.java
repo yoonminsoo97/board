@@ -12,7 +12,7 @@ import java.util.List;
 public class PostListResponse {
 
     private final List<PostListItem> posts;
-    private final int pageNumber;
+    private final int page;
     private final int totalPages;
     private final long totalElements;
     private final boolean prev;
@@ -22,7 +22,7 @@ public class PostListResponse {
 
     public PostListResponse(Page<PostListItem> postPage) {
         this.posts = postPage.getContent();
-        this.pageNumber = postPage.getNumber() + 1;
+        this.page = postPage.getNumber() + 1;
         this.totalPages = postPage.getTotalPages();
         this.totalElements = postPage.getTotalElements();
         this.prev = postPage.hasPrevious();

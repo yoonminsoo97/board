@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 public class CommentListResponse {
 
     private final List<CommentListItem> comments;
-    private final int pageNumber;
+    private final int page;
     private final int totalPages;
     private final long totalElements;
     private final boolean prev;
@@ -27,7 +27,7 @@ public class CommentListResponse {
         this.comments = commentPage.getContent().stream()
                 .map(CommentListItem::new)
                 .collect(Collectors.toList());
-        this.pageNumber = commentPage.getNumber() + 1;
+        this.page = commentPage.getNumber() + 1;
         this.totalPages = commentPage.getTotalPages();
         this.totalElements = commentPage.getTotalElements();
         this.prev = commentPage.hasPrevious();
