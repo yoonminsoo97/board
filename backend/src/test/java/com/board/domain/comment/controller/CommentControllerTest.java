@@ -4,6 +4,7 @@ import com.board.domain.comment.dto.CommentListItem;
 import com.board.domain.comment.dto.CommentListResponse;
 import com.board.domain.comment.dto.CommentModifyRequest;
 import com.board.domain.comment.dto.CommentWriteRequest;
+import com.board.domain.comment.exception.AlreadyDeleteCommentException;
 import com.board.domain.comment.exception.CommentDeleteAccessDeniedException;
 import com.board.domain.comment.exception.CommentModifyAccessDeniedException;
 import com.board.domain.comment.exception.NotFoundCommentException;
@@ -63,7 +64,7 @@ class CommentControllerTest extends RestDocsTestSupport {
         given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
         willDoNothing().given(commentService).commentWrite(anyLong(), any(CommentWriteRequest.class), anyString());
 
-        mockMvc.perform(post("/api/posts/{postNumber}/comments/write", 1)
+        mockMvc.perform(post("/api/posts/{postId}/comments", 1)
                         .header("Authorization", "Bearer access-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(commentWriteRequest))
@@ -77,7 +78,7 @@ class CommentControllerTest extends RestDocsTestSupport {
                                 headerWithName("Authorization").description("액세스 토큰")
                         ),
                         pathParameters(
-                                parameterWithName("postNumber").description("게시글 번호")
+                                parameterWithName("postId").description("게시글 번호")
                         ),
                         requestFields(
                                 fieldWithPath("content").type(STRING).description("댓글")
@@ -95,14 +96,14 @@ class CommentControllerTest extends RestDocsTestSupport {
 
         given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
 
-        mockMvc.perform(post("/api/posts/{postNumber}/comments/write", 1)
+        mockMvc.perform(post("/api/posts/{postId}/comments", 1)
                         .header("Authorization", "Bearer access-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidCommentWriteRequest)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("fail"))
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.result.path").value("/api/posts/1/comments/write"))
+                .andExpect(jsonPath("$.result.path").value("/api/posts/1/comments"))
                 .andExpect(jsonPath("$.result.error.code").value("E400001"))
                 .andExpect(jsonPath("$.result.error.message").value("입력값이 잘못되었습니다."))
                 .andExpect(jsonPath("$.result.error.fieldErrors[0].field").value("content"))
@@ -113,7 +114,7 @@ class CommentControllerTest extends RestDocsTestSupport {
                                 headerWithName("Authorization").description("액세스 토큰")
                         ),
                         pathParameters(
-                                parameterWithName("postNumber").description("게시글 번호")
+                                parameterWithName("postId").description("게시글 번호")
                         ),
                         requestFields(
                                 fieldWithPath("content").type(STRING).description("댓글")
@@ -136,14 +137,14 @@ class CommentControllerTest extends RestDocsTestSupport {
         given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
         willThrow(new NotFoundPostException()).given(commentService).commentWrite(anyLong(), any(CommentWriteRequest.class), anyString());
 
-        mockMvc.perform(post("/api/posts/{postNumber}/comments/write", 1)
+        mockMvc.perform(post("/api/posts/{postId}/comments", 1)
                         .header("Authorization", "Bearer access-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(commentWriteRequest))
                 )
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.result.path").value("/api/posts/1/comments/write"))
+                .andExpect(jsonPath("$.result.path").value("/api/posts/1/comments"))
                 .andExpect(jsonPath("$.result.error.code").value("E404002"))
                 .andExpect(jsonPath("$.result.error.message").value("게시글을 찾을 수 없습니다."))
                 .andExpect(jsonPath("$.result.error.fieldErrors").isEmpty())
@@ -152,7 +153,7 @@ class CommentControllerTest extends RestDocsTestSupport {
                                 headerWithName("Authorization").description("Access Token")
                         ),
                         pathParameters(
-                                parameterWithName("postNumber").description("게시글 번호")
+                                parameterWithName("postId").description("게시글 번호")
                         ),
                         requestFields(
                                 fieldWithPath("content").type(STRING).description("댓글")
@@ -285,17 +286,17 @@ class CommentControllerTest extends RestDocsTestSupport {
 
         given(commentService.commentList(anyLong(), anyInt())).willReturn(commentListResponse);
 
-        mockMvc.perform(get("/api/posts/{postNumber}/comments", 1)
+        mockMvc.perform(get("/api/posts/{postId}/comments", 1)
                         .param("page", "1")
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("success"))
                 .andExpect(jsonPath("$.status").value(200))
-                .andExpect(jsonPath("$.result.comments[0].commentNum").value(1))
+                .andExpect(jsonPath("$.result.comments[0].commentId").value(1))
                 .andExpect(jsonPath("$.result.comments[0].writer").value("작성자"))
                 .andExpect(jsonPath("$.result.comments[0].content").value("댓글"))
-                .andExpect(jsonPath("$.result.comments[0].createdAt").value("2024.06.17"))
-                .andExpect(jsonPath("$.result.pageNumber").value(1))
+                .andExpect(jsonPath("$.result.comments[0].createdAt").value("2024-06-17T00:00:00"))
+                .andExpect(jsonPath("$.result.page").value(1))
                 .andExpect(jsonPath("$.result.totalPages").value(1))
                 .andExpect(jsonPath("$.result.totalElements").value(1))
                 .andExpect(jsonPath("$.result.prev").value(false))
@@ -304,7 +305,7 @@ class CommentControllerTest extends RestDocsTestSupport {
                 .andExpect(jsonPath("$.result.last").value(true))
                 .andDo(restDocs.document(
                         pathParameters(
-                                parameterWithName("postNumber").description("게시글 번호")
+                                parameterWithName("postId").description("게시글 번호")
                         ),
                         queryParameters(
                                 parameterWithName("page").description("페이지 번호")
@@ -313,11 +314,11 @@ class CommentControllerTest extends RestDocsTestSupport {
                                 commonSuccessResponse())
                                 .and(
                                         fieldWithPath("result.comments").type(ARRAY).description("댓글 목록"),
-                                        fieldWithPath("result.comments[].commentNum").type(NUMBER).description("댓글 번호"),
+                                        fieldWithPath("result.comments[].commentId").type(NUMBER).description("댓글 번호"),
                                         fieldWithPath("result.comments[].writer").type(STRING).description("댓글 작성자"),
                                         fieldWithPath("result.comments[].content").type(STRING).description("댓글 내용"),
                                         fieldWithPath("result.comments[].createdAt").type(STRING).description("댓글 작성일"),
-                                        fieldWithPath("result.pageNumber").type(NUMBER).description("페이지 번호"),
+                                        fieldWithPath("result.page").type(NUMBER).description("페이지 번호"),
                                         fieldWithPath("result.totalPages").type(NUMBER).description("전체 페이지 개수"),
                                         fieldWithPath("result.totalElements").type(NUMBER).description("전체 게시글 개수"),
                                         fieldWithPath("result.prev").type(BOOLEAN).description("이전 페이지 이동 가능 여부"),
@@ -336,7 +337,7 @@ class CommentControllerTest extends RestDocsTestSupport {
         given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
         willDoNothing().given(commentService).commentModify(anyLong(), anyLong(), any(CommentModifyRequest.class), anyString());
 
-        mockMvc.perform(put("/api/posts/{postNumber}/comments/{commentNumber}", 1, 1)
+        mockMvc.perform(put("/api/posts/{postId}/comments/{commentId}", 1, 1)
                         .header("Authorization", "Bearer acces-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(commentModifyRequest))
@@ -347,8 +348,8 @@ class CommentControllerTest extends RestDocsTestSupport {
                 .andExpect(jsonPath("$.result").isEmpty())
                 .andDo(restDocs.document(
                         pathParameters(
-                                parameterWithName("postNumber").description("게시글 번호"),
-                                parameterWithName("commentNumber").description("댓글 번호")
+                                parameterWithName("postId").description("게시글 번호"),
+                                parameterWithName("commentId").description("댓글 번호")
                         ),
                         requestHeaders(
                                 headerWithName("Authorization").description("액세스 토큰")
@@ -369,7 +370,7 @@ class CommentControllerTest extends RestDocsTestSupport {
 
         given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
 
-        mockMvc.perform(put("/api/posts/{postNumber}/comments/{commentNumber}", 1, 1)
+        mockMvc.perform(put("/api/posts/{postId}/comments/{commentId}", 1, 1)
                         .header("Authorization", "Bearer acces-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidCommentModifyRequest))
@@ -385,8 +386,8 @@ class CommentControllerTest extends RestDocsTestSupport {
                 .andExpect(jsonPath("$.result.error.fieldErrors[0].message").value("내용을 입력해 주세요."))
                 .andDo(restDocs.document(
                         pathParameters(
-                                parameterWithName("postNumber").description("게시글 번호"),
-                                parameterWithName("commentNumber").description("댓글 번호")
+                                parameterWithName("postId").description("게시글 번호"),
+                                parameterWithName("commentId").description("댓글 번호")
                         ),
                         requestHeaders(
                                 headerWithName("Authorization").description("액세스 토큰")
@@ -412,7 +413,7 @@ class CommentControllerTest extends RestDocsTestSupport {
         given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
         willThrow(new NotFoundCommentException()).given(commentService).commentModify(anyLong(), anyLong(), any(CommentModifyRequest.class), anyString());
 
-        mockMvc.perform(put("/api/posts/{postNumber}/comments/{commentNumber}", 1, 1)
+        mockMvc.perform(put("/api/posts/{postId}/comments/{commentId}", 1, 1)
                         .header("Authorization", "Bearer acces-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(commentModifyRequest))
@@ -425,8 +426,8 @@ class CommentControllerTest extends RestDocsTestSupport {
                 .andExpect(jsonPath("$.result.error.fieldErrors").isEmpty())
                 .andDo(restDocs.document(
                         pathParameters(
-                                parameterWithName("postNumber").description("게시글 번호"),
-                                parameterWithName("commentNumber").description("댓글 번호")
+                                parameterWithName("postId").description("게시글 번호"),
+                                parameterWithName("commentId").description("댓글 번호")
                         ),
                         requestHeaders(
                                 headerWithName("Authorization").description("액세스 토큰")
@@ -448,7 +449,7 @@ class CommentControllerTest extends RestDocsTestSupport {
         given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
         willThrow(new CommentModifyAccessDeniedException()).given(commentService).commentModify(anyLong(), anyLong(), any(CommentModifyRequest.class), anyString());
 
-        mockMvc.perform(put("/api/posts/{postNumber}/comments/{commentNumber}", 1, 1)
+        mockMvc.perform(put("/api/posts/{postId}/comments/{commentId}", 1, 1)
                         .header("Authorization", "Bearer acces-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(commentModifyRequest))
@@ -461,8 +462,44 @@ class CommentControllerTest extends RestDocsTestSupport {
                 .andExpect(jsonPath("$.result.error.fieldErrors").isEmpty())
                 .andDo(restDocs.document(
                         pathParameters(
-                                parameterWithName("postNumber").description("게시글 번호"),
-                                parameterWithName("commentNumber").description("댓글 번호")
+                                parameterWithName("postId").description("게시글 번호"),
+                                parameterWithName("commentId").description("댓글 번호")
+                        ),
+                        requestHeaders(
+                                headerWithName("Authorization").description("Access Token")
+                        ),
+                        requestFields(
+                                fieldWithPath("content").type(STRING).description("수정 댓글")
+                        ),
+                        responseFields(
+                                commonErrorResponse()
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("이미 삭제된 댓글에 수정을 시도할 경우 예외가 발생한다")
+    void commentModifyAlreadyDeleteComment() throws Exception {
+        CommentModifyRequest commentModifyRequest = new CommentModifyRequest("댓글");
+
+        given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
+        willThrow(new AlreadyDeleteCommentException()).given(commentService).commentModify(anyLong(), anyLong(), any(CommentModifyRequest.class), anyString());
+
+        mockMvc.perform(put("/api/posts/{postId}/comments/{commentId}", 1, 1)
+                        .header("Authorization", "Bearer access-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(commentModifyRequest))
+                )
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.result.path").value("/api/posts/1/comments/1"))
+                .andExpect(jsonPath("$.result.error.code").value("E404004"))
+                .andExpect(jsonPath("$.result.error.message").value("이미 삭제된 댓글입니다."))
+                .andExpect(jsonPath("$.result.error.fieldErrors").isEmpty())
+                .andDo(restDocs.document(
+                        pathParameters(
+                                parameterWithName("postId").description("게시글 번호"),
+                                parameterWithName("commentId").description("댓글 번호")
                         ),
                         requestHeaders(
                                 headerWithName("Authorization").description("Access Token")
@@ -482,7 +519,7 @@ class CommentControllerTest extends RestDocsTestSupport {
         given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
         willDoNothing().given(commentService).commentDelete(anyLong(), anyLong(), anyString());
 
-        mockMvc.perform(delete("/api/posts/{postNumber}/comments/{commentNumber}", 1, 1)
+        mockMvc.perform(delete("/api/posts/{postId}/comments/{commentId}", 1, 1)
                         .header("Authorization", "Bearer access-token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("success"))
@@ -490,8 +527,8 @@ class CommentControllerTest extends RestDocsTestSupport {
                 .andExpect(jsonPath("$.result").isEmpty())
                 .andDo(restDocs.document(
                         pathParameters(
-                                parameterWithName("postNumber").description("게시글 번호"),
-                                parameterWithName("commentNumber").description("댓글 번호")
+                                parameterWithName("postId").description("게시글 번호"),
+                                parameterWithName("commentId").description("댓글 번호")
                         ),
                         requestHeaders(
                                 headerWithName("Authorization").description("액세스 토큰")
@@ -508,7 +545,7 @@ class CommentControllerTest extends RestDocsTestSupport {
         given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
         willThrow(new NotFoundCommentException()).given(commentService).commentDelete(anyLong(), anyLong(), anyString());
 
-        mockMvc.perform(delete("/api/posts/{postNumber}/comments/{commentNumber}", 1, 1)
+        mockMvc.perform(delete("/api/posts/{postId}/comments/{commentId}", 1, 1)
                         .header("Authorization", "Bearer access-token"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
@@ -518,8 +555,8 @@ class CommentControllerTest extends RestDocsTestSupport {
                 .andExpect(jsonPath("$.result.error.fieldErrors").isEmpty())
                 .andDo(restDocs.document(
                         pathParameters(
-                                parameterWithName("postNumber").description("게시글 번호"),
-                                parameterWithName("commentNumber").description("댓글 번호")
+                                parameterWithName("postId").description("게시글 번호"),
+                                parameterWithName("commentId").description("댓글 번호")
                         ),
                         requestHeaders(
                                 headerWithName("Authorization").description("액세스 토큰")
@@ -536,7 +573,7 @@ class CommentControllerTest extends RestDocsTestSupport {
         given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
         willThrow(new CommentDeleteAccessDeniedException()).given(commentService).commentDelete(anyLong(), anyLong(), anyString());
 
-        mockMvc.perform(delete("/api/posts/{postNumber}/comments/{commentNumber}", 1, 1)
+        mockMvc.perform(delete("/api/posts/{postId}/comments/{commentId}", 1, 1)
                         .header("Authorization", "Bearer access-token"))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.status").value(403))
@@ -546,8 +583,36 @@ class CommentControllerTest extends RestDocsTestSupport {
                 .andExpect(jsonPath("$.result.error.fieldErrors").isEmpty())
                 .andDo(restDocs.document(
                         pathParameters(
-                                parameterWithName("postNumber").description("게시글 번호"),
-                                parameterWithName("commentNumber").description("댓글 번호")
+                                parameterWithName("postId").description("게시글 번호"),
+                                parameterWithName("commentId").description("댓글 번호")
+                        ),
+                        requestHeaders(
+                                headerWithName("Authorization").description("액세스 토큰")
+                        ),
+                        responseFields(
+                                commonErrorResponse()
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("이미 삭제된 댓글에 삭제를 시도할 경우 예외가 발생한다")
+    void commentDeleteAlreadyDeleteComment() throws Exception {
+        given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
+        willThrow(new AlreadyDeleteCommentException()).given(commentService).commentDelete(anyLong(), anyLong(), anyString());
+
+        mockMvc.perform(delete("/api/posts/{postId}/comments/{commentId}", 1, 1)
+                        .header("Authorization", "Bearer access-token"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.result.path").value("/api/posts/1/comments/1"))
+                .andExpect(jsonPath("$.result.error.code").value("E404004"))
+                .andExpect(jsonPath("$.result.error.message").value("이미 삭제된 댓글입니다."))
+                .andExpect(jsonPath("$.result.error.fieldErrors").isEmpty())
+                .andDo(restDocs.document(
+                        pathParameters(
+                                parameterWithName("postId").description("게시글 번호"),
+                                parameterWithName("commentId").description("댓글 번호")
                         ),
                         requestHeaders(
                                 headerWithName("Authorization").description("액세스 토큰")

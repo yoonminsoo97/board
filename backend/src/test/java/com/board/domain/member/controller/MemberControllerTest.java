@@ -447,12 +447,12 @@ class MemberControllerTest extends RestDocsTestSupport {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("success"))
                 .andExpect(jsonPath("$.status").value(200))
-                .andExpect(jsonPath("$.result.posts[0].postNumber").value(1))
+                .andExpect(jsonPath("$.result.posts[0].postId").value(1))
                 .andExpect(jsonPath("$.result.posts[0].title").value("제목"))
                 .andExpect(jsonPath("$.result.posts[0].writer").value("작성자"))
                 .andExpect(jsonPath("$.result.posts[0].commentCount").value(5))
-                .andExpect(jsonPath("$.result.posts[0].createdAt").value("2024.06.17"))
-                .andExpect(jsonPath("$.result.pageNumber").value(1))
+                .andExpect(jsonPath("$.result.posts[0].createdAt").value("2024-06-17T00:00:00"))
+                .andExpect(jsonPath("$.result.page").value(1))
                 .andExpect(jsonPath("$.result.totalPages").value(1))
                 .andExpect(jsonPath("$.result.totalElements").value(1))
                 .andExpect(jsonPath("$.result.prev").value(false))
@@ -470,12 +470,12 @@ class MemberControllerTest extends RestDocsTestSupport {
                                 commonSuccessResponse())
                                 .and(
                                         fieldWithPath("result.posts").type(ARRAY).description("게시글 목록"),
-                                        fieldWithPath("result.posts[].postNumber").type(NUMBER).description("게시글 번호"),
+                                        fieldWithPath("result.posts[].postId").type(NUMBER).description("게시글 번호"),
                                         fieldWithPath("result.posts[].title").type(STRING).description("게시글 제목"),
                                         fieldWithPath("result.posts[].writer").type(STRING).description("게시글 제목"),
                                         fieldWithPath("result.posts[].commentCount").type(NUMBER).description("댓글 개수"),
                                         fieldWithPath("result.posts[].createdAt").type(STRING).description("게시글 제목"),
-                                        fieldWithPath("result.pageNumber").type(NUMBER).description("페이지 번호"),
+                                        fieldWithPath("result.page").type(NUMBER).description("페이지 번호"),
                                         fieldWithPath("result.totalPages").type(NUMBER).description("전체 페이지 개수"),
                                         fieldWithPath("result.totalElements").type(NUMBER).description("전체 게시글 개수"),
                                         fieldWithPath("result.prev").type(BOOLEAN).description("이전 페이지 이동 가능 여부"),
@@ -504,11 +504,11 @@ class MemberControllerTest extends RestDocsTestSupport {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("success"))
                 .andExpect(jsonPath("$.status").value(200))
-                .andExpect(jsonPath("$.result.comments[0].commentNum").value(1))
+                .andExpect(jsonPath("$.result.comments[0].commentId").value(1))
                 .andExpect(jsonPath("$.result.comments[0].writer").value("작성자"))
                 .andExpect(jsonPath("$.result.comments[0].content").value("댓글"))
-                .andExpect(jsonPath("$.result.comments[0].createdAt").value("2024.06.17"))
-                .andExpect(jsonPath("$.result.pageNumber").value(1))
+                .andExpect(jsonPath("$.result.comments[0].createdAt").value("2024-06-17T00:00:00"))
+                .andExpect(jsonPath("$.result.page").value(1))
                 .andExpect(jsonPath("$.result.totalPages").value(1))
                 .andExpect(jsonPath("$.result.totalElements").value(1))
                 .andExpect(jsonPath("$.result.prev").value(false))
@@ -526,11 +526,11 @@ class MemberControllerTest extends RestDocsTestSupport {
                                 commonSuccessResponse())
                                 .and(
                                         fieldWithPath("result.comments").type(ARRAY).description("댓글 목록"),
-                                        fieldWithPath("result.comments[].commentNum").type(NUMBER).description("댓글 번호"),
+                                        fieldWithPath("result.comments[].commentId").type(NUMBER).description("댓글 번호"),
                                         fieldWithPath("result.comments[].writer").type(STRING).description("댓글 작성자"),
                                         fieldWithPath("result.comments[].content").type(STRING).description("댓글 내용"),
                                         fieldWithPath("result.comments[].createdAt").type(STRING).description("댓글 작성일"),
-                                        fieldWithPath("result.pageNumber").type(NUMBER).description("페이지 번호"),
+                                        fieldWithPath("result.page").type(NUMBER).description("페이지 번호"),
                                         fieldWithPath("result.totalPages").type(NUMBER).description("전체 페이지 개수"),
                                         fieldWithPath("result.totalElements").type(NUMBER).description("전체 게시글 개수"),
                                         fieldWithPath("result.prev").type(BOOLEAN).description("이전 페이지 이동 가능 여부"),

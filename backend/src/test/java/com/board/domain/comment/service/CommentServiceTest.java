@@ -3,6 +3,7 @@ package com.board.domain.comment.service;
 import com.board.domain.comment.dto.CommentModifyRequest;
 import com.board.domain.comment.dto.CommentWriteRequest;
 import com.board.domain.comment.entity.Comment;
+import com.board.domain.comment.exception.AlreadyDeleteCommentException;
 import com.board.domain.comment.exception.CommentDeleteAccessDeniedException;
 import com.board.domain.comment.exception.CommentModifyAccessDeniedException;
 import com.board.domain.comment.exception.NotFoundCommentException;
@@ -36,7 +37,6 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.never;
 
@@ -192,6 +192,25 @@ class CommentServiceTest {
     }
 
     @Test
+    @DisplayName("이미 삭제된 댓글에 수정을 시도할 경우 예외가 발생한다")
+    void commentModifyAlreadyCommentDelete() {
+        CommentModifyRequest commentModifyRequest = new CommentModifyRequest("댓글");
+        Comment comment = Comment.builder()
+                .content("댓글")
+                .member(member)
+                .post(post)
+                .build();
+        comment.delete();
+
+        given(commentRepository.findCommentJoinFetchMember(anyLong(), anyLong())).willReturn(Optional.of(comment));
+
+        assertThatThrownBy(() -> commentService.commentModify(1L, 1L, commentModifyRequest, "yoon1234"))
+                .isInstanceOf(AlreadyDeleteCommentException.class);
+
+        then(commentRepository).should().findCommentJoinFetchMember(anyLong(), anyLong());
+    }
+
+    @Test
     @DisplayName("댓글을 삭제한다")
     void commentDelete() {
         Comment comment = Comment.builder()
@@ -201,12 +220,10 @@ class CommentServiceTest {
                 .build();
 
         given(commentRepository.findCommentJoinFetchMember(anyLong(), anyLong())).willReturn(Optional.of(comment));
-        willDoNothing().given(commentRepository).delete(any(Comment.class));
 
         commentService.commentDelete(1L, 1L, "yoon1234");
 
         then(commentRepository).should().findCommentJoinFetchMember(anyLong(), anyLong());
-        then(commentRepository).should().delete(any(Comment.class));
     }
 
     @Test
@@ -218,7 +235,6 @@ class CommentServiceTest {
                 .isInstanceOf(NotFoundCommentException.class);
 
         then(commentRepository).should().findCommentJoinFetchMember(anyLong(), anyLong());
-        then(commentRepository).should(never()).delete(any(Comment.class));
     }
 
     @Test
@@ -236,7 +252,24 @@ class CommentServiceTest {
                 .isInstanceOf(CommentDeleteAccessDeniedException.class);
 
         then(commentRepository).should().findCommentJoinFetchMember(anyLong(), anyLong());
-        then(commentRepository).should(never()).delete(any(Comment.class));
+    }
+
+    @Test
+    @DisplayName("이미 삭제된 댓글에 삭제를 시도할 경우 예외가 발생한다")
+    void commentDeleteAlreadyDeleteComment() {
+        Comment comment = Comment.builder()
+                .content("댓글")
+                .member(member)
+                .post(post)
+                .build();
+        comment.delete();
+
+        given(commentRepository.findCommentJoinFetchMember(anyLong(), anyLong())).willReturn(Optional.of(comment));
+
+        assertThatThrownBy(() -> commentService.commentDelete(1L, 1L, "yoon1234"))
+                .isInstanceOf(AlreadyDeleteCommentException.class);
+
+        then(commentRepository).should().findCommentJoinFetchMember(anyLong(), anyLong());
     }
 
     @Test

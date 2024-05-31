@@ -22,6 +22,7 @@ public enum ErrorType {
     NOT_FOUND_MEMBER("E404001", HttpStatus.NOT_FOUND.value(), "회원을 찾을 수 없습니다."),
     NOT_FOUND_POST("E404002", HttpStatus.NOT_FOUND.value(), "게시글을 찾을 수 없습니다."),
     NOT_FOUND_COMMENT("E404003", HttpStatus.NOT_FOUND.value(), "댓글을 찾을 수 없습니다."),
+    ALREADY_COMMENT_DELETE("E404004", HttpStatus.NOT_FOUND.value(), "이미 삭제된 댓글입니다."),
     DUPLICATE_NICKNAME("E409001", HttpStatus.CONFLICT.value(), "사용 중인 닉네임입니다."),
     DUPLICATE_USERNAME("E409002", HttpStatus.CONFLICT.value(), "사용 중인 아이디입니다.");
 

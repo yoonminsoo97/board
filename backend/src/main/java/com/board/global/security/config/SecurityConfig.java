@@ -82,8 +82,8 @@ public class SecurityConfig {
                                 "/api/members/profile/comments",
                                 "/api/members/profile/nickname").hasRole(ROLE_MEMBER)
                         .requestMatchers(HttpMethod.POST,
-                                "/api/posts/write",
-                                "/api/posts/*/comments/write",
+                                "/api/posts",
+                                "/api/posts/*/comments",
                                 "/api/posts/*/comments/*/replies").hasRole(ROLE_MEMBER)
                         .requestMatchers(HttpMethod.PUT,
                                 "/api/members/profile/password",
