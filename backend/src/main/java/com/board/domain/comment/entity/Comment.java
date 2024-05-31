@@ -39,7 +39,7 @@ public class Comment extends BaseEntity {
     private String content;
 
     @Column(nullable = false)
-    private boolean delete;
+    private boolean isDelete;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
@@ -62,7 +62,7 @@ public class Comment extends BaseEntity {
         this.content = content;
         this.member = member;
         this.reference = reference;
-        this.delete = false;
+        this.isDelete = false;
         setPost(post);
     }
 
@@ -76,7 +76,7 @@ public class Comment extends BaseEntity {
     }
 
     public void delete() {
-        this.delete = true;
+        this.isDelete = true;
     }
 
     public boolean isOwner(String loginUsername) {
