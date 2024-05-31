@@ -32,49 +32,49 @@ public class PostController {
     private final PostService postService;
 
     @Secured("ROLE_MEMBER")
-    @PostMapping("/write")
+    @PostMapping
     public ResponseEntity<ApiResponse<Void>> postWrite(@RequestBody @Valid PostWriteRequest postWriteRequest,
-                                                 @AuthenticationPrincipal String username) {
+                                                       @AuthenticationPrincipal String username) {
         postService.postWrite(postWriteRequest, username);
         return ResponseEntity.ok().body(ApiResponse.success());
     }
 
-    @GetMapping("/{postNumber}")
-    public ResponseEntity<ApiResponse<PostDetailResponse>> postDetail(@PathVariable("postNumber") Long postNumber) {
-        PostDetailResponse postDetailResponse = postService.postDetail(postNumber);
+    @GetMapping("/{postId}")
+    public ResponseEntity<ApiResponse<PostDetailResponse>> postDetail(@PathVariable("postId") Long postId) {
+        PostDetailResponse postDetailResponse = postService.postDetail(postId);
         return ResponseEntity.ok().body(ApiResponse.success(postDetailResponse));
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<PostListResponse>> postList(@RequestParam("page") int pageNumber) {
-        pageNumber = pageNumber <= 0 ? 0 : pageNumber - 1;
-        PostListResponse postListResponse = postService.postList(pageNumber);
+    public ResponseEntity<ApiResponse<PostListResponse>> postList(@RequestParam("page") int page) {
+        page = page <= 0 ? 0 : page - 1;
+        PostListResponse postListResponse = postService.postList(page);
         return ResponseEntity.ok().body(ApiResponse.success(postListResponse));
     }
 
     @GetMapping("/search")
     public ResponseEntity<ApiResponse<PostListResponse>> postListSearch(@RequestParam("page") int page,
-                                                           @RequestParam("type") String type,
-                                                           @RequestParam("keyword") String keyword) {
+                                                                        @RequestParam("type") String type,
+                                                                        @RequestParam("keyword") String keyword) {
         page = page <= 0 ? 0 : page - 1;
         PostListResponse postListResponse = postService.postListSearch(page, type, keyword);
         return ResponseEntity.ok().body(ApiResponse.success(postListResponse));
     }
 
     @Secured("ROLE_MEMBER")
-    @PutMapping("/{postNumber}")
-    public ResponseEntity<ApiResponse<Void>> postModify(@PathVariable("postNumber") Long postNumber,
-                                           @RequestBody @Valid PostModifyRequest postModifyRequest,
-                                           @AuthenticationPrincipal String loginUsername) {
-        postService.postModify(postNumber, postModifyRequest, loginUsername);
+    @PutMapping("/{postId}")
+    public ResponseEntity<ApiResponse<Void>> postModify(@PathVariable("postId") Long postId,
+                                                        @RequestBody @Valid PostModifyRequest postModifyRequest,
+                                                        @AuthenticationPrincipal String username) {
+        postService.postModify(postId, postModifyRequest, username);
         return ResponseEntity.ok().body(ApiResponse.success());
     }
 
     @Secured("ROLE_MEMBER")
-    @DeleteMapping("/{postNumber}")
-    public ResponseEntity<ApiResponse<Void>> postDelete(@PathVariable("postNumber") Long postNumber,
-                                           @AuthenticationPrincipal String loginUsername) {
-        postService.postDelete(postNumber, loginUsername);
+    @DeleteMapping("/{postId}")
+    public ResponseEntity<ApiResponse<Void>> postDelete(@PathVariable("postId") Long postId,
+                                                        @AuthenticationPrincipal String username) {
+        postService.postDelete(postId, username);
         return ResponseEntity.ok().body(ApiResponse.success());
     }
 

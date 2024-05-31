@@ -63,7 +63,7 @@ class PostControllerTest extends RestDocsTestSupport {
         given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
         willDoNothing().given(postService).postWrite(any(PostWriteRequest.class), anyString());
 
-        mockMvc.perform(post("/api/posts/write")
+        mockMvc.perform(post("/api/posts")
                         .header("Authorization", "Bearer access-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(postWriteRequest))
@@ -94,7 +94,7 @@ class PostControllerTest extends RestDocsTestSupport {
         given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
         willDoNothing().given(postService).postWrite(any(PostWriteRequest.class), anyString());
 
-        mockMvc.perform(post("/api/posts/write")
+        mockMvc.perform(post("/api/posts")
                         .header("Authorization", "Bearer access-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidPostWriteRequest))
@@ -102,7 +102,7 @@ class PostControllerTest extends RestDocsTestSupport {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("fail"))
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.result.path").value("/api/posts/write"))
+                .andExpect(jsonPath("$.result.path").value("/api/posts"))
                 .andExpect(jsonPath("$.result.error.code").value("E400001"))
                 .andExpect(jsonPath("$.result.error.message").value("입력값이 잘못되었습니다."))
                 .andExpect(jsonPath("$.result.error.fieldErrors[0].field").value("title"))
@@ -133,23 +133,23 @@ class PostControllerTest extends RestDocsTestSupport {
 
         given(postService.postDetail(anyLong())).willReturn(postDetailResponse);
 
-        mockMvc.perform(get("/api/posts/{postNumber}", 1))
+        mockMvc.perform(get("/api/posts/{postId}", 1))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("success"))
                 .andExpect(jsonPath("$.status").value(200))
-                .andExpect(jsonPath("$.result.postNumber").value(1))
+                .andExpect(jsonPath("$.result.postId").value(1))
                 .andExpect(jsonPath("$.result.title").value("제목"))
                 .andExpect(jsonPath("$.result.writer").value("yoonkun"))
                 .andExpect(jsonPath("$.result.content").value("내용"))
-                .andExpect(jsonPath("$.result.createdAt").value("2024.06.17"))
+                .andExpect(jsonPath("$.result.createdAt").value("2024-06-17T00:00:00"))
                 .andDo(restDocs.document(
                         pathParameters(
-                                parameterWithName("postNumber").description("게시글 번호")
+                                parameterWithName("postId").description("게시글 번호")
                         ),
                         responseFields(
                                 commonSuccessResponse())
                                 .and(
-                                        fieldWithPath("result.postNumber").description("게시글 번호"),
+                                        fieldWithPath("result.postId").description("게시글 번호"),
                                         fieldWithPath("result.title").description("게시글 제목"),
                                         fieldWithPath("result.writer").description("게시글 작성자"),
                                         fieldWithPath("result.content").description("게시글 내용"),
@@ -163,7 +163,7 @@ class PostControllerTest extends RestDocsTestSupport {
     void postDetailNotFoundPost() throws Exception {
         willThrow(new NotFoundPostException()).given(postService).postDetail(anyLong());
 
-        mockMvc.perform(get("/api/posts/{postNumber}", 1))
+        mockMvc.perform(get("/api/posts/{postId}", 1))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("fail"))
                 .andExpect(jsonPath("$.status").value(404))
@@ -173,7 +173,7 @@ class PostControllerTest extends RestDocsTestSupport {
                 .andExpect(jsonPath("$.result.error.fieldErrors").isEmpty())
                 .andDo(restDocs.document(
                         pathParameters(
-                                parameterWithName("postNumber").description("게시글 번호")
+                                parameterWithName("postId").description("게시글 번호")
                         ),
                         responseFields(
                                 commonErrorResponse()
@@ -197,12 +197,12 @@ class PostControllerTest extends RestDocsTestSupport {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("success"))
                 .andExpect(jsonPath("$.status").value(200))
-                .andExpect(jsonPath("$.result.posts[0].postNumber").value(1))
+                .andExpect(jsonPath("$.result.posts[0].postId").value(1))
                 .andExpect(jsonPath("$.result.posts[0].title").value("제목"))
                 .andExpect(jsonPath("$.result.posts[0].writer").value("작성자"))
                 .andExpect(jsonPath("$.result.posts[0].commentCount").value(5))
-                .andExpect(jsonPath("$.result.posts[0].createdAt").value("2024.06.17"))
-                .andExpect(jsonPath("$.result.pageNumber").value(1))
+                .andExpect(jsonPath("$.result.posts[0].createdAt").value("2024-06-17T00:00:00"))
+                .andExpect(jsonPath("$.result.page").value(1))
                 .andExpect(jsonPath("$.result.totalPages").value(1))
                 .andExpect(jsonPath("$.result.totalElements").value(1))
                 .andExpect(jsonPath("$.result.prev").value(false))
@@ -217,12 +217,12 @@ class PostControllerTest extends RestDocsTestSupport {
                                 commonSuccessResponse())
                                 .and(
                                         fieldWithPath("result.posts").type(ARRAY).description("게시글 목록"),
-                                        fieldWithPath("result.posts[].postNumber").type(NUMBER).description("게시글 번호"),
+                                        fieldWithPath("result.posts[].postId").type(NUMBER).description("게시글 번호"),
                                         fieldWithPath("result.posts[].title").type(STRING).description("게시글 제목"),
                                         fieldWithPath("result.posts[].writer").type(STRING).description("게시글 제목"),
                                         fieldWithPath("result.posts[].commentCount").type(NUMBER).description("댓글 개수"),
                                         fieldWithPath("result.posts[].createdAt").type(STRING).description("게시글 제목"),
-                                        fieldWithPath("result.pageNumber").type(NUMBER).description("페이지 번호"),
+                                        fieldWithPath("result.page").type(NUMBER).description("페이지 번호"),
                                         fieldWithPath("result.totalPages").type(NUMBER).description("전체 페이지 개수"),
                                         fieldWithPath("result.totalElements").type(NUMBER).description("전체 게시글 개수"),
                                         fieldWithPath("result.prev").type(BOOLEAN).description("이전 페이지 이동 가능 여부"),
@@ -251,12 +251,12 @@ class PostControllerTest extends RestDocsTestSupport {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("success"))
                 .andExpect(jsonPath("$.status").value(200))
-                .andExpect(jsonPath("$.result.posts[0].postNumber").value(1))
+                .andExpect(jsonPath("$.result.posts[0].postId").value(1))
                 .andExpect(jsonPath("$.result.posts[0].title").value("제목"))
                 .andExpect(jsonPath("$.result.posts[0].writer").value("작성자"))
                 .andExpect(jsonPath("$.result.posts[0].commentCount").value(5))
-                .andExpect(jsonPath("$.result.posts[0].createdAt").value("2024.06.17"))
-                .andExpect(jsonPath("$.result.pageNumber").value(1))
+                .andExpect(jsonPath("$.result.posts[0].createdAt").value("2024-06-17T00:00:00"))
+                .andExpect(jsonPath("$.result.page").value(1))
                 .andExpect(jsonPath("$.result.totalPages").value(1))
                 .andExpect(jsonPath("$.result.totalElements").value(1))
                 .andExpect(jsonPath("$.result.prev").value(false))
@@ -273,12 +273,12 @@ class PostControllerTest extends RestDocsTestSupport {
                                 commonSuccessResponse())
                                 .and(
                                         fieldWithPath("result.posts").type(ARRAY).description("게시글 목록"),
-                                        fieldWithPath("result.posts[].postNumber").type(NUMBER).description("게시글 번호"),
+                                        fieldWithPath("result.posts[].postId").type(NUMBER).description("게시글 번호"),
                                         fieldWithPath("result.posts[].title").type(STRING).description("게시글 제목"),
                                         fieldWithPath("result.posts[].writer").type(STRING).description("게시글 제목"),
                                         fieldWithPath("result.posts[].commentCount").type(NUMBER).description("댓글 개수"),
                                         fieldWithPath("result.posts[].createdAt").type(STRING).description("게시글 제목"),
-                                        fieldWithPath("result.pageNumber").type(NUMBER).description("페이지 번호"),
+                                        fieldWithPath("result.page").type(NUMBER).description("페이지 번호"),
                                         fieldWithPath("result.totalPages").type(NUMBER).description("전체 페이지 개수"),
                                         fieldWithPath("result.totalElements").type(NUMBER).description("전체 게시글 개수"),
                                         fieldWithPath("result.prev").type(BOOLEAN).description("이전 페이지 이동 가능 여부"),
@@ -297,7 +297,7 @@ class PostControllerTest extends RestDocsTestSupport {
         given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
         willDoNothing().given(postService).postModify(anyLong(), any(PostModifyRequest.class), anyString());
 
-        mockMvc.perform(put("/api/posts/{postNumber}", 1)
+        mockMvc.perform(put("/api/posts/{postId}", 1)
                         .header("Authorization", "Bearer access-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(postModifyRequest))
@@ -311,7 +311,7 @@ class PostControllerTest extends RestDocsTestSupport {
                                 headerWithName("Authorization").description("액세스 토큰")
                         ),
                         pathParameters(
-                                parameterWithName("postNumber").description("게시글 번호")
+                                parameterWithName("postId").description("게시글 번호")
                         ),
                         requestFields(
                                 fieldWithPath("title").type(STRING).description("제목"),
@@ -331,7 +331,7 @@ class PostControllerTest extends RestDocsTestSupport {
         given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
         willDoNothing().given(postService).postModify(anyLong(), any(PostModifyRequest.class), anyString());
 
-        mockMvc.perform(put("/api/posts/{postNumber}", 1)
+        mockMvc.perform(put("/api/posts/{postId}", 1)
                         .header("Authorization", "Bearer access-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidPostModifyRequest))
@@ -350,7 +350,7 @@ class PostControllerTest extends RestDocsTestSupport {
                                 headerWithName("Authorization").description("액세스 토큰")
                         ),
                         pathParameters(
-                                parameterWithName("postNumber").description("게시글 번호")
+                                parameterWithName("postId").description("게시글 번호")
                         ),
                         requestFields(
                                 fieldWithPath("title").type(STRING).description("제목"),
@@ -374,7 +374,7 @@ class PostControllerTest extends RestDocsTestSupport {
         given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
         willThrow(new NotFoundPostException()).given(postService).postModify(anyLong(), any(PostModifyRequest.class), anyString());
 
-        mockMvc.perform(put("/api/posts/{postNumber}", 1)
+        mockMvc.perform(put("/api/posts/{postId}", 1)
                         .header("Authorization", "Bearer access-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(postModifyRequest))
@@ -391,7 +391,7 @@ class PostControllerTest extends RestDocsTestSupport {
                                 headerWithName("Authorization").description("Access Token")
                         ),
                         pathParameters(
-                                parameterWithName("postNumber").description("게시글 번호")
+                                parameterWithName("postId").description("게시글 번호")
                         ),
                         requestFields(
                                 fieldWithPath("title").type(STRING).description("제목"),
@@ -411,7 +411,7 @@ class PostControllerTest extends RestDocsTestSupport {
         given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
         willThrow(new PostModifyAccessDeniedException()).given(postService).postModify(anyLong(), any(PostModifyRequest.class), anyString());
 
-        mockMvc.perform(put("/api/posts/{postNumber}", 1)
+        mockMvc.perform(put("/api/posts/{postId}", 1)
                         .header("Authorization", "Bearer access-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(postModifyRequest))
@@ -428,7 +428,7 @@ class PostControllerTest extends RestDocsTestSupport {
                                 headerWithName("Authorization").description("Access Token")
                         ),
                         pathParameters(
-                                parameterWithName("postNumber").description("게시글 번호")
+                                parameterWithName("postId").description("게시글 번호")
                         ),
                         requestFields(
                                 fieldWithPath("title").type(STRING).description("제목"),
@@ -446,7 +446,7 @@ class PostControllerTest extends RestDocsTestSupport {
         given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
         willDoNothing().given(postService).postDelete(anyLong(), anyString());
 
-        mockMvc.perform(delete("/api/posts/{postNumber}", 1)
+        mockMvc.perform(delete("/api/posts/{postId}", 1)
                         .header("Authorization", "Bearer access-token")
                 )
                 .andExpect(status().isOk())
@@ -458,7 +458,7 @@ class PostControllerTest extends RestDocsTestSupport {
                                 headerWithName("Authorization").description("액세스 토큰")
                         ),
                         pathParameters(
-                                parameterWithName("postNumber").description("게시글 번호")
+                                parameterWithName("postId").description("게시글 번호")
                         ),
                         responseFields(
                                 commonSuccessResponse()
@@ -472,7 +472,7 @@ class PostControllerTest extends RestDocsTestSupport {
         given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
         willThrow(new NotFoundPostException()).given(postService).postDelete(anyLong(), anyString());
 
-        mockMvc.perform(delete("/api/posts/{postNumber}", 1)
+        mockMvc.perform(delete("/api/posts/{postId}", 1)
                         .header("Authorization", "Bearer access-token")
                 )
                 .andExpect(status().isNotFound())
@@ -487,7 +487,7 @@ class PostControllerTest extends RestDocsTestSupport {
                                 headerWithName("Authorization").description("액세스 토큰")
                         ),
                         pathParameters(
-                                parameterWithName("postNumber").description("게시글 번호")
+                                parameterWithName("postId").description("게시글 번호")
                         ),
                         responseFields(
                                 commonErrorResponse()
@@ -501,7 +501,7 @@ class PostControllerTest extends RestDocsTestSupport {
         given(tokenService.tokenPayload(anyString())).willReturn(mockClaims());
         willThrow(new PostDeleteAccessDeniedException()).given(postService).postDelete(anyLong(), anyString());
 
-        mockMvc.perform(delete("/api/posts/{postNumber}", 1)
+        mockMvc.perform(delete("/api/posts/{postId}", 1)
                         .header("Authorization", "Bearer access-token")
                 )
                 .andExpect(status().isForbidden())
@@ -516,7 +516,7 @@ class PostControllerTest extends RestDocsTestSupport {
                                 headerWithName("Authorization").description("액세스 토큰")
                         ),
                         pathParameters(
-                                parameterWithName("postNumber").description("게시글 번호")
+                                parameterWithName("postId").description("게시글 번호")
                         ),
                         responseFields(
                                 commonErrorResponse()
