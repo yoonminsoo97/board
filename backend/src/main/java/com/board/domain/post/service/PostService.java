@@ -4,7 +4,6 @@ import com.board.domain.member.entity.Member;
 import com.board.domain.member.exception.NotFoundMemberException;
 import com.board.domain.member.repository.MemberRepository;
 import com.board.domain.post.dto.PostDetailResponse;
-import com.board.domain.post.dto.PostListItem;
 import com.board.domain.post.dto.PostListResponse;
 import com.board.domain.post.dto.PostModifyRequest;
 import com.board.domain.post.dto.PostWriteRequest;
@@ -16,10 +15,7 @@ import com.board.domain.post.repository.PostRepository;
 
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,8 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class PostService {
 
-    private static final int PAGE_SIZE = 10;
-    private static final String PROPERTIES = "id";
+    private static final int POST_PER_PAGE = 10;
 
     private final PostRepository postRepository;
     private final MemberRepository memberRepository;
@@ -46,39 +41,35 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
-    public PostDetailResponse postDetail(Long postNumber) {
-        Post post = postRepository.findById(postNumber)
+    public PostDetailResponse postDetail(Long postId) {
+        Post post = postRepository.findById(postId)
                 .orElseThrow(NotFoundPostException::new);
-        return new PostDetailResponse(post);
+        return PostDetailResponse.of(post);
     }
 
-    @Transactional
-    public PostListResponse postList(int pageNumber) {
-        Pageable pageable = PageRequest.of(pageNumber, PAGE_SIZE, Sort.Direction.DESC, PROPERTIES);
-        Page<PostListItem> postPage = postRepository.findPosts(pageable);
-        return new PostListResponse(postPage);
+    @Transactional(readOnly = true)
+    public PostListResponse postList(int page) {
+        return postRepository.findPosts(PageRequest.of(page, POST_PER_PAGE));
     }
 
     @Transactional(readOnly = true)
     public PostListResponse postListSearch(int page, String type, String keyword) {
-        Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.Direction.DESC, PROPERTIES);
-        Page<PostListItem> postPage = postRepository.findPostsSearch(pageable, type, keyword);
-        return new PostListResponse(postPage);
+        return postRepository.findSearchPosts(PageRequest.of(page, POST_PER_PAGE), type, keyword);
     }
 
     @Transactional
-    public void postModify(Long postNumber, PostModifyRequest postModifyRequest, String loginUsername) {
-        Post post = postRepository.findPostJoinFetch(postNumber)
+    public void postModify(Long postId, PostModifyRequest postModifyRequest, String username) {
+        Post post = postRepository.findPostJoinFetch(postId)
                 .orElseThrow(NotFoundPostException::new);
-        if (!post.isOwner(loginUsername)) {
+        if (!post.isOwner(username)) {
             throw new PostModifyAccessDeniedException();
         }
         post.modify(postModifyRequest.getTitle(), postModifyRequest.getContent());
     }
 
     @Transactional
-    public void postDelete(Long postNumber, String loginUsername) {
-        Post post = postRepository.findPostJoinFetch(postNumber)
+    public void postDelete(Long postId, String loginUsername) {
+        Post post = postRepository.findPostJoinFetch(postId)
                 .orElseThrow(NotFoundPostException::new);
         if (!post.isOwner(loginUsername)) {
             throw new PostDeleteAccessDeniedException();
@@ -88,9 +79,7 @@ public class PostService {
 
     @Transactional(readOnly = true)
     public PostListResponse postListFromMember(int page, String username) {
-        Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.Direction.DESC, PROPERTIES);
-        Page<PostListItem> postPage = postRepository.findPostsFromMember(pageable, username);
-        return new PostListResponse(postPage);
+        return null;
     }
 
 }
