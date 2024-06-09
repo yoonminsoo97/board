@@ -28,7 +28,8 @@ public class MemberLogoutSuccessHandler implements LogoutSuccessHandler {
     public void onLogoutSuccess(HttpServletRequest request,
                                 HttpServletResponse response,
                                 Authentication authentication) throws IOException {
-        tokenService.tokenDelete(authentication.getName());
+        Long memberId = (Long) authentication.getPrincipal();
+        tokenService.deleteToken(memberId);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setStatus(HttpStatus.OK.value());
         objectMapper.writeValue(response.getOutputStream(), ApiResponse.success());
