@@ -29,13 +29,17 @@ public class Token {
     private String refreshToken;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id")
+    @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 
     @Builder
     public Token(String refreshToken, Member member) {
         this.refreshToken = refreshToken;
         this.member = member;
+    }
+
+    public void update(String refreshToken) {
+        this.refreshToken = refreshToken;
     }
 
 }
