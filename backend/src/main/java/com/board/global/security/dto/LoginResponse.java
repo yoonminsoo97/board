@@ -1,4 +1,4 @@
-package com.board.domain.token.dto;
+package com.board.global.security.dto;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -10,14 +10,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class TokenResponse {
+public class LoginResponse {
 
     private String accessToken;
-
-    public static TokenResponse of(String accessToken) {
-        return TokenResponse.builder()
-                .accessToken(accessToken)
-                .build();
-    }
+    private String refreshToken;
 
 }

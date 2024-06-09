@@ -1,10 +1,12 @@
-package com.board.domain.token.util;
+package com.board.global.security.support;
 
-import com.board.domain.token.exception.ExpiredTokenException;
-import com.board.domain.token.exception.InvalidTokenException;
+import com.board.global.security.exception.ExpiredTokenException;
+import com.board.global.security.exception.InvalidTokenException;
+import com.board.global.security.dto.LoginMember;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -19,38 +21,37 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 @Component
-public class JwtUtil {
+public class JwtManager {
 
     private final SecretKey secretKey;
     private final long accessTokenExpire;
     private final long refreshTokenExpire;
 
-    public JwtUtil(@Value("${jwt.secret-key}") String secretKey,
-                   @Value("${jwt.access-token.expire}") long accessTokenExpire,
-                   @Value("${jwt.refresh-token.expire}") long refreshTokenExpire) {
+    public JwtManager(@Value("${jwt.secret-key}") String secretKey,
+                      @Value("${jwt.access-token.expire}") long accessTokenExpire,
+                      @Value("${jwt.refresh-token.expire}") long refreshTokenExpire) {
         this.secretKey = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
         this.accessTokenExpire = accessTokenExpire;
         this.refreshTokenExpire = refreshTokenExpire;
     }
 
-    public String createAccessToken(String username, String nickname, String authority) {
+    public String createAccessToken(LoginMember loginMember) {
         Date iat = new Date();
         Date exp = new Date(iat.getTime() + accessTokenExpire);
         return Jwts.builder()
-                .subject(username)
-                .claim("nickname", nickname)
-                .claim("authority", authority)
+                .subject(String.valueOf(loginMember.getMemberId()))
+                .claim("nickname", loginMember.getNickname())
+                .claim("authority", loginMember.getAuthority())
                 .issuedAt(iat)
                 .expiration(exp)
                 .signWith(secretKey, Jwts.SIG.HS256)
                 .compact();
     }
 
-    public String createRefreshToken(String username) {
+    public String createRefreshToken() {
         Date iat = new Date();
         Date exp = new Date(iat.getTime() + refreshTokenExpire);
         return Jwts.builder()
-                .subject(username)
                 .issuedAt(iat)
                 .expiration(exp)
                 .signWith(secretKey, Jwts.SIG.HS256)
@@ -58,12 +59,15 @@ public class JwtUtil {
     }
 
     public Claims getPayload(String token) {
+        return validateParseClaims(token).getPayload();
+    }
+
+    private Jws<Claims> validateParseClaims(String token) {
         try {
             return Jwts.parser()
                     .verifyWith(secretKey)
                     .build()
-                    .parseSignedClaims(token)
-                    .getPayload();
+                    .parseSignedClaims(token);
         } catch (ExpiredJwtException e) {
             throw new ExpiredTokenException();
         } catch (JwtException | IllegalArgumentException e) {

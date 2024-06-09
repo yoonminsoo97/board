@@ -6,6 +6,7 @@ import com.board.global.security.handler.JwtAuthenticationEntryPoint;
 import com.board.global.security.handler.MemberLoginFailureHandler;
 import com.board.global.security.handler.MemberLoginSuccessHandler;
 import com.board.global.security.handler.MemberLogoutSuccessHandler;
+import com.board.global.security.support.JwtManager;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -38,6 +39,7 @@ public class SecurityConfig {
 
     private final ObjectMapper objectMapper;
     private final TokenService tokenService;
+    private final JwtManager jwtManager;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
@@ -75,7 +77,7 @@ public class SecurityConfig {
                                 "/api/posts/*/comments").permitAll()
                         .requestMatchers(HttpMethod.POST,
                                 "/api/members/signup",
-                                "/api/tokens/reissue").permitAll()
+                                "/api/token/reissue").permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/api/members/profile",
                                 "/api/members/profile/posts",
@@ -104,7 +106,7 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationSuccessHandler memberLoginSuccessHandler() {
-        return new MemberLoginSuccessHandler(objectMapper, tokenService);
+        return new MemberLoginSuccessHandler(objectMapper, tokenService, jwtManager);
     }
 
     @Bean
@@ -124,7 +126,7 @@ public class SecurityConfig {
 
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
-        return new JwtAuthenticationFilter(tokenService, authenticationEntryPoint());
+        return new JwtAuthenticationFilter(authenticationEntryPoint(), jwtManager);
     }
 
 }

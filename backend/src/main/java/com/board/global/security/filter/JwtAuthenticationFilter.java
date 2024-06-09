@@ -1,6 +1,6 @@
 package com.board.global.security.filter;
 
-import com.board.domain.token.service.TokenService;
+import com.board.global.security.support.JwtManager;
 
 import io.jsonwebtoken.Claims;
 
@@ -23,6 +23,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+
 import java.util.Arrays;
 
 import static org.springframework.security.core.authority.AuthorityUtils.createAuthorityList;
@@ -30,8 +31,8 @@ import static org.springframework.security.core.authority.AuthorityUtils.createA
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final TokenService tokenService;
     private final AuthenticationEntryPoint authenticationEntryPoint;
+    private final JwtManager jwtManager;
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request,
@@ -39,7 +40,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     @NonNull FilterChain filterChain) throws ServletException, IOException {
         try {
             String token = extractToken(request);
-            Claims payload = tokenService.tokenPayload(token);
+            Claims payload = jwtManager.getPayload(token);
             Authentication authentication = createAuthentication(payload);
             SecurityContextHolder.getContext().setAuthentication(authentication);
             filterChain.doFilter(request, response);
@@ -57,9 +58,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private Authentication createAuthentication(Claims payload) {
-        String username = payload.getSubject();
+        Long memberId = Long.valueOf(payload.getSubject());
         String authority = payload.get("authority", String.class);
-        return UsernamePasswordAuthenticationToken.authenticated(username, null, createAuthorityList(authority));
+        return UsernamePasswordAuthenticationToken
+                .authenticated(memberId, null, createAuthorityList(authority));
     }
 
     @Override
@@ -79,7 +81,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         POST_LIST("GET", "/api/posts"),
         POST_LIST_SEARCH("GET", "/api/posts/search"),
         COMMENT_LIST("GET", "/api/posts/*/comments"),
-        REISSUE_ACCESS_TOKEN("POST", "/api/tokens/reissue");
+        REISSUE_ACCESS_TOKEN("POST", "/api/token/reissue");
 
         private final String method;
         private final String pattern;

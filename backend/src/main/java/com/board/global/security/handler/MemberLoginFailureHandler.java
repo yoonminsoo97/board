@@ -15,7 +15,6 @@ import org.springframework.http.MediaType;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
-import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 
@@ -32,18 +31,10 @@ public class MemberLoginFailureHandler implements AuthenticationFailureHandler {
         if (exception instanceof BadCredentialsException) {
             errorType = ErrorType.BAD_CREDENTIALS;
         }
-        ErrorResponse errorResponse = ErrorResponse.of(errorType, requestPath(request));
+        ErrorResponse errorResponse = ErrorResponse.of(errorType);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setStatus(errorType.getStatus());
-        objectMapper.writeValue(response.getOutputStream(), ApiResponse.fail(errorType.getStatus(), errorResponse));
-    }
-
-    private String requestPath(HttpServletRequest request) {
-        String queryString = request.getQueryString();
-        if (StringUtils.hasText(queryString)) {
-            return request.getRequestURI() + "?" + queryString;
-        }
-        return request.getRequestURI();
+        objectMapper.writeValue(response.getOutputStream(), ApiResponse.fail(errorResponse));
     }
 
 }

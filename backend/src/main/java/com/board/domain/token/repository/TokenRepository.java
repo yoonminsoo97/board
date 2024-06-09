@@ -10,10 +10,9 @@ import java.util.Optional;
 
 public interface TokenRepository extends JpaRepository<Token, Long> {
 
-    @Query("SELECT t FROM Token AS t WHERE t.member.username = :username")
-    Optional<Token> findByMemberUsername(@Param("username") String username);
+    Optional<Token> findByMemberId(Long memberId);
 
-    @Query("SELECT t FROM Token AS t JOIN FETCH t.member AS m WHERE m.username = :username")
-    Optional<Token> findTokenJoinFetchMember(@Param("username") String username);
+    @Query("SELECT t FROM Token AS t JOIN FETCH t.member WHERE t.refreshToken = :refreshToken")
+    Optional<Token> findByRefreshTokenJoinFetchMember(@Param("refreshToken") String refreshToken);
 
 }
