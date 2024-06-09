@@ -1,5 +1,6 @@
 package com.board.domain.token.controller;
 
+import com.board.domain.token.dto.TokenResponse;
 import com.board.domain.token.service.TokenService;
 import com.board.global.common.dto.ApiResponse;
 
@@ -13,17 +14,17 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/tokens")
+@RequestMapping("/api/token")
 @RequiredArgsConstructor
 public class TokenController {
 
     private final TokenService tokenService;
 
-    @PostMapping(value = "/reissue", headers = "Authorization")
-    public ResponseEntity<ApiResponse<String>> reIssueAccessToken(@RequestHeader("Authorization") String header) {
+    @PostMapping("/reissue")
+    public ResponseEntity<ApiResponse<TokenResponse>> reIssueAccessToken(@RequestHeader("Authorization") String header) {
         String refreshToken = extractRefreshToken(header);
-        String accessToken = tokenService.reIssueAccessToken(refreshToken);
-        return ResponseEntity.ok().body(ApiResponse.success(accessToken));
+        TokenResponse tokenResponse = tokenService.reIssueAccessToken(refreshToken);
+        return ResponseEntity.ok().body(ApiResponse.success(tokenResponse));
     }
 
     private String extractRefreshToken(String header) {
