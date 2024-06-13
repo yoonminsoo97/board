@@ -2,6 +2,7 @@ package com.board.domain.member.service;
 
 import com.board.domain.member.dto.MemberNicknameRequest;
 import com.board.domain.member.dto.MemberPasswordRequest;
+import com.board.domain.member.dto.MemberProfileResponse;
 import com.board.domain.member.dto.MemberSignupRequest;
 import com.board.domain.member.entity.Member;
 import com.board.domain.member.exception.DuplicateNicknameException;
@@ -9,34 +10,42 @@ import com.board.domain.member.exception.DuplicateUsernameException;
 import com.board.domain.member.exception.NotFoundMemberException;
 import com.board.domain.member.exception.PasswordMismatchException;
 import com.board.domain.member.repository.MemberRepository;
+import com.board.domain.post.dto.PostListResponse;
+import com.board.domain.post.repository.PostRepository;
+import com.board.support.ServiceTest;
 
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.util.Optional;
+import java.time.LocalDateTime;
+import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.never;
 
-@ExtendWith(MockitoExtension.class)
-class MemberServiceTest {
+class MemberServiceTest extends ServiceTest {
 
     @Mock
     private MemberRepository memberRepository;
+
+    @Mock
+    private PostRepository postRepository;
 
     @Mock
     private PasswordEncoder passwordEncoder;
@@ -44,242 +53,379 @@ class MemberServiceTest {
     @InjectMocks
     private MemberService memberService;
 
-    @Test
-    @DisplayName("닉네임 중복 확인을 한다")
-    void memberNicknameExists() {
-        String targetNickname = "yoonkun";
+    @Nested
+    @DisplayName("닉네임 중복 확인")
+    class MemberNicknameExistsTest {
 
-        given(memberRepository.existsMemberByNickname(anyString())).willReturn(false);
+        @Test
+        @DisplayName("닉네임이 중복되지 않는다")
+        void memberNicknameExists() {
+            given(memberRepository.existsByNickname(anyString())).willReturn(false);
 
-        memberService.memberNicknameExists(targetNickname);
+            memberService.memberNicknameExists("yoonkun");
 
-        then(memberRepository).should().existsMemberByNickname(anyString());
+            then(memberRepository).should().existsByNickname(anyString());
+        }
+
+        @Test
+        @DisplayName("닉네임이 중복되면 예외가 발생한다")
+        void memberNicknameExistsDuplicateNickname() {
+            given(memberRepository.existsByNickname(anyString())).willReturn(true);
+
+            assertThatThrownBy(() -> memberService.memberNicknameExists("yoonkun"))
+                    .isInstanceOf(DuplicateNicknameException.class);
+
+            then(memberRepository).should().existsByNickname(anyString());
+        }
+
     }
 
-    @Test
-    @DisplayName("닉네임 중복 시 예외가 발생한다")
-    void memberNicknameExists_duplicateNickname() {
-        String targetNickname = "yoonkun";
+    @Nested
+    @DisplayName("아이디 중복 확인")
+    class MemberUsernameExistsTest {
 
-        given(memberRepository.existsMemberByNickname(anyString())).willReturn(true);
+        @Test
+        @DisplayName("아이디가 중복되지 않는다")
+        void memberUsernameExists() {
+            given(memberRepository.existsByUsername(anyString())).willReturn(false);
 
-        assertThatThrownBy(() -> memberService.memberNicknameExists(targetNickname))
-                        .isInstanceOf(DuplicateNicknameException.class);
+            memberService.memberUsernameExists("yoonkun");
 
-        then(memberRepository).should().existsMemberByNickname(anyString());
+            then(memberRepository).should().existsByUsername(anyString());
+        }
+
+        @Test
+        @DisplayName("아이디가 중복되면 예외가 발생한다")
+        void memberUsernameExistsDuplicateUsername() {
+            given(memberRepository.existsByUsername(anyString())).willReturn(true);
+
+            assertThatThrownBy(() -> memberService.memberUsernameExists("yoonkun"))
+                    .isInstanceOf(DuplicateUsernameException.class);
+
+            then(memberRepository).should().existsByUsername(anyString());
+        }
+
     }
 
-    @Test
-    @DisplayName("아이디 중복 확인을 한다")
-    void memberUsernameExists() {
-        String targetUsername = "yoon1234";
+    @Nested
+    @DisplayName("회원가입")
+    class MemberSignupTest {
 
-        given(memberRepository.existsMemberByUsername(anyString())).willReturn(false);
+        @Test
+        @DisplayName("회원가입을 한다")
+        void memberSignup() {
+            MemberSignupRequest memberSignupRequest = MemberSignupRequest.builder()
+                    .nickname("yoonkun")
+                    .username("yoon1234")
+                    .password("12345678")
+                    .passwordConfirm("12345678")
+                    .build();
 
-        memberService.memberUsernameExists(targetUsername);
+            String encoded = new BCryptPasswordEncoder().encode("12345678");
 
-        then(memberRepository).should().existsMemberByUsername(anyString());
+            Member member = Member.builder()
+                    .nickname("yoonkun")
+                    .username("yoon1234")
+                    .password(encoded)
+                    .build();
+
+            given(memberRepository.existsByNickname(anyString())).willReturn(false);
+            given(memberRepository.existsByUsername(anyString())).willReturn(false);
+            given(passwordEncoder.encode(anyString())).willReturn(encoded);
+            given(memberRepository.save(any(Member.class))).willReturn(member);
+
+            memberService.memberSignup(memberSignupRequest);
+
+            then(memberRepository).should().existsByNickname(anyString());
+            then(memberRepository).should().existsByUsername(anyString());
+            then(passwordEncoder).should().encode(anyString());
+            then(memberRepository).should().save(any(Member.class));
+
+        }
+
+        @Test
+        @DisplayName("닉네임이 중복되면 예외가 발생한다")
+        void memberSignupDuplicateNickname() {
+            MemberSignupRequest memberSignupRequest = MemberSignupRequest.builder()
+                    .nickname("yoonkun")
+                    .username("yoon1234")
+                    .password("12345678")
+                    .passwordConfirm("12345678")
+                    .build();
+
+            given(memberRepository.existsByNickname(anyString())).willReturn(true);
+
+            assertThatThrownBy(() -> memberService.memberSignup(memberSignupRequest))
+                    .isInstanceOf(DuplicateNicknameException.class);
+
+            then(memberRepository).should().existsByNickname(anyString());
+            then(memberRepository).should(never()).existsByUsername(anyString());
+            then(passwordEncoder).should(never()).encode(anyString());
+            then(memberRepository).should(never()).save(any(Member.class));
+        }
+
+        @Test
+        @DisplayName("아이디가 중복되면 예외가 발생한다")
+        void memberSignupDuplicateUsername() {
+            MemberSignupRequest memberSignupRequest = MemberSignupRequest.builder()
+                    .nickname("yoonkun")
+                    .username("yoon1234")
+                    .password("12345678")
+                    .passwordConfirm("12345678")
+                    .build();
+
+            given(memberRepository.existsByNickname(anyString())).willReturn(false);
+            given(memberRepository.existsByUsername(anyString())).willReturn(true);
+
+            assertThatThrownBy(() -> memberService.memberSignup(memberSignupRequest))
+                    .isInstanceOf(DuplicateUsernameException.class);
+
+            then(memberRepository).should().existsByNickname(anyString());
+            then(memberRepository).should().existsByUsername(anyString());
+            then(passwordEncoder).should(never()).encode(anyString());
+            then(memberRepository).should(never()).save(any(Member.class));
+        }
+
+        @Test
+        @DisplayName("비밀번호와 비밀번호 확인이 일치하지 않으면 예외가 발생한다")
+        void memberSignupPassworndAndPasswordConfirmMismatch() {
+            MemberSignupRequest memberSignupRequest = MemberSignupRequest.builder()
+                    .nickname("yoonkun")
+                    .username("yoon1234")
+                    .password("12345678")
+                    .passwordConfirm("87654321")
+                    .build();
+
+            given(memberRepository.existsByNickname(anyString())).willReturn(false);
+            given(memberRepository.existsByUsername(anyString())).willReturn(false);
+
+            assertThatThrownBy(() -> memberService.memberSignup(memberSignupRequest))
+                    .isInstanceOf(PasswordMismatchException.class);
+
+            then(memberRepository).should().existsByNickname(anyString());
+            then(memberRepository).should().existsByUsername(anyString());
+            then(passwordEncoder).should(never()).encode(anyString());
+            then(memberRepository).should(never()).save(any(Member.class));
+        }
+
     }
 
-    @Test
-    @DisplayName("아이이 중복 시 예외가 발생한다")
-    void memberUsernameExists_duplicateUsername() {
-        String targetUsername = "yoon1234";
+    @Nested
+    @DisplayName("회원 상세정보")
+    class MemberProfileTest {
 
-        given(memberRepository.existsMemberByUsername(anyString())).willReturn(true);
+        @Test
+        @DisplayName("상제정보를 조회한다")
+        void memberProfile() {
+            Member member = Member.builder()
+                    .nickname("yoonkun")
+                    .username("yoon1234")
+                    .password(new BCryptPasswordEncoder().encode("12345678"))
+                    .build();
 
-        assertThatThrownBy(() -> memberService.memberUsernameExists(targetUsername))
-                .isInstanceOf(DuplicateUsernameException.class);
+            given(memberRepository.findByMemberId(anyLong())).willReturn(member);
 
-        then(memberRepository).should().existsMemberByUsername(anyString());
+            MemberProfileResponse memberProfileResponse = memberService.memberProfile(1L);
+
+            assertThat(memberProfileResponse.getNickname()).isEqualTo("yoonkun");
+            assertThat(memberProfileResponse.getUsername()).isEqualTo("yoon1234");
+            then(memberRepository).should().findByMemberId(anyLong());
+        }
+
+        @Test
+        @DisplayName("회원이 존재하지 않으면 에외가 발생한다")
+        void memberProfileNotFoundMember() {
+            willThrow(new NotFoundMemberException()).given(memberRepository).findByMemberId(anyLong());
+
+            assertThatThrownBy(() -> memberService.memberProfile(1L))
+                    .isInstanceOf(NotFoundMemberException.class);
+
+            then(memberRepository).should().findByMemberId(anyLong());
+        }
+
     }
 
-    @Test
-    @DisplayName("회원가입을 한다")
-    void memberSignup() {
-        MemberSignupRequest memberSignupRequest = new MemberSignupRequest("yoonkun", "yoon1234", "12345678", "12345678");
+    @Nested
+    @DisplayName("회원이 작성한 게시글 목록조회")
+    class MemberPostListTest {
 
-        String encoded = new BCryptPasswordEncoder().encode(memberSignupRequest.getPassword());
+        @Test
+        @DisplayName("회원이 작성한 게시글 목록을 조회한다")
+        void memberPostList() {
+            PostListResponse postListResponse = PostListResponse.builder()
+                    .posts(List.of(
+                            PostListResponse.PostItem.builder()
+                                    .postId(1L)
+                                    .title("title")
+                                    .writer("writer")
+                                    .commentCount(0)
+                                    .createdAt(LocalDateTime.of(2024, 6, 17, 0, 0))
+                                    .build()
+                    ))
+                    .page(1)
+                    .totalPages(1)
+                    .totalElements(1)
+                    .first(true)
+                    .last(true)
+                    .prev(false)
+                    .next(false)
+                    .build();
 
-        Member member = Member.builder()
-                .nickname(memberSignupRequest.getNickname())
-                .username(memberSignupRequest.getUsername())
-                .password(encoded)
-                .build();
+            given(postRepository.findPostMemberList(any(Pageable.class), anyLong())).willReturn(postListResponse);
 
-        given(memberRepository.existsMemberByNickname(anyString())).willReturn(false);
-        given(memberRepository.existsMemberByUsername(anyString())).willReturn(false);
-        given(passwordEncoder.encode(anyString())).willReturn(encoded);
-        given(memberRepository.save(any(Member.class))).willReturn(member);
+            PostListResponse response = memberService.memberPostList(0, 1L);
 
-        memberService.memberSignup(memberSignupRequest);
+            assertThat(response.getPosts().get(0).getPostId()).isEqualTo(1L);
+            assertThat(response.getPage()).isEqualTo(1);
+            assertThat(response.getTotalPages()).isEqualTo(1);
+            assertThat(response.getTotalElements()).isEqualTo(1);
+            assertThat(response.isFirst()).isTrue();
+            assertThat(response.isLast()).isTrue();
+            assertThat(response.isPrev()).isFalse();
+            assertThat(response.isNext()).isFalse();
+            then(postRepository).should().findPostMemberList(any(Pageable.class), anyLong());
+        }
 
-        then(memberRepository).should().existsMemberByNickname(anyString());
-        then(memberRepository).should().existsMemberByUsername(anyString());
-        then(passwordEncoder).should().encode(anyString());
-        then(memberRepository).should().save(any(Member.class));
     }
 
-    @Test
-    @DisplayName("회원가입 시 비밀번호가 일치하지 않으면 예외가 발생한다")
-    void memberSignup_passwordMismatch() {
-        MemberSignupRequest memberSignupRequest = new MemberSignupRequest("yoonkun", "yoon1234", "12345678", "12345679");
+    @Nested
+    @DisplayName("회원 닉네임 변경")
+    class MemberNicknameChangeTest {
 
-        given(memberRepository.existsMemberByNickname(anyString())).willReturn(false);
-        given(memberRepository.existsMemberByUsername(anyString())).willReturn(false);
+        @Test
+        @DisplayName("닉네임을 변경한다")
+        void memberNicknameChange() {
+            MemberNicknameRequest memberNicknameRequest = MemberNicknameRequest.builder()
+                    .nickname("newNickname")
+                    .build();
 
-        assertThatThrownBy(() -> memberService.memberSignup(memberSignupRequest))
-                .isInstanceOf(PasswordMismatchException.class);
+            Member member = Member.builder()
+                    .nickname("yoonkun")
+                    .username("yoon1234")
+                    .password(new BCryptPasswordEncoder().encode("12345678"))
+                    .build();
 
-        then(memberRepository).should().existsMemberByNickname(anyString());
-        then(memberRepository).should().existsMemberByUsername(anyString());
-        then(passwordEncoder).should(never()).encode(anyString());
-        then(memberRepository).should(never()).save(any(Member.class));
+            given(memberRepository.findByMemberId(anyLong())).willReturn(member);
+
+            memberService.memberNicknameChange(memberNicknameRequest, 1L);
+
+            then(memberRepository).should().findByMemberId(anyLong());
+        }
+
+        @Test
+        @DisplayName("회원이 존재하지 않으면 예외가 발생한다")
+        void memberNicknameChangeNotFoundMember() {
+            MemberNicknameRequest memberNicknameRequest = MemberNicknameRequest.builder()
+                    .nickname("newNickname")
+                    .build();
+
+            willThrow(new NotFoundMemberException()).given(memberRepository).findByMemberId(anyLong());
+
+            assertThatThrownBy(() -> memberService.memberNicknameChange(memberNicknameRequest, 1L))
+                    .isInstanceOf(NotFoundMemberException.class);
+
+            then(memberRepository).should().findByMemberId(anyLong());
+        }
+
     }
 
-    @Test
-    @DisplayName("회원 정보를 조회한다")
-    void memberProfile() {
-        Member member = Member.builder()
-                .nickname("yoonkun")
-                .username("yoon1234")
-                .build();
+    @Nested
+    @DisplayName("회원 비밀번호 변경")
+    class MemberPasswordChangeTest {
 
-        given(memberRepository.findMemberByUsername(anyString())).willReturn(Optional.of(member));
+        @Test
+        @DisplayName("비밀번호를 변경한다")
+        void memberPasswordChange() {
+            MemberPasswordRequest memberPasswordRequest = MemberPasswordRequest.builder()
+                    .curPassword("12345678")
+                    .newPassword("87654321")
+                    .newPasswordConfirm("87654321")
+                    .build();
 
-        memberService.memberProfile("yoon1234");
+            Member member = Member.builder()
+                    .nickname("yoonkun")
+                    .username("yoon1234")
+                    .password(new BCryptPasswordEncoder().encode("12345678"))
+                    .build();
 
-        then(memberRepository).should().findMemberByUsername(anyString());
-    }
+            given(memberRepository.findByMemberId(anyLong())).willReturn(member);
+            given(passwordEncoder.matches(anyString(), anyString())).willReturn(true);
 
-    @Test
-    @DisplayName("회원 정보 조회 시 회원을 찾을 수 없으면 예외가 발생한다")
-    void memberProfileNotFoundMember() {
-        willThrow(new NotFoundMemberException()).given(memberRepository).findMemberByUsername(anyString());
+            memberService.memberPasswordChange(memberPasswordRequest, 1L);
 
-        assertThatThrownBy(() -> memberService.memberProfile("yoon1234"))
-                .isInstanceOf(NotFoundMemberException.class);
+            then(memberRepository).should().findByMemberId(anyLong());
+            then(passwordEncoder).should().matches(anyString(), anyString());
+        }
 
-        then(memberRepository).should().findMemberByUsername(anyString());
-    }
+        @Test
+        @DisplayName("회원이 존재하지 않으면 예외가 발생한다")
+        void memberPasswordChangeNotFoundMember() {
+            MemberPasswordRequest memberPasswordRequest = MemberPasswordRequest.builder()
+                    .curPassword("12345678")
+                    .newPassword("87654321")
+                    .newPasswordConfirm("87654321")
+                    .build();
 
-    @Test
-    @DisplayName("회원 닉네임을 변경한다")
-    void memberNicknameChange() {
-        Member member = Member.builder()
-                .nickname("yoonkun")
-                .username("yoon1234")
-                .password("12345678")
-                .build();
-        MemberNicknameRequest memberNicknameRequest = new MemberNicknameRequest("newNickname");
+            willThrow(new NotFoundMemberException()).given(memberRepository).findByMemberId(anyLong());
 
-        given(memberRepository.existsMemberByNickname(anyString())).willReturn(false);
-        given(memberRepository.findMemberByUsername(anyString())).willReturn(Optional.of(member));
+            assertThatThrownBy(() -> memberService.memberPasswordChange(memberPasswordRequest, 1L))
+                    .isInstanceOf(NotFoundMemberException.class);
 
-        memberService.memberNicknameChange(memberNicknameRequest, "yoon1234");
+            then(memberRepository).should().findByMemberId(anyLong());
+            then(passwordEncoder).should(never()).matches(anyString(), anyString());
+        }
 
-        then(memberRepository).should().existsMemberByNickname(anyString());
-        then(memberRepository).should().findMemberByUsername(anyString());
-    }
+        @Test
+        @DisplayName("현재 사용 중인 비밀번호가 일치하지 않으면 예외가 발생한다")
+        void MemberPasswordCurPasswordMismatch() {
+            MemberPasswordRequest memberPasswordRequest = MemberPasswordRequest.builder()
+                    .curPassword("12345679")
+                    .newPassword("87654321")
+                    .newPasswordConfirm("98765432")
+                    .build();
 
-    @Test
-    @DisplayName("회원 닉네임 변경 시 닉네임이 중복되면 예외가 발생한다")
-    void memberNicknameChangeDuplicateNickname() {
-        MemberNicknameRequest memberNicknameRequest = new MemberNicknameRequest("newNickname");
+            Member member = Member.builder()
+                    .nickname("yoonkun")
+                    .username("yoon1234")
+                    .password(new BCryptPasswordEncoder().encode("12345678"))
+                    .build();
 
-        given(memberRepository.existsMemberByNickname(anyString())).willReturn(true);
+            given(memberRepository.findByMemberId(anyLong())).willReturn(member);
+            given(passwordEncoder.matches(anyString(), anyString())).willReturn(false);
 
-        assertThatThrownBy(() -> memberService.memberNicknameChange(memberNicknameRequest, "yoon1234"))
-                .isInstanceOf(DuplicateNicknameException.class);
+            assertThatThrownBy(() -> memberService.memberPasswordChange(memberPasswordRequest, 1L))
+                    .isInstanceOf(PasswordMismatchException.class);
 
-        then(memberRepository).should().existsMemberByNickname(anyString());
-        then(memberRepository).should(never()).findMemberByUsername(anyString());
-    }
+            then(memberRepository).should().findByMemberId(anyLong());
+            then(passwordEncoder).should().matches(anyString(), anyString());
+        }
 
-    @Test
-    @DisplayName("회원 닉네임 변경 시 회원을 찾을 수 없으면 예외가 발생한다")
-    void memberNicknameNotFoundMember() {
-        MemberNicknameRequest memberNicknameRequest = new MemberNicknameRequest("newNickname");
+        @Test
+        @DisplayName("새 비밀번호와 새 비밀번호 확인이 일치하지 않으면 예외가 발생한다")
+        void memberPasswordNewPasswordAndNewPasswordConfirmMismatch() {
+            MemberPasswordRequest memberPasswordRequest = MemberPasswordRequest.builder()
+                    .curPassword("12345678")
+                    .newPassword("87654321")
+                    .newPasswordConfirm("98765432")
+                    .build();
 
-        given(memberRepository.existsMemberByNickname(anyString())).willReturn(false);
-        willThrow(new NotFoundMemberException()).given(memberRepository).findMemberByUsername(anyString());
+            Member member = Member.builder()
+                    .nickname("yoonkun")
+                    .username("yoon1234")
+                    .password(new BCryptPasswordEncoder().encode("12345678"))
+                    .build();
 
-        assertThatThrownBy(() -> memberService.memberNicknameChange(memberNicknameRequest, "yoon1234"))
-                .isInstanceOf(NotFoundMemberException.class);
+            given(memberRepository.findByMemberId(anyLong())).willReturn(member);
+            given(passwordEncoder.matches(anyString(), anyString())).willReturn(true);
 
-        then(memberRepository).should().existsMemberByNickname(anyString());
-        then(memberRepository).should().findMemberByUsername(anyString());
-    }
+            assertThatThrownBy(() -> memberService.memberPasswordChange(memberPasswordRequest, 1L))
+                    .isInstanceOf(PasswordMismatchException.class);
 
-    @Test
-    @DisplayName("회원 비밀번호를 변경한다")
-    void memberPasswordChange() {
-        Member member = Member.builder()
-                .nickname("yoonkun")
-                .username("yoon1234")
-                .password(new BCryptPasswordEncoder().encode("12345678"))
-                .build();
-        MemberPasswordRequest memberPasswordRequest = new MemberPasswordRequest("12345678", "87654321", "87654321");
+            then(memberRepository).should().findByMemberId(anyLong());
+            then(passwordEncoder).should().matches(anyString(), anyString());
+        }
 
-        given(memberRepository.findMemberByUsername(anyString())).willReturn(Optional.of(member));
-        given(passwordEncoder.matches(anyString(), anyString())).willReturn(true);
 
-        memberService.memberPasswordChange(memberPasswordRequest, "yoon1234");
-
-        then(memberRepository).should().findMemberByUsername(anyString());
-        then(passwordEncoder).should().matches(anyString(), anyString());
-    }
-
-    @Test
-    @DisplayName("회원 비밀번호 변경 시 회원을 찾을 수 없으면 예외가 발생한다")
-    void memberPasswordChangeNotFoundMember() {
-        MemberPasswordRequest memberPasswordRequest = new MemberPasswordRequest("12345678", "87654321", "87654321");
-
-        willThrow(new NotFoundMemberException()).given(memberRepository).findMemberByUsername(anyString());
-
-        assertThatThrownBy(() -> memberService.memberPasswordChange(memberPasswordRequest, "yoon"))
-                .isInstanceOf(NotFoundMemberException.class);
-
-        then(memberRepository).should().findMemberByUsername(anyString());
-        then(passwordEncoder).should(never()).matches(anyString(), anyString());
-    }
-
-    @Test
-    @DisplayName("회원 비밀번호 변경 시 현재 비밀번호가 일치하지 않으면 예외가 발생한다")
-    void memberPasswordChangeMismatchCurPassword() {
-        Member member = Member.builder()
-                .nickname("yoonkun")
-                .username("yoon1234")
-                .password("12345678")
-                .build();
-        MemberPasswordRequest memberPasswordRequest = new MemberPasswordRequest("12345679", "87654321", "87654321");
-
-        given(memberRepository.findMemberByUsername(anyString())).willReturn(Optional.of(member));
-
-        assertThatThrownBy(() -> memberService.memberPasswordChange(memberPasswordRequest, "yoon"))
-                .isInstanceOf(PasswordMismatchException.class);
-
-        then(memberRepository).should().findMemberByUsername(anyString());
-        then(passwordEncoder).should().matches(anyString(), anyString());
-    }
-
-    @Test
-    @DisplayName("회원 비밀번호 변경 시 새로운 비밀번호가 일치하지 않으면 예외가 발생한다")
-    void memberPasswordChangeMismatchNewPassword() {
-        Member member = Member.builder()
-                .nickname("yoonkun")
-                .username("yoon1234")
-                .password("12345678")
-                .build();
-        MemberPasswordRequest memberPasswordRequest = new MemberPasswordRequest("12345678", "87654320", "87654321");
-
-        given(memberRepository.findMemberByUsername(anyString())).willReturn(Optional.of(member));
-
-        assertThatThrownBy(() -> memberService.memberPasswordChange(memberPasswordRequest, "yoon"))
-                .isInstanceOf(PasswordMismatchException.class);
-
-        then(memberRepository).should().findMemberByUsername(anyString());
-        then(passwordEncoder).should().matches(anyString(), anyString());
     }
 
 }
