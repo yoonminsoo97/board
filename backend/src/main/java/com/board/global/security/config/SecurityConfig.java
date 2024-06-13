@@ -7,6 +7,7 @@ import com.board.global.security.handler.MemberLoginFailureHandler;
 import com.board.global.security.handler.MemberLoginSuccessHandler;
 import com.board.global.security.handler.MemberLogoutSuccessHandler;
 import com.board.global.security.support.JwtManager;
+import com.board.global.security.support.RequestURI;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -35,6 +36,8 @@ import org.springframework.security.web.authentication.logout.LogoutSuccessHandl
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    private static final String LOGIN_USERNAME_PARAM = "username";
+    private static final String LOGIN_PASSWORD_PARAM = "password";
     private static final String ROLE_MEMBER = "MEMBER";
 
     private final ObjectMapper objectMapper;
@@ -54,46 +57,47 @@ public class SecurityConfig {
                         .authenticationEntryPoint(authenticationEntryPoint())
                 )
                 .formLogin(form -> form
-                        .loginProcessingUrl("/api/members/login")
-                        .usernameParameter("username")
-                        .passwordParameter("password")
+                        .loginProcessingUrl(RequestURI.MEMBER_LOGIN.pattern())
+                        .usernameParameter(LOGIN_USERNAME_PARAM)
+                        .passwordParameter(LOGIN_PASSWORD_PARAM)
                         .successHandler(memberLoginSuccessHandler())
                         .failureHandler(memberLoginFailureHandler())
                         .permitAll()
                 )
                 .logout(logout -> logout
-                        .logoutUrl("/api/members/logout")
+                        .logoutUrl(RequestURI.MEMBER_LOGOUT.pattern())
                         .logoutSuccessHandler(logoutSuccessHandler())
                         .permitAll(false)
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET,
-                                "/docs/board.html",
-                                "/api/members/nickname/*",
-                                "/api/members/username/*",
-                                "/api/posts/*",
-                                "/api/posts",
-                                "/api/posts/search",
-                                "/api/posts/*/comments").permitAll()
+                                RequestURI.MEMBER_NICKNAME_EXISTS.pattern(),
+                                RequestURI.MEMBER_USERNAME_EXISTS.pattern(),
+                                RequestURI.POST_DETAIL.pattern(),
+                                RequestURI.POST_LIST.pattern(),
+                                RequestURI.POST_SERACH_LIST.pattern(),
+                                RequestURI.COMMENT_LIST.pattern()).permitAll()
                         .requestMatchers(HttpMethod.POST,
-                                "/api/members/signup",
-                                "/api/token/reissue").permitAll()
+                                RequestURI.MEMBER_SIGNUP.pattern(),
+                                RequestURI.MEMBER_LOGIN.pattern(),
+                                RequestURI.REISSUE_ACCESS_TOKEN.pattern()).permitAll()
                         .requestMatchers(HttpMethod.GET,
-                                "/api/members/profile",
-                                "/api/members/profile/posts",
-                                "/api/members/profile/comments",
-                                "/api/members/profile/nickname").hasRole(ROLE_MEMBER)
+                                RequestURI.MEMBER_PROFILE.pattern(),
+                                RequestURI.MEMBER_POST_LIST.pattern(),
+                                RequestURI.MEMBER_COMMENT_LIST.pattern()).hasRole(ROLE_MEMBER)
                         .requestMatchers(HttpMethod.POST,
-                                "/api/posts",
-                                "/api/posts/*/comments",
-                                "/api/posts/*/comments/*/replies").hasRole(ROLE_MEMBER)
+                                RequestURI.POST_WRITE.pattern(),
+                                RequestURI.COMMENT_WRITE.pattern(),
+                                RequestURI.COMMENT_REPLRY_WRITE.pattern(),
+                                RequestURI.MEMBER_LOGOUT.pattern()).hasRole(ROLE_MEMBER)
                         .requestMatchers(HttpMethod.PUT,
-                                "/api/members/profile/password",
-                                "/api/posts/*",
-                                "/api/posts/*/comments/*").hasRole(ROLE_MEMBER)
+                                RequestURI.MEMBER_NICKNAME_CHANGE.pattern(),
+                                RequestURI.MEMBER_PASSWORD_CHANGE.pattern(),
+                                RequestURI.POST_MODIFY.pattern(),
+                                RequestURI.COMMENT_MODIFY.pattern()).hasRole(ROLE_MEMBER)
                         .requestMatchers(HttpMethod.DELETE,
-                                "/api/posts/*",
-                                "/api/posts/*/comments/*").hasRole(ROLE_MEMBER)
+                                RequestURI.POST_DELETE.pattern(),
+                                RequestURI.COMMENT_DELETE.pattern()).hasRole(ROLE_MEMBER)
                         .anyRequest().denyAll()
                 );
         return httpSecurity.build();

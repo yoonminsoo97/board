@@ -1,14 +1,11 @@
 package com.board.domain.member.controller;
 
-import com.board.domain.comment.dto.CommentListResponse;
-import com.board.domain.comment.service.CommentService;
 import com.board.domain.member.dto.MemberNicknameRequest;
 import com.board.domain.member.dto.MemberPasswordRequest;
 import com.board.domain.member.dto.MemberProfileResponse;
 import com.board.domain.member.dto.MemberSignupRequest;
 import com.board.domain.member.service.MemberService;
 import com.board.domain.post.dto.PostListResponse;
-import com.board.domain.post.service.PostService;
 import com.board.global.common.dto.ApiResponse;
 
 import jakarta.validation.Valid;
@@ -33,8 +30,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class MemberController {
 
     private final MemberService memberService;
-    private final PostService postService;
-    private final CommentService commentService;
 
     @GetMapping("/nickname/{nickname}")
     public ResponseEntity<ApiResponse<Void>> memberNicknameExists(@PathVariable("nickname") String nickname) {
@@ -55,43 +50,34 @@ public class MemberController {
     }
 
     @Secured("ROLE_MEMBER")
-    @GetMapping("/profile")
-    public ResponseEntity<ApiResponse<MemberProfileResponse>> memberProfile(@AuthenticationPrincipal String username) {
-        MemberProfileResponse memberProfileResponse = memberService.memberProfile(username);
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<MemberProfileResponse>> memberProfile(@AuthenticationPrincipal Long memberId) {
+        MemberProfileResponse memberProfileResponse = memberService.memberProfile(memberId);
         return ResponseEntity.ok().body(ApiResponse.success(memberProfileResponse));
     }
 
     @Secured("ROLE_MEMBER")
-    @GetMapping("/profile/posts")
-    public ResponseEntity<ApiResponse<PostListResponse>> memberProfilePostList(@RequestParam("page") int page,
-                                                                               @AuthenticationPrincipal String username) {
+    @GetMapping("/me/posts")
+    public ResponseEntity<ApiResponse<PostListResponse>> memberPostList(@RequestParam("page") int page,
+                                                                        @AuthenticationPrincipal Long memberId) {
         page = page <= 0 ? 0 : page - 1;
-        PostListResponse postListResponse = postService.postListFromMember(page, username);
+        PostListResponse postListResponse = memberService.memberPostList(page, memberId);
         return ResponseEntity.ok().body(ApiResponse.success(postListResponse));
     }
 
     @Secured("ROLE_MEMBER")
-    @GetMapping("/profile/comments")
-    public ResponseEntity<ApiResponse<CommentListResponse>> memberProfileCommentList(@RequestParam("page") int page,
-                                                                                     @AuthenticationPrincipal String username) {
-        page = page <= 0 ? 0 : page - 1;
-        CommentListResponse commentListResponse = commentService.commentListFromMember(page, username);
-        return ResponseEntity.ok().body(ApiResponse.success(commentListResponse));
-    }
-
-    @Secured("ROLE_MEMBER")
-    @GetMapping("/profile/nickname")
+    @PutMapping("/me/nickname")
     public ResponseEntity<ApiResponse<Void>> memberNicknameChange(@RequestBody @Valid MemberNicknameRequest memberNicknameRequest,
-                                                                  @AuthenticationPrincipal String username) {
-        memberService.memberNicknameChange(memberNicknameRequest, username);
+                                                                  @AuthenticationPrincipal Long memberId) {
+        memberService.memberNicknameChange(memberNicknameRequest, memberId);
         return ResponseEntity.ok(ApiResponse.success());
     }
 
     @Secured("ROLE_MEMBER")
-    @PutMapping("/profile/password")
+    @PutMapping("/me/password")
     public ResponseEntity<ApiResponse<Void>> memberPasswordChange(@RequestBody @Valid MemberPasswordRequest memberPasswordRequest,
-                                                                  @AuthenticationPrincipal String username) {
-        memberService.memberPasswordChange(memberPasswordRequest, username);
+                                                                  @AuthenticationPrincipal Long memberId) {
+        memberService.memberPasswordChange(memberPasswordRequest, memberId);
         return ResponseEntity.ok().body(ApiResponse.success());
     }
 
