@@ -1,5 +1,8 @@
 package com.board.domain.member.service;
 
+import com.board.domain.comment.repository.CommentRepository;
+import com.board.domain.member.dto.MemberCommentListResponse;
+import com.board.domain.member.dto.MemberCommentListResponse.CommentItem;
 import com.board.domain.member.dto.MemberNicknameRequest;
 import com.board.domain.member.dto.MemberPasswordRequest;
 import com.board.domain.member.dto.MemberProfileResponse;
@@ -11,6 +14,7 @@ import com.board.domain.member.exception.NotFoundMemberException;
 import com.board.domain.member.exception.PasswordMismatchException;
 import com.board.domain.member.repository.MemberRepository;
 import com.board.domain.post.dto.PostListResponse;
+import com.board.domain.post.dto.PostListResponse.PostItem;
 import com.board.domain.post.repository.PostRepository;
 import com.board.support.ServiceTest;
 
@@ -46,6 +50,9 @@ class MemberServiceTest extends ServiceTest {
 
     @Mock
     private PostRepository postRepository;
+
+    @Mock
+    private CommentRepository commentRepository;
 
     @Mock
     private PasswordEncoder passwordEncoder;
@@ -246,7 +253,7 @@ class MemberServiceTest extends ServiceTest {
     }
 
     @Nested
-    @DisplayName("회원이 작성한 게시글 목록조회")
+    @DisplayName("회원이 작성한 게시글 목록 조회")
     class MemberPostListTest {
 
         @Test
@@ -254,7 +261,7 @@ class MemberServiceTest extends ServiceTest {
         void memberPostList() {
             PostListResponse postListResponse = PostListResponse.builder()
                     .posts(List.of(
-                            PostListResponse.PostItem.builder()
+                            PostItem.builder()
                                     .postId(1L)
                                     .title("title")
                                     .writer("writer")
@@ -284,6 +291,48 @@ class MemberServiceTest extends ServiceTest {
             assertThat(response.isPrev()).isFalse();
             assertThat(response.isNext()).isFalse();
             then(postRepository).should().findPostMemberList(any(Pageable.class), anyLong());
+        }
+
+    }
+
+    @Nested
+    @DisplayName("회원이 작성한 댓글 목록 조회")
+    class MemberCommentListTest {
+
+        @Test
+        @DisplayName("회원이 작성한 댓글 목록을 조회한다")
+        void memberCommentList() {
+            MemberCommentListResponse memberCommentListResponse = MemberCommentListResponse.builder()
+                    .comments(List.of(
+                            CommentItem.builder()
+                                    .commentId(1L)
+                                    .writer("yoonkun")
+                                    .content("comment")
+                                    .createdAt(LocalDateTime.of(2024, 6, 17, 0, 0))
+                                    .build()
+                    ))
+                    .page(1)
+                    .totalPages(1)
+                    .totalElements(1)
+                    .first(true)
+                    .last(true)
+                    .prev(false)
+                    .next(false)
+                    .build();
+
+            given(commentRepository.findMemberCommentList(any(Pageable.class), anyLong())).willReturn(memberCommentListResponse);
+
+            MemberCommentListResponse response = memberService.memberCommentList(0, 1L);
+
+            assertThat(response.getComments().get(0).getCommentId()).isEqualTo(1L);
+            assertThat(response.getPage()).isEqualTo(1);
+            assertThat(response.getTotalPages()).isEqualTo(1);
+            assertThat(response.getTotalElements()).isEqualTo(1);
+            assertThat(response.isFirst()).isTrue();
+            assertThat(response.isLast()).isTrue();
+            assertThat(response.isPrev()).isFalse();
+            assertThat(response.isNext()).isFalse();
+            then(commentRepository).should().findMemberCommentList(any(Pageable.class), anyLong());
         }
 
     }

@@ -1,5 +1,7 @@
 package com.board.domain.member.controller;
 
+import com.board.domain.member.dto.MemberCommentListResponse;
+import com.board.domain.member.dto.MemberCommentListResponse.CommentItem;
 import com.board.domain.member.dto.MemberNicknameRequest;
 import com.board.domain.member.dto.MemberPasswordRequest;
 import com.board.domain.member.dto.MemberProfileResponse;
@@ -11,6 +13,7 @@ import com.board.domain.member.exception.NotFoundMemberException;
 import com.board.domain.member.exception.PasswordMismatchException;
 import com.board.domain.member.service.MemberService;
 import com.board.domain.post.dto.PostListResponse;
+import com.board.domain.post.dto.PostListResponse.PostItem;
 import com.board.global.security.exception.ExpiredTokenException;
 import com.board.global.security.exception.InvalidTokenException;
 import com.board.global.security.dto.LoginMember;
@@ -705,7 +708,7 @@ class MemberControllerTest extends ControllerTest {
         void memberPostList() throws Exception {
             PostListResponse postListResponse = PostListResponse.builder()
                     .posts(List.of(
-                            PostListResponse.PostItem.builder()
+                            PostItem.builder()
                                     .postId(1L)
                                     .title("title")
                                     .writer("writer")
@@ -796,6 +799,125 @@ class MemberControllerTest extends ControllerTest {
                     .andExpect(jsonPath("$.error.code").value("E401003"))
                     .andExpect(jsonPath("$.error.message").value("토큰이 만료되었습니다."))
                     .andDo(restDocs.document(
+                            responseFields(
+                                    commonErrorResponse()
+                            )
+                    ));
+        }
+
+    }
+
+    @Nested
+    @DisplayName("회원이 작성한 댓글 목록조회 요청")
+    class MemberCommentListTest {
+
+        @Test
+        @DisplayName("회원이 작성한 댓글 목록을 조회한다")
+        void memberCommentList() throws Exception {
+            MemberCommentListResponse memberCommentListResponse = MemberCommentListResponse.builder()
+                    .comments(List.of(
+                            CommentItem.builder()
+                                    .commentId(1L)
+                                    .writer("yoonkun")
+                                    .content("comment")
+                                    .createdAt(LocalDateTime.of(2024, 6, 17, 0, 0))
+                                    .build()
+                    ))
+                    .page(1)
+                    .totalPages(1)
+                    .totalElements(1)
+                    .first(true)
+                    .last(true)
+                    .prev(false)
+                    .next(false)
+                    .build();
+
+            Claims claims = Jwts.claims()
+                    .subject(String.valueOf(1L))
+                    .add("nickname", "yoonkun")
+                    .add("authority", "ROLE_MEMBER")
+                    .build();
+
+            given(jwtManager.getPayload(anyString())).willReturn(claims);
+            given(memberService.memberCommentList(anyInt(), anyLong())).willReturn(memberCommentListResponse);
+
+            mockMvc.perform(get("/api/members/me/comments")
+                            .header("Authorization", "Bearer access-token")
+                            .param("page", "1")
+                    )
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value("success"))
+                    .andExpect(jsonPath("$.data.comments[0].commentId").value(1))
+                    .andExpect(jsonPath("$.data.comments[0].writer").value("yoonkun"))
+                    .andExpect(jsonPath("$.data.comments[0].content").value("comment"))
+                    .andExpect(jsonPath("$.data.comments[0].createdAt").value("2024-06-17T00:00:00"))
+                    .andExpect(jsonPath("$.data.page").value(1))
+                    .andExpect(jsonPath("$.data.totalPages").value(1))
+                    .andExpect(jsonPath("$.data.totalElements").value(1))
+                    .andExpect(jsonPath("$.data.first").value(true))
+                    .andExpect(jsonPath("$.data.last").value(true))
+                    .andExpect(jsonPath("$.data.prev").value(false))
+                    .andExpect(jsonPath("$.data.next").value(false))
+                    .andDo(restDocs.document(
+                            requestHeaders(
+                                    headerWithName("Authorization").description("액세스 토큰")
+                            ),
+                            queryParameters(
+                                    parameterWithName("page").description("페이지 번호")
+                            ),
+                            responseFields(
+                                    commonSuccessResponse()
+                            )
+                    ));
+
+        }
+
+        @Test
+        @DisplayName("액세스 토큰이 유효하지 않으면 예외가 발생한다")
+        void memberCommentListInvalidAccessToken() throws Exception {
+            willThrow(new InvalidTokenException()).given(jwtManager).getPayload(anyString());
+
+            mockMvc.perform(get("/api/members/me/comments")
+                            .header("Authorization", "Bearer invalid-token")
+                            .param("page", "1")
+                    )
+                    .andExpect(status().isUnauthorized())
+                    .andExpect(jsonPath("$.error.code").value("E401002"))
+                    .andExpect(jsonPath("$.error.message").value("토큰이 유효하지 않습니다."))
+                    .andExpect(jsonPath("$.error.fields").isEmpty())
+                    .andDo(restDocs.document(
+                            requestHeaders(
+                                    headerWithName("Authorization").description("액세스 토큰")
+                            ),
+                            queryParameters(
+                                    parameterWithName("page").description("페이지 번호")
+                            ),
+                            responseFields(
+                                    commonErrorResponse()
+                            )
+                    ));
+        }
+
+        @Test
+        @DisplayName("리프레시 토큰이 유효하지 않으면 예외가 발생한다")
+        void memberCommentListExpiredAccessToken() throws Exception {
+            willThrow(new ExpiredTokenException()).given(jwtManager).getPayload(anyString());
+
+            mockMvc.perform(get("/api/members/me/comments")
+                            .header("Authorization", "Bearer invalid-token")
+                            .param("page", "1")
+                    )
+                    .andExpect(status().isUnauthorized())
+                    .andExpect(jsonPath("$.error.code").value("E401003"))
+                    .andExpect(jsonPath("$.error.message").value("토큰이 만료되었습니다."))
+                    .andExpect(jsonPath("$.error.fields").isEmpty())
+                    .andDo(restDocs.document(
+                            requestHeaders(
+                                    headerWithName("Authorization").description("액세스 토큰")
+                            ),
+                            queryParameters(
+                                    parameterWithName("page").description("페이지 번호")
+                            ),
                             responseFields(
                                     commonErrorResponse()
                             )

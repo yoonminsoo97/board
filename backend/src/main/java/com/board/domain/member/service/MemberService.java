@@ -1,5 +1,7 @@
 package com.board.domain.member.service;
 
+import com.board.domain.comment.repository.CommentRepository;
+import com.board.domain.member.dto.MemberCommentListResponse;
 import com.board.domain.member.dto.MemberNicknameRequest;
 import com.board.domain.member.dto.MemberPasswordRequest;
 import com.board.domain.member.dto.MemberProfileResponse;
@@ -24,9 +26,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class MemberService {
 
     private static final int POST_PER_PAGE = 10;
+    private static final int COMMENT_PER_PAGE = 10;
 
     private final MemberRepository memberRepository;
     private final PostRepository postRepository;
+    private final CommentRepository commentRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
@@ -68,6 +72,11 @@ public class MemberService {
     @Transactional(readOnly = true)
     public PostListResponse memberPostList(int page, Long memberId) {
         return postRepository.findPostMemberList(PageRequest.of(page, POST_PER_PAGE), memberId);
+    }
+
+    @Transactional(readOnly = true)
+    public MemberCommentListResponse memberCommentList(int page, Long memberId) {
+        return commentRepository.findMemberCommentList(PageRequest.of(page, COMMENT_PER_PAGE), memberId);
     }
 
     @Transactional

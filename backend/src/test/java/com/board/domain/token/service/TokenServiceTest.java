@@ -7,15 +7,14 @@ import com.board.global.security.dto.LoginMember;
 import com.board.global.security.exception.InvalidTokenException;
 import com.board.global.security.support.JwtManager;
 
+import com.board.support.ServiceTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -33,8 +32,7 @@ import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.never;
 
-@ExtendWith(MockitoExtension.class)
-class TokenServiceTest {
+class TokenServiceTest extends ServiceTest {
 
     @Mock
     private TokenRepository tokenRepository;
