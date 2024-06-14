@@ -1,5 +1,6 @@
 package com.board.domain.member.controller;
 
+import com.board.domain.member.dto.MemberCommentListResponse;
 import com.board.domain.member.dto.MemberNicknameRequest;
 import com.board.domain.member.dto.MemberPasswordRequest;
 import com.board.domain.member.dto.MemberProfileResponse;
@@ -63,6 +64,15 @@ public class MemberController {
         page = page <= 0 ? 0 : page - 1;
         PostListResponse postListResponse = memberService.memberPostList(page, memberId);
         return ResponseEntity.ok().body(ApiResponse.success(postListResponse));
+    }
+
+    @Secured("ROLE_MEMBER")
+    @GetMapping("/me/comments")
+    public ResponseEntity<ApiResponse<MemberCommentListResponse>> memberCommentList(@RequestParam("page") int page,
+                                                                                    @AuthenticationPrincipal Long memberId) {
+        page = page <= 0 ? 0 : page - 1;
+        MemberCommentListResponse memberCommentListResponse = memberService.memberCommentList(page, memberId);
+        return ResponseEntity.ok().body(ApiResponse.success(memberCommentListResponse));
     }
 
     @Secured("ROLE_MEMBER")
