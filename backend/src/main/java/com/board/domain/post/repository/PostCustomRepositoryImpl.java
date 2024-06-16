@@ -28,7 +28,7 @@ public class PostCustomRepositoryImpl implements PostCustomRepository {
     private final JPAQueryFactory jpaQueryFactory;
 
     @Override
-    public PostListResponse findPosts(Pageable pageable) {
+    public PostListResponse findPostList(Pageable pageable) {
         List<PostItem> content = jpaQueryFactory
                 .select(Projections.constructor(PostItem.class,
                         post.id,
@@ -52,7 +52,7 @@ public class PostCustomRepositoryImpl implements PostCustomRepository {
     }
 
     @Override
-    public PostListResponse findSearchPosts(Pageable pageable, String type, String keyword) {
+    public PostListResponse findPostSearchList(Pageable pageable, String type, String keyword) {
         List<PostItem> content = jpaQueryFactory
                 .select(Projections.constructor(PostItem.class,
                         post.id,
@@ -84,6 +84,32 @@ public class PostCustomRepositoryImpl implements PostCustomRepository {
             return post.writer.eq(keyword);
         }
         return null;
+    }
+
+    @Override
+    public PostListResponse findPostMemberList(Pageable pageable, Long memberId) {
+        List<PostItem> content = jpaQueryFactory
+                .select(Projections.constructor(PostItem.class,
+                        post.id,
+                        post.title,
+                        post.writer,
+                        comment.count().intValue(),
+                        post.createdAt)
+                )
+                .from(post)
+                .leftJoin(post.comments, comment).on(comment.isDelete.eq(false))
+                .groupBy(post.id)
+                .having(post.member.id.eq(memberId))
+                .orderBy(post.id.desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+        JPAQuery<Long> count = jpaQueryFactory
+                .select(post.count())
+                .where(post.member.id.eq(memberId))
+                .from(post);
+        Page<PostItem> postPage = PageableExecutionUtils.getPage(content, pageable, count::fetchOne);
+        return PostListResponse.of(postPage);
     }
 
 }

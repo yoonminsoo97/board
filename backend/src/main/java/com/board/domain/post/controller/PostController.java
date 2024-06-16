@@ -34,8 +34,8 @@ public class PostController {
     @Secured("ROLE_MEMBER")
     @PostMapping
     public ResponseEntity<ApiResponse<Void>> postWrite(@RequestBody @Valid PostWriteRequest postWriteRequest,
-                                                       @AuthenticationPrincipal String username) {
-        postService.postWrite(postWriteRequest, username);
+                                                       @AuthenticationPrincipal Long memberId) {
+        postService.postWrite(postWriteRequest, memberId);
         return ResponseEntity.ok().body(ApiResponse.success());
     }
 
@@ -53,11 +53,11 @@ public class PostController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<ApiResponse<PostListResponse>> postListSearch(@RequestParam("page") int page,
+    public ResponseEntity<ApiResponse<PostListResponse>> postSearchList(@RequestParam("page") int page,
                                                                         @RequestParam("type") String type,
                                                                         @RequestParam("keyword") String keyword) {
         page = page <= 0 ? 0 : page - 1;
-        PostListResponse postListResponse = postService.postListSearch(page, type, keyword);
+        PostListResponse postListResponse = postService.postSearchList(page, type, keyword);
         return ResponseEntity.ok().body(ApiResponse.success(postListResponse));
     }
 
@@ -65,16 +65,16 @@ public class PostController {
     @PutMapping("/{postId}")
     public ResponseEntity<ApiResponse<Void>> postModify(@PathVariable("postId") Long postId,
                                                         @RequestBody @Valid PostModifyRequest postModifyRequest,
-                                                        @AuthenticationPrincipal String username) {
-        postService.postModify(postId, postModifyRequest, username);
+                                                        @AuthenticationPrincipal Long memberId) {
+        postService.postModify(postId, postModifyRequest, memberId);
         return ResponseEntity.ok().body(ApiResponse.success());
     }
 
     @Secured("ROLE_MEMBER")
     @DeleteMapping("/{postId}")
     public ResponseEntity<ApiResponse<Void>> postDelete(@PathVariable("postId") Long postId,
-                                                        @AuthenticationPrincipal String username) {
-        postService.postDelete(postId, username);
+                                                        @AuthenticationPrincipal Long memberId) {
+        postService.postDelete(postId, memberId);
         return ResponseEntity.ok().body(ApiResponse.success());
     }
 
