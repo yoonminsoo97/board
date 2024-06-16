@@ -49,9 +49,9 @@ public class Post extends BaseEntity {
     private List<Comment> comments = new ArrayList<>();
 
     @Builder
-    public Post(String title, String content, Member member) {
+    public Post(String title, String writer, String content, Member member) {
         this.title = title;
-        this.writer = member.getNickname();
+        this.writer = writer;
         this.content = content;
         this.member = member;
     }
@@ -61,8 +61,8 @@ public class Post extends BaseEntity {
         this.content = content;
     }
 
-    public boolean isOwner(String loginUsername) {
-        return member.getUsername().equals(loginUsername);
+    public boolean isOwner(Long memberId) {
+        return member.getId().equals(memberId);
     }
 
 }

@@ -2,27 +2,34 @@ package com.board.domain.post.dto;
 
 import com.board.domain.post.entity.Post;
 
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Getter
-@AllArgsConstructor
+@Builder
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class PostDetailResponse {
 
-    private final Long postId;
-    private final String title;
-    private final String writer;
-    private final String content;
-    private final LocalDateTime createdAt;
+    private Long postId;
+    private String title;
+    private String writer;
+    private String content;
+    private LocalDateTime createdAt;
 
-    public PostDetailResponse(Post post) {
-        this.postId = post.getId();
-        this.title = post.getTitle();
-        this.writer = post.getWriter();
-        this.content = post.getContent();
-        this.createdAt = post.getCreatedAt();
+    public static PostDetailResponse of(Post post) {
+        return PostDetailResponse.builder()
+                .postId(post.getId())
+                .title(post.getTitle())
+                .writer(post.getWriter())
+                .content(post.getContent())
+                .createdAt(post.getCreatedAt())
+                .build();
     }
 
 }
