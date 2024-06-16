@@ -2,182 +2,258 @@ package com.board.domain.post.repository;
 
 import com.board.domain.member.entity.Member;
 import com.board.domain.member.repository.MemberRepository;
-import com.board.domain.post.dto.PostListItem;
+import com.board.domain.post.dto.PostListResponse;
 import com.board.domain.post.entity.Post;
-import com.board.global.common.config.JpaAuditConfig;
-import com.board.support.config.QuerydslConfig;
+import com.board.domain.post.exception.NotFoundPostException;
+import com.board.support.RepositoryTest;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.data.domain.Page;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@DataJpaTest
-@Import({JpaAuditConfig.class, QuerydslConfig.class})
-class PostRepositoryTest {
-
-    @Autowired
-    private PostRepository postRepository;
+class PostRepositoryTest extends RepositoryTest {
 
     @Autowired
     private MemberRepository memberRepository;
 
+    @Autowired
+    private PostRepository postRepository;
+
     private Member member;
+    private Member memberB;
 
     @BeforeEach
     void setUp() {
-        member = memberRepository.save(Member.builder()
+        member = Member.builder()
                 .nickname("yoonkun")
                 .username("yoon1234")
-                .password("12345678")
-                .build());
-    }
-
-    @Test
-    @DisplayName("게시글을 저장한다")
-    void postSave() {
-        Post post = Post.builder()
-                .title("제목")
-                .content("내용")
-                .member(member)
+                .password(new BCryptPasswordEncoder().encode("12345678"))
                 .build();
-
-        Post savePost = postRepository.save(post);
-
-        assertThat(savePost.getId()).isNotNull();
-    }
-
-    @Test
-    @DisplayName("게시글 기본키로 상세조회 한다")
-    void postDetail() {
-        Post post = Post.builder()
-                .title("제목")
-                .content("내용")
-                .member(member)
+        memberB = Member.builder()
+                .nickname("yoongun")
+                .username("yoon5678")
+                .password(new BCryptPasswordEncoder().encode("12345678"))
                 .build();
-        Post savePost = postRepository.save(post);
-
-        Post findPost = postRepository.findById(savePost.getId()).get();
-
-        assertThat(findPost.getTitle()).isEqualTo("제목");
-        assertThat(findPost.getContent()).isEqualTo("내용");
+        memberRepository.save(member);
+        memberRepository.save(memberB);
     }
 
-    @Test
-    @DisplayName("게시글과 해당 게시글을 작성한 회원을 한 번에 조회한다")
-    void findPostJoinFetch() {
-        Post post = Post.builder()
-                .title("제목")
-                .content("내용")
-                .member(member)
-                .build();
-        Post savePost = postRepository.save(post);
+    @Nested
+    @DisplayName("게시글 저장")
+    class PostSaveTest {
 
-        Post findPost = postRepository.findPostJoinFetch(savePost.getId()).get();
+        @Test
+        @DisplayName("게시글을 저장한다")
+        void save() {
+            Post post = Post.builder()
+                    .title("title")
+                    .writer(member.getNickname())
+                    .content("content")
+                    .member(member)
+                    .build();
 
-        assertThat(findPost.getTitle()).isEqualTo("제목");
-        assertThat(findPost.getContent()).isEqualTo("내용");
-        assertThat(findPost.getMember().getNickname()).isEqualTo("yoonkun");
-        assertThat(findPost.getMember().getUsername()).isEqualTo("yoon1234");
+            Post savePost = postRepository.save(post);
+
+            assertThat(savePost.getId()).isNotNull();
+        }
+
+        @Test
+        @DisplayName("제목이 Null이면 예외가 발생한다")
+        void saveNullTitle() {
+            Post post = Post.builder()
+                    .writer(member.getNickname())
+                    .content("content")
+                    .member(member)
+                    .build();
+
+            assertThatThrownBy(() -> postRepository.save(post))
+                    .isInstanceOf(DataIntegrityViolationException.class);
+        }
+
+        @Test
+        @DisplayName("작성자가 Null이면 예외가 발생한다")
+        void saveNullWriter() {
+            Post post = Post.builder()
+                    .title("title")
+                    .content("content")
+                    .member(member)
+                    .build();
+
+            assertThatThrownBy(() -> postRepository.save(post))
+                    .isInstanceOf(DataIntegrityViolationException.class);
+        }
+
+        @Test
+        @DisplayName("내용이 Null이면 예외가 발생한다")
+        void saveNullContent() {
+            Post post = Post.builder()
+                    .title("title")
+                    .writer(member.getNickname())
+                    .member(member)
+                    .build();
+
+            assertThatThrownBy(() -> postRepository.save(post))
+                    .isInstanceOf(DataIntegrityViolationException.class);
+        }
+
+        @Test
+        @DisplayName("회원이 Null이면 예외가 발생한다")
+        void saveNullMember() {
+            Post post = Post.builder()
+                    .title("title")
+                    .writer(member.getNickname())
+                    .content("content")
+                    .build();
+
+            assertThatThrownBy(() -> postRepository.save(post))
+                    .isInstanceOf(DataIntegrityViolationException.class);
+        }
+
     }
 
-    @Test
-    @DisplayName("게시글 목록을 조회한다")
-    void postFindAll() {
-        List<Post> content = List.of(
-                Post.builder().title("제목").content("내용").member(member).build(),
-                Post.builder().title("제목").content("내용").member(member).build(),
-                Post.builder().title("제목").content("내용").member(member).build(),
-                Post.builder().title("제목").content("내용").member(member).build(),
-                Post.builder().title("제목").content("내용").member(member).build()
-        );
-        postRepository.saveAll(content);
+    @Nested
+    @DisplayName("게시글 단건 조회")
+    class PostFindTest {
 
-        Pageable pageable = PageRequest.of(0, 10, Sort.Direction.DESC, "id");
-        Page<PostListItem> postPage = postRepository.findPosts(pageable);
+        @Test
+        @DisplayName("게시글 기본키(id)로 조회한다")
+        void findByPostId() {
+            Post post = Post.builder()
+                    .title("title")
+                    .writer(member.getNickname())
+                    .content("content")
+                    .member(member)
+                    .build();
+            postRepository.save(post);
 
-        assertThat(postPage.getNumber()).isEqualTo(0);
-        assertThat(postPage.getTotalPages()).isEqualTo(1);
-        assertThat(postPage.getTotalElements()).isEqualTo(5);
-        assertThat(postPage.hasPrevious()).isFalse();
-        assertThat(postPage.hasNext()).isFalse();
-        assertThat(postPage.isFirst()).isTrue();
-        assertThat(postPage.isLast()).isTrue();
+            Post findPost = postRepository.findByPostId(post.getId());
+
+            assertThat(findPost.getTitle()).isEqualTo("title");
+            assertThat(findPost.getWriter()).isEqualTo("yoonkun");
+            assertThat(findPost.getContent()).isEqualTo("content");
+        }
+
+        @Test
+        @DisplayName("기본키(id)에 해당하는 게시글이 없으면 예외가 발생한다")
+        void findByPostIdNotFoundPost() {
+            assertThatThrownBy(() -> postRepository.findByPostId(1L))
+                    .isInstanceOf(NotFoundPostException.class);
+        }
+
     }
 
-    @Test
-    @DisplayName("특정 단어가 포함된 게시글 목록을 조회한다")
-    void findPostsSearch() {
-        List<Post> content = List.of(
-                Post.builder().title("독수리").content("내용").member(member).build(),
-                Post.builder().title("기러기").content("내용").member(member).build(),
-                Post.builder().title("호랑이").content("내용").member(member).build(),
-                Post.builder().title("거북이").content("내용").member(member).build(),
-                Post.builder().title("코끼리").content("내용").member(member).build()
-        );
-        postRepository.saveAll(content);
+    @Nested
+    @DisplayName("게시글 목록 조회")
+    @Transactional
+    class PostListFindTest {
 
-        Pageable pageable = PageRequest.of(0, 10, Sort.Direction.DESC, "id");
-        Page<PostListItem> postPage = postRepository.findPostsSearch(pageable, "title", "이");
+        @Test
+        @DisplayName("게시글 목록을 조회한다")
+        void findPostList() {
+            postRepository.saveAll(postList());
 
-        assertThat(postPage.getNumber()).isEqualTo(0);
-        assertThat(postPage.getTotalPages()).isEqualTo(1);
-        assertThat(postPage.getTotalElements()).isEqualTo(2);
-        assertThat(postPage.hasPrevious()).isFalse();
-        assertThat(postPage.hasNext()).isFalse();
-        assertThat(postPage.isFirst()).isTrue();
-        assertThat(postPage.isLast()).isTrue();
+            PostListResponse postListResponse = postRepository.findPostList(PageRequest.of(0, 10));
+
+            assertThat(postListResponse.getPage()).isEqualTo(1);
+            assertThat(postListResponse.getTotalPages()).isEqualTo(1);
+            assertThat(postListResponse.getTotalElements()).isEqualTo(4);
+            assertThat(postListResponse.isNext()).isFalse();
+            assertThat(postListResponse.isPrev()).isFalse();
+            assertThat(postListResponse.isFirst()).isTrue();
+            assertThat(postListResponse.isLast()).isTrue();
+        }
+
+        @Test
+        @DisplayName("제목이 apple인 게시글 목록을 조회한다")
+        void findSearchTitlePostList() {
+            postRepository.saveAll(postList());
+
+            PostListResponse postListResponse = postRepository.findPostSearchList(PageRequest.of(0, 10), "title", "apple");
+
+            assertThat(postListResponse.getPage()).isEqualTo(1);
+            assertThat(postListResponse.getTotalPages()).isEqualTo(1);
+            assertThat(postListResponse.getTotalElements()).isEqualTo(2);
+            assertThat(postListResponse.isNext()).isFalse();
+            assertThat(postListResponse.isPrev()).isFalse();
+            assertThat(postListResponse.isFirst()).isTrue();
+            assertThat(postListResponse.isLast()).isTrue();
+        }
+
+        @Test
+        @DisplayName("작성자가 yoonkun인 게시글 목록을 조회한다")
+        void findSearchWriterPostList() {
+            postRepository.saveAll(postList());
+
+            PostListResponse postListResponse = postRepository.findPostSearchList(PageRequest.of(0, 10), "writer", "yoonkun");
+
+            assertThat(postListResponse.getPage()).isEqualTo(1);
+            assertThat(postListResponse.getTotalPages()).isEqualTo(1);
+            assertThat(postListResponse.getTotalElements()).isEqualTo(2);
+            assertThat(postListResponse.isNext()).isFalse();
+            assertThat(postListResponse.isPrev()).isFalse();
+            assertThat(postListResponse.isFirst()).isTrue();
+            assertThat(postListResponse.isLast()).isTrue();
+        }
+
+        @Test
+        @DisplayName("자신이 작성한 게시글 목록을 조회한다")
+        void findmemberPostList() {
+            postRepository.saveAll(postList());
+
+            PostListResponse postListResponse = postRepository.findPostMemberList(PageRequest.of(0, 10), member.getId());
+
+            assertThat(postListResponse.getPage()).isEqualTo(1);
+            assertThat(postListResponse.getTotalPages()).isEqualTo(1);
+            assertThat(postListResponse.getTotalElements()).isEqualTo(2);
+            assertThat(postListResponse.isNext()).isFalse();
+            assertThat(postListResponse.isPrev()).isFalse();
+            assertThat(postListResponse.isFirst()).isTrue();
+            assertThat(postListResponse.isLast()).isTrue();
+        }
+
+        private List<Post> postList() {
+            return List.of(
+                    Post.builder().title("apple").writer("yoonkun").content("content").member(member).build(),
+                    Post.builder().title("banana").writer("yoongun").content("content").member(memberB).build(),
+                    Post.builder().title("apple").writer("yoonkun").content("content").member(member).build(),
+                    Post.builder().title("title").writer("yoongun").content("content").member(memberB).build()
+            );
+        }
+
     }
 
-    @Test
-    @DisplayName("게시글을 삭제한다")
-    void postDelete() {
-        Post post = Post.builder()
-                .title("제목")
-                .content("내용")
-                .member(member)
-                .build();
-        Post savePost = postRepository.save(post);
-        Post findPost = postRepository.findPostJoinFetch(savePost.getId()).get();
+    @Nested
+    @DisplayName("게시글 삭제")
+    class PostDelete {
 
-        postRepository.delete(findPost);
+        @Test
+        @DisplayName("게시글을 삭제한다")
+        void delete() {
+            Post post = Post.builder()
+                    .title("title")
+                    .writer(member.getNickname())
+                    .content("content")
+                    .member(member)
+                    .build();
+            postRepository.save(post);
 
-        assertThat(postRepository.findPostJoinFetch(savePost.getId())).isEmpty();
-    }
+            postRepository.delete(post);
 
-    @Test
-    @DisplayName("특정 회원이 작성한 게시글 목록을 조회한다")
-    void findPostsFromMember() {
-        List<Post> content = List.of(
-                Post.builder().title("독수리").content("내용").member(member).build(),
-                Post.builder().title("기러기").content("내용").member(member).build(),
-                Post.builder().title("호랑이").content("내용").member(member).build(),
-                Post.builder().title("거북이").content("내용").member(member).build(),
-                Post.builder().title("코끼리").content("내용").member(member).build()
-        );
-        postRepository.saveAll(content);
+            assertThat(postRepository.findById(post.getId())).isEmpty();
+        }
 
-        Pageable pageable = PageRequest.of(0, 10, Sort.Direction.DESC, "id");
-        Page<PostListItem> postPage = postRepository.findPostsFromMember(pageable, "yoon1234");
-
-        assertThat(postPage.getNumber()).isEqualTo(0);
-        assertThat(postPage.getTotalPages()).isEqualTo(1);
-        assertThat(postPage.getTotalElements()).isEqualTo(5);
-        assertThat(postPage.hasPrevious()).isFalse();
-        assertThat(postPage.hasNext()).isFalse();
-        assertThat(postPage.isFirst()).isTrue();
-        assertThat(postPage.isLast()).isTrue();
     }
 
 }
