@@ -2,13 +2,16 @@ package com.board.domain.comment.dto;
 
 import jakarta.validation.constraints.NotBlank;
 
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
-@NoArgsConstructor
-@AllArgsConstructor
+@Builder
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class CommentModifyRequest {
 
     @NotBlank(message = "내용을 입력해 주세요.")
