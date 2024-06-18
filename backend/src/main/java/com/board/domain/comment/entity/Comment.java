@@ -57,13 +57,13 @@ public class Comment extends BaseEntity {
     private List<Comment> replies = new ArrayList<>();
 
     @Builder
-    public Comment(String content, Member member, Post post, Comment reference) {
-        this.writer = member.getNickname();
+    public Comment(String content, String writer, Member member, Post post, Comment reference) {
+        this.writer = writer;
         this.content = content;
         this.member = member;
         this.reference = reference;
         this.isDelete = false;
-        setPost(post);
+        this.post = post;
     }
 
     public void addReply(Comment reply) {
@@ -79,16 +79,8 @@ public class Comment extends BaseEntity {
         this.isDelete = true;
     }
 
-    public boolean isOwner(String loginUsername) {
-        return member.getUsername().equals(loginUsername);
-    }
-
-    private void setPost(Post post) {
-        if (this.post != null) {
-            this.post.getComments().remove(this);
-        }
-        this.post = post;
-        post.getComments().add(this);
+    public boolean isOwner(Long memberId) {
+        return member.getId().equals(memberId);
     }
 
 }
