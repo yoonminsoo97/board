@@ -1,5 +1,6 @@
 package com.board.domain.comment.service;
 
+import com.board.domain.comment.dto.CommentListResponse;
 import com.board.domain.comment.dto.CommentModifyRequest;
 import com.board.domain.comment.dto.CommentWriteRequest;
 import com.board.domain.comment.entity.Comment;
@@ -14,34 +15,34 @@ import com.board.domain.member.repository.MemberRepository;
 import com.board.domain.post.entity.Post;
 import com.board.domain.post.exception.NotFoundPostException;
 import com.board.domain.post.repository.PostRepository;
+import com.board.support.ServiceTest;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.never;
 
-@ExtendWith(MockitoExtension.class)
-class CommentServiceTest {
+class CommentServiceTest extends ServiceTest {
 
     @Mock
     private CommentRepository commentRepository;
@@ -63,288 +64,296 @@ class CommentServiceTest {
         member = Member.builder()
                 .nickname("yoonkun")
                 .username("yoon1234")
+                .password(new BCryptPasswordEncoder().encode("12345678"))
                 .build();
-
         post = Post.builder()
-                .title("제목")
-                .content("내용")
+                .title("title")
+                .writer(member.getNickname())
+                .content("content")
                 .member(member)
                 .build();
+        ReflectionTestUtils.setField(member, "id", 1L);
+        ReflectionTestUtils.setField(post, "id", 1L);
     }
 
-    @Test
-    @DisplayName("댓글을 작성한다")
-    void commentWrite() {
-        CommentWriteRequest commentWriteRequest = new CommentWriteRequest("댓글");
-        Comment comment = Comment.builder()
-                .content("댓글")
-                .member(member)
-                .post(post)
-                .build();
+    @Nested
+    @DisplayName("댓글 작성")
+    class CommentWriteTest {
 
-        given(postRepository.findById(anyLong())).willReturn(Optional.of(post));
-        given(memberRepository.findMemberByUsername(anyString())).willReturn(Optional.of(member));
-        given(commentRepository.save(any(Comment.class))).willReturn(comment);
+        @Test
+        @DisplayName("댓글을 작성한다")
+        void commentWrite() {
+            CommentWriteRequest commentWriteRequest = CommentWriteRequest.builder()
+                    .content("comment")
+                    .build();
 
-        commentService.commentWrite(1L, commentWriteRequest, "yoon1234");
+            Comment comment = Comment.builder()
+                    .writer(member.getNickname())
+                    .content("comment")
+                    .member(member)
+                    .post(post)
+                    .build();
 
-        then(postRepository).should().findById(anyLong());
-        then(memberRepository).should().findMemberByUsername(anyString());
-        then(commentRepository).should().save(any(Comment.class));
-    }
+            given(postRepository.findByPostId(anyLong())).willReturn(post);
+            given(memberRepository.findByMemberId(anyLong())).willReturn(member);
+            given(commentRepository.save(any(Comment.class))).willReturn(comment);
 
-    @Test
-    @DisplayName("댓글 작성 시 게시글을 찾을 수 없으면 예외가 발생한다")
-    void commentWriteNotFoundPost() {
-        CommentWriteRequest commentWriteRequest = new CommentWriteRequest("댓글");
+            commentService.commentWrite(1L, commentWriteRequest, 1L);
 
-        willThrow(new NotFoundPostException()).given(postRepository).findById(anyLong());
+            then(postRepository).should().findByPostId(anyLong());
+            then(memberRepository).should().findByMemberId(anyLong());
+            then(commentRepository).should().save(any(Comment.class));
+        }
 
-        assertThatThrownBy(() -> commentService.commentWrite(1L, commentWriteRequest, "yoon1234"))
-                .isInstanceOf(NotFoundPostException.class);
+        @Test
+        @DisplayName("대댓글을 작성한다")
+        void replyWrite() {
+            CommentWriteRequest replyWriteRequest = CommentWriteRequest.builder()
+                    .content("reply")
+                    .build();
 
-        then(postRepository).should().findById(anyLong());
-        then(memberRepository).should(never()).findMemberByUsername(anyString());
-        then(commentRepository).should(never()).save(any(Comment.class));
-    }
+            Comment comment = Comment.builder()
+                    .writer(member.getNickname())
+                    .content("comment")
+                    .member(member)
+                    .post(post)
+                    .build();
 
-    @Test
-    @DisplayName("댓글 작성 시 회원을 찾을 수 없으면 예외가 발생한다")
-    void commentWriteNotFoundMember() {
-        CommentWriteRequest commentWriteRequest = new CommentWriteRequest("댓글");
+            given(commentRepository.findCommentByPostIdAndCommentId(anyLong(), anyLong())).willReturn(Optional.of(comment));
+            given(memberRepository.findByMemberId(anyLong())).willReturn(member);
 
-        given(postRepository.findById(anyLong())).willReturn(Optional.of(post));
-        willThrow(new NotFoundMemberException()).given(memberRepository).findMemberByUsername(anyString());
+            commentService.replyWrite(1L, 1L, replyWriteRequest, 1L);
 
-        assertThatThrownBy(() -> commentService.commentWrite(1L, commentWriteRequest, "yoon1234"))
-                .isInstanceOf(NotFoundMemberException.class);
+            then(commentRepository).should().findCommentByPostIdAndCommentId(anyLong(), anyLong());
+            then(memberRepository).should().findByMemberId(anyLong());
+        }
 
-        then(postRepository).should().findById(anyLong());
-        then(memberRepository).should().findMemberByUsername(anyString());
-        then(commentRepository).should(never()).save(any(Comment.class));
-    }
+        @Test
+        @DisplayName("게시글이 존재하지 않으면 예외가 발생한다")
+        void commentWriteNotFoundPost() {
+            CommentWriteRequest commentWriteRequest = CommentWriteRequest.builder()
+                    .content("comment")
+                    .build();
 
-    @Test
-    @DisplayName("댓글 목록을 조회한다")
-    void commentList() {
-        List<Comment> content = List.of(
-                Comment.builder().content("댓글").member(member).post(post).build(),
-                Comment.builder().content("댓글").member(member).post(post).build(),
-                Comment.builder().content("댓글").member(member).post(post).build(),
-                Comment.builder().content("댓글").member(member).post(post).build(),
-                Comment.builder().content("댓글").member(member).post(post).build()
-        );
-        PageImpl<Comment> commentPage = new PageImpl<>(content);
+            willThrow(new NotFoundPostException()).given(postRepository).findByPostId(anyLong());
 
-        given(commentRepository.findCommentsByPostId(any(Pageable.class), anyLong())).willReturn(commentPage);
+            assertThatThrownBy(() -> commentService.commentWrite(1L, commentWriteRequest, 1L))
+                    .isInstanceOf(NotFoundPostException.class);
 
-        commentService.commentList(1L, 1);
+            then(postRepository).should().findByPostId(anyLong());
+            then(memberRepository).should(never()).findByMemberId(anyLong());
+            then(commentRepository).should(never()).save(any(Comment.class));
+        }
 
-        then(commentRepository).should().findCommentsByPostId(any(Pageable.class), anyLong());
-    }
+        @Test
+        @DisplayName("회원이 존재하지 않으면 예외가 발생한다")
+        void commentWriteNotFoundComment() {
+            CommentWriteRequest commentWriteRequest = CommentWriteRequest.builder()
+                    .content("comment")
+                    .build();
 
-    @Test
-    @DisplayName("댓글을 수정한다")
-    void commentModify() {
-        CommentModifyRequest commentModifyRequest = new CommentModifyRequest("댓글");
-        Comment comment = Comment.builder()
-                .content("댓글")
-                .member(member)
-                .post(post)
-                .build();
+            given(postRepository.findByPostId(anyLong())).willReturn(post);
+            willThrow(new NotFoundMemberException()).given(memberRepository).findByMemberId(anyLong());
 
-        given(commentRepository.findCommentJoinFetchMember(anyLong(), anyLong())).willReturn(Optional.of(comment));
+            assertThatThrownBy(() -> commentService.commentWrite(1L, commentWriteRequest, 1L))
+                    .isInstanceOf(NotFoundMemberException.class);
 
-        commentService.commentModify(1L, 1L, commentModifyRequest, "yoon1234");
-
-        then(commentRepository).should().findCommentJoinFetchMember(anyLong(), anyLong());
-    }
-
-    @Test
-    @DisplayName("댓글 수정 시 댓글을 찾을 수 없으면 예외가 발생한다")
-    void commentModifyNotFoundComment() {
-        CommentModifyRequest commentModifyRequest = new CommentModifyRequest("댓글");
-
-        willThrow(new NotFoundCommentException()).given(commentRepository).findCommentJoinFetchMember(anyLong(), anyLong());
-
-        assertThatThrownBy(() -> commentService.commentModify(1L, 1L, commentModifyRequest, "yoon1234"))
-                .isInstanceOf(NotFoundCommentException.class);
-
-        then(commentRepository).should().findCommentJoinFetchMember(anyLong(), anyLong());
-    }
-
-    @Test
-    @DisplayName("댓글 수정 시 작성자가 아닌데 수정을 시도하면 예외가 발생한다")
-    void commentModifyNotCommentOwner() {
-        CommentModifyRequest commentModifyRequest = new CommentModifyRequest("댓글");
-        Comment comment = Comment.builder()
-                .content("댓글")
-                .member(member)
-                .post(post)
-                .build();
-
-        given(commentRepository.findCommentJoinFetchMember(anyLong(), anyLong())).willReturn(Optional.of(comment));
-
-        assertThatThrownBy(() -> commentService.commentModify(1L, 1L, commentModifyRequest, "unknown"))
-                .isInstanceOf(CommentModifyAccessDeniedException.class);
-
-        then(commentRepository).should().findCommentJoinFetchMember(anyLong(), anyLong());
-    }
-
-    @Test
-    @DisplayName("이미 삭제된 댓글에 수정을 시도할 경우 예외가 발생한다")
-    void commentModifyAlreadyCommentDelete() {
-        CommentModifyRequest commentModifyRequest = new CommentModifyRequest("댓글");
-        Comment comment = Comment.builder()
-                .content("댓글")
-                .member(member)
-                .post(post)
-                .build();
-        comment.delete();
-
-        given(commentRepository.findCommentJoinFetchMember(anyLong(), anyLong())).willReturn(Optional.of(comment));
-
-        assertThatThrownBy(() -> commentService.commentModify(1L, 1L, commentModifyRequest, "yoon1234"))
-                .isInstanceOf(AlreadyDeleteCommentException.class);
-
-        then(commentRepository).should().findCommentJoinFetchMember(anyLong(), anyLong());
-    }
-
-    @Test
-    @DisplayName("댓글을 삭제한다")
-    void commentDelete() {
-        Comment comment = Comment.builder()
-                .content("댓글")
-                .member(member)
-                .post(post)
-                .build();
-
-        given(commentRepository.findCommentJoinFetchMember(anyLong(), anyLong())).willReturn(Optional.of(comment));
-
-        commentService.commentDelete(1L, 1L, "yoon1234");
-
-        then(commentRepository).should().findCommentJoinFetchMember(anyLong(), anyLong());
-    }
-
-    @Test
-    @DisplayName("댓글 삭제 시 댓글을 찾을 수 없으면 예외가 발생한다")
-    void commentDeleteNotFoundComment() {
-        willThrow(new NotFoundCommentException()).given(commentRepository).findCommentJoinFetchMember(anyLong(), anyLong());
-
-        assertThatThrownBy(() -> commentService.commentDelete(1L, 1L, "yoon1234"))
-                .isInstanceOf(NotFoundCommentException.class);
-
-        then(commentRepository).should().findCommentJoinFetchMember(anyLong(), anyLong());
-    }
-
-    @Test
-    @DisplayName("댓글 삭제 시 작성자가 아닌데 삭제를 시도하면 예외가 발생한다")
-    void commentDeleteNotCommentOwner() {
-        Comment comment = Comment.builder()
-                .content("댓글")
-                .member(member)
-                .post(post)
-                .build();
-
-        given(commentRepository.findCommentJoinFetchMember(anyLong(), anyLong())).willReturn(Optional.of(comment));
-
-        assertThatThrownBy(() -> commentService.commentDelete(1L, 1L, "unknown"))
-                .isInstanceOf(CommentDeleteAccessDeniedException.class);
-
-        then(commentRepository).should().findCommentJoinFetchMember(anyLong(), anyLong());
-    }
-
-    @Test
-    @DisplayName("이미 삭제된 댓글에 삭제를 시도할 경우 예외가 발생한다")
-    void commentDeleteAlreadyDeleteComment() {
-        Comment comment = Comment.builder()
-                .content("댓글")
-                .member(member)
-                .post(post)
-                .build();
-        comment.delete();
-
-        given(commentRepository.findCommentJoinFetchMember(anyLong(), anyLong())).willReturn(Optional.of(comment));
-
-        assertThatThrownBy(() -> commentService.commentDelete(1L, 1L, "yoon1234"))
-                .isInstanceOf(AlreadyDeleteCommentException.class);
-
-        then(commentRepository).should().findCommentJoinFetchMember(anyLong(), anyLong());
-    }
-
-    @Test
-    @DisplayName("특정 회원이 작성한 댓글 목록을 조회한다")
-    void commentListFromMember() {
-        List<Comment> content = List.of(
-                Comment.builder().content("댓글").member(member).post(post).build(),
-                Comment.builder().content("댓글").member(member).post(post).build(),
-                Comment.builder().content("댓글").member(member).post(post).build(),
-                Comment.builder().content("댓글").member(member).post(post).build(),
-                Comment.builder().content("댓글").member(member).post(post).build()
-        );
-        PageImpl<Comment> commentPage = new PageImpl<>(content);
-
-        given(commentRepository.findCommentsByMemberUsername(any(Pageable.class), anyString())).willReturn(commentPage);
-
-        commentService.commentListFromMember(0, "yoon1234");
-
-        then(commentRepository).should().findCommentsByMemberUsername(any(Pageable.class), anyString());
-    }
-
-    @Test
-    @DisplayName("대댓글을 작성한다")
-    void replyWrite() {
-        Comment comment = Comment.builder()
-                .content("댓글")
-                .member(member)
-                .post(post)
-                .build();
-
-        CommentWriteRequest replyWriteRequest = new CommentWriteRequest("대댓글");
-
-        given(commentRepository.findCommentByPostIdAndCommentId(anyLong(), anyLong())).willReturn(Optional.of(comment));
-        given(memberRepository.findMemberByUsername(anyString())).willReturn(Optional.of(member));
-
-        commentService.replyWrite(1L, 1L, replyWriteRequest, "yoon1234");
-
-        then(commentRepository).should().findCommentByPostIdAndCommentId(anyLong(), anyLong());
-        then(memberRepository).should().findMemberByUsername(anyString());
+            then(postRepository).should().findByPostId(anyLong());
+            then(memberRepository).should().findByMemberId(anyLong());
+            then(commentRepository).should(never()).save(any(Comment.class));
+        }
 
     }
 
-    @Test
-    @DisplayName("대댓글 작성 시 댓글을 찾을 수 없으면 예외가 발생한다")
-    void replyWriteNotFoundComment() {
-        CommentWriteRequest replyWriteRequest = new CommentWriteRequest("대댓글");
+    @Nested
+    @DisplayName("댓글 목록 조회")
+    class CommentListFind {
 
-        willThrow(new NotFoundCommentException()).given(commentRepository).findCommentByPostIdAndCommentId(anyLong(), anyLong());
+        @Test
+        @DisplayName("특정 게시글에 속한 댓글 목록을 조회한다")
+        void commentList() {
+            List<Comment> content = List.of(
+                    Comment.builder().writer(member.getNickname()).content("comment").member(member).post(post).build(),
+                    Comment.builder().writer(member.getNickname()).content("comment").member(member).post(post).build(),
+                    Comment.builder().writer(member.getNickname()).content("comment").member(member).post(post).build(),
+                    Comment.builder().writer(member.getNickname()).content("comment").member(member).post(post).build(),
+                    Comment.builder().writer(member.getNickname()).content("comment").member(member).post(post).build(),
+                    Comment.builder().writer(member.getNickname()).content("comment").member(member).post(post).build()
+            );
+            PageImpl<Comment> commentPage = new PageImpl<>(content);
 
-        assertThatThrownBy(() -> commentService.replyWrite(1L, 1L, replyWriteRequest, "yoon1234"))
-                .isInstanceOf(NotFoundCommentException.class);
+            given(commentRepository.findCommentsByPostId(any(Pageable.class), anyLong())).willReturn(commentPage);
 
-        then(commentRepository).should().findCommentByPostIdAndCommentId(anyLong(), anyLong());
-        then(memberRepository).should(never()).findMemberByUsername(anyString());
+            CommentListResponse response = commentService.commentList(1L, 0);
+
+            assertThat(response.getPage()).isEqualTo(1);
+            assertThat(response.getTotalElements()).isEqualTo(6);
+            assertThat(response.getTotalPages()).isEqualTo(1);
+            assertThat(response.isFirst()).isTrue();
+            assertThat(response.isLast()).isTrue();
+            assertThat(response.isPrev()).isFalse();
+            assertThat(response.isNext()).isFalse();
+            then(commentRepository).should().findCommentsByPostId(any(Pageable.class), anyLong());
+        }
+
     }
 
-    @Test
-    @DisplayName("대댓글 작성 시 회원을 찾을 수 없으면 예외가 발생한다")
-    void replyWriteNotFoundMember() {
-        Comment comment = Comment.builder()
-                .content("댓글")
-                .member(member)
-                .post(post)
-                .build();
+    @Nested
+    @DisplayName("댓글 수정")
+    class CommentModifyTest {
 
-        CommentWriteRequest replyWriteRequest = new CommentWriteRequest("대댓글");
+        @Test
+        @DisplayName("댓글을 수정한다")
+        void commentModify() {
+            CommentModifyRequest commentModifyRequest = CommentModifyRequest.builder()
+                    .content("newComment")
+                    .build();
 
-        given(commentRepository.findCommentByPostIdAndCommentId(anyLong(), anyLong())).willReturn(Optional.of(comment));
-        willThrow(new NotFoundMemberException()).given(memberRepository).findMemberByUsername(anyString());
+            Comment comment = Comment.builder()
+                    .writer(member.getNickname())
+                    .content("comment")
+                    .member(member)
+                    .post(post)
+                    .build();
 
-        assertThatThrownBy(() -> commentService.replyWrite(1L, 1L, replyWriteRequest, "yoon1234"))
-                .isInstanceOf(NotFoundMemberException.class);
+            given(commentRepository.findCommentByPostIdAndCommentId(anyLong(), anyLong())).willReturn(Optional.of(comment));
 
-        then(commentRepository).should().findCommentByPostIdAndCommentId(anyLong(), anyLong());
-        then(memberRepository).should().findMemberByUsername(anyString());
+            commentService.commentModify(1L, 1L, commentModifyRequest, 1L);
+
+            then(commentRepository).should().findCommentByPostIdAndCommentId(anyLong(), anyLong());
+        }
+
+        @Test
+        @DisplayName("댓글이 존재하지 않으면 예외가 발생한다")
+        void commentModifyNotFoundComment() {
+            CommentModifyRequest commentModifyRequest = CommentModifyRequest.builder()
+                    .content("newComment")
+                    .build();
+
+            willThrow(new NotFoundCommentException()).given(commentRepository).findCommentByPostIdAndCommentId(anyLong(), anyLong());
+
+            assertThatThrownBy(() -> commentService.commentModify(1L, 1L, commentModifyRequest, 1L))
+                    .isInstanceOf(NotFoundCommentException.class);
+
+            then(commentRepository).should().findCommentByPostIdAndCommentId(anyLong(), anyLong());
+        }
+
+        @Test
+        @DisplayName("이미 삭제된 댓글이면 예외가 발생한다")
+        void commentModifyAlreadyCommentDelete() {
+            CommentModifyRequest commentModifyRequest = CommentModifyRequest.builder()
+                    .content("newComment")
+                    .build();
+
+            Comment comment = Comment.builder()
+                    .writer(member.getNickname())
+                    .content("comment")
+                    .member(member)
+                    .post(post)
+                    .build();
+            comment.delete();
+
+            given(commentRepository.findCommentByPostIdAndCommentId(anyLong(), anyLong())).willReturn(Optional.of(comment));
+
+            assertThatThrownBy(() -> commentService.commentModify(1L, 1L, commentModifyRequest, 1L))
+                    .isInstanceOf(AlreadyDeleteCommentException.class);
+
+            then(commentRepository).should().findCommentByPostIdAndCommentId(anyLong(), anyLong());
+        }
+
+        @Test
+        @DisplayName("작성자가 아니면 예외가 발생한다")
+        void commentModifyNotCommentOwner() {
+            CommentModifyRequest commentModifyRequest = CommentModifyRequest.builder()
+                    .content("newComment")
+                    .build();
+
+            Comment comment = Comment.builder()
+                    .writer(member.getNickname())
+                    .content("comment")
+                    .member(member)
+                    .post(post)
+                    .build();
+
+            given(commentRepository.findCommentByPostIdAndCommentId(anyLong(), anyLong())).willReturn(Optional.of(comment));
+
+            assertThatThrownBy(() -> commentService.commentModify(1L, 1L, commentModifyRequest, 2L))
+                    .isInstanceOf(CommentModifyAccessDeniedException.class);
+
+            then(commentRepository).should().findCommentByPostIdAndCommentId(anyLong(), anyLong());
+        }
+
+    }
+
+    @Nested
+    @DisplayName("댓글 삭제")
+    class CommentDeleteTest {
+
+        @Test
+        @DisplayName("댓글을 삭제한다")
+        void commentDelete() {
+            Comment comment = Comment.builder()
+                    .writer(member.getNickname())
+                    .content("comment")
+                    .member(member)
+                    .post(post)
+                    .build();
+
+            given(commentRepository.findCommentByPostIdAndCommentId(anyLong(), anyLong())).willReturn(Optional.of(comment));
+
+            commentService.commentDelete(1L, 1L, 1L);
+
+            then(commentRepository).should().findCommentByPostIdAndCommentId(anyLong(), anyLong());
+        }
+
+        @Test
+        @DisplayName("댓글이 존재하지 않으면 예외가 발생한다")
+        void commentDeleteNotFoundComment() {
+            willThrow(new NotFoundCommentException()).given(commentRepository).findCommentByPostIdAndCommentId(anyLong(), anyLong());
+
+            assertThatThrownBy(() -> commentService.commentDelete(1L, 1L, 1L))
+                    .isInstanceOf(NotFoundCommentException.class);
+
+            then(commentRepository).should().findCommentByPostIdAndCommentId(anyLong(), anyLong());
+        }
+
+        @Test
+        @DisplayName("이미 삭제된 댓글이면 예외가 발생한다")
+        void commentDeleteAlreadyCommentDelete() {
+            Comment comment = Comment.builder()
+                    .writer(member.getNickname())
+                    .content("comment")
+                    .member(member)
+                    .post(post)
+                    .build();
+            comment.delete();
+
+            given(commentRepository.findCommentByPostIdAndCommentId(anyLong(), anyLong())).willReturn(Optional.of(comment));
+
+            assertThatThrownBy(() -> commentService.commentDelete(1L, 1L, 1L))
+                    .isInstanceOf(AlreadyDeleteCommentException.class);
+
+            then(commentRepository).should().findCommentByPostIdAndCommentId(anyLong(), anyLong());
+        }
+
+        @Test
+        @DisplayName("작성자가 아니면 예외가 발생한다")
+        void commentDeleteNotCommentOwner() {
+            Comment comment = Comment.builder()
+                    .writer(member.getNickname())
+                    .content("comment")
+                    .member(member)
+                    .post(post)
+                    .build();
+
+            given(commentRepository.findCommentByPostIdAndCommentId(anyLong(), anyLong())).willReturn(Optional.of(comment));
+
+            assertThatThrownBy(() -> commentService.commentDelete(1L, 1L, 2L))
+                    .isInstanceOf(CommentDeleteAccessDeniedException.class);
+
+            then(commentRepository).should().findCommentByPostIdAndCommentId(anyLong(), anyLong());
+        }
+
     }
 
 }

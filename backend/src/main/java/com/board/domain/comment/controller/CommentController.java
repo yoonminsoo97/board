@@ -34,8 +34,8 @@ public class CommentController {
     @PostMapping("/{postId}/comments")
     public ResponseEntity<ApiResponse<Void>> commentWrite(@PathVariable("postId") Long postId,
                                                           @RequestBody @Valid CommentWriteRequest commentWriteRequest,
-                                                          @AuthenticationPrincipal String username) {
-        commentService.commentWrite(postId, commentWriteRequest, username);
+                                                          @AuthenticationPrincipal Long memberId) {
+        commentService.commentWrite(postId, commentWriteRequest, memberId);
         return ResponseEntity.ok().body(ApiResponse.success());
     }
 
@@ -44,8 +44,8 @@ public class CommentController {
     public ResponseEntity<ApiResponse<Void>> replyWrite(@PathVariable("postId") Long postId,
                                                         @PathVariable("commentId") Long commentId,
                                                         @RequestBody @Valid CommentWriteRequest commentWriteRequest,
-                                                        @AuthenticationPrincipal String username) {
-        commentService.replyWrite(postId, commentId, commentWriteRequest, username);
+                                                        @AuthenticationPrincipal Long memberId) {
+        commentService.replyWrite(postId, commentId, commentWriteRequest, memberId);
         return ResponseEntity.ok().body(ApiResponse.success());
     }
 
@@ -62,8 +62,8 @@ public class CommentController {
     public ResponseEntity<ApiResponse<Void>> commentModify(@PathVariable("postId") Long postId,
                                                            @PathVariable("commentId") Long commentId,
                                                            @RequestBody @Valid CommentModifyRequest commentModifyRequest,
-                                                           @AuthenticationPrincipal String username) {
-        commentService.commentModify(postId, commentId, commentModifyRequest, username);
+                                                           @AuthenticationPrincipal Long memberId) {
+        commentService.commentModify(postId, commentId, commentModifyRequest, memberId);
         return ResponseEntity.ok().body(ApiResponse.success());
     }
 
@@ -71,8 +71,8 @@ public class CommentController {
     @DeleteMapping("/{postId}/comments/{commentId}")
     public ResponseEntity<ApiResponse<Void>> commentDelete(@PathVariable("postId") Long postId,
                                                            @PathVariable("commentId") Long commentId,
-                                                           @AuthenticationPrincipal String username) {
-        commentService.commentDelete(postId, commentId, username);
+                                                           @AuthenticationPrincipal Long memberId) {
+        commentService.commentDelete(postId, commentId, memberId);
         return ResponseEntity.ok().body(ApiResponse.success());
     }
 

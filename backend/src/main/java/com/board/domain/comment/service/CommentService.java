@@ -10,10 +10,8 @@ import com.board.domain.comment.exception.CommentModifyAccessDeniedException;
 import com.board.domain.comment.exception.NotFoundCommentException;
 import com.board.domain.comment.repository.CommentRepository;
 import com.board.domain.member.entity.Member;
-import com.board.domain.member.exception.NotFoundMemberException;
 import com.board.domain.member.repository.MemberRepository;
 import com.board.domain.post.entity.Post;
-import com.board.domain.post.exception.NotFoundPostException;
 import com.board.domain.post.repository.PostRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -32,17 +30,16 @@ public class CommentService {
     private static final int PAGE_SIZE = 10;
     private static final String PROPERTIES = "id";
 
-    private final CommentRepository commentRepository;
-    private final PostRepository postRepository;
     private final MemberRepository memberRepository;
+    private final PostRepository postRepository;
+    private final CommentRepository commentRepository;
 
     @Transactional
-    public void commentWrite(Long postNumber, CommentWriteRequest commentWriteRequest, String loginUsername) {
-        Post post = postRepository.findById(postNumber)
-                .orElseThrow(NotFoundPostException::new);
-        Member member = memberRepository.findMemberByUsername(loginUsername)
-                .orElseThrow(NotFoundMemberException::new);
+    public void commentWrite(Long postId, CommentWriteRequest commentWriteRequest, Long memberId) {
+        Post post = postRepository.findByPostId(postId);
+        Member member = memberRepository.findByMemberId(memberId);
         Comment comment = Comment.builder()
+                .writer(member.getNickname())
                 .content(commentWriteRequest.getContent())
                 .member(member)
                 .post(post)
@@ -51,12 +48,12 @@ public class CommentService {
     }
 
     @Transactional
-    public void replyWrite(Long postId, Long commentId, CommentWriteRequest commentWriteRequest, String username) {
+    public void replyWrite(Long postId, Long commentId, CommentWriteRequest commentWriteRequest, Long memberId) {
         Comment comment = commentRepository.findCommentByPostIdAndCommentId(postId, commentId)
                 .orElseThrow(NotFoundCommentException::new);
-        Member member = memberRepository.findMemberByUsername(username)
-                .orElseThrow(NotFoundMemberException::new);
+        Member member = memberRepository.findByMemberId(memberId);
         Comment reply = Comment.builder()
+                .writer(member.getNickname())
                 .content(commentWriteRequest.getContent())
                 .member(member)
                 .post(comment.getPost())
@@ -66,17 +63,17 @@ public class CommentService {
     }
 
     @Transactional(readOnly = true)
-    public CommentListResponse commentList(Long postNumber, int pageNumber) {
-        Pageable pageable = PageRequest.of(pageNumber, PAGE_SIZE, Sort.Direction.ASC, PROPERTIES);
-        Page<Comment> commentPage = commentRepository.findCommentsByPostId(pageable, postNumber);
+    public CommentListResponse commentList(Long postId, int page) {
+        Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.Direction.ASC, PROPERTIES);
+        Page<Comment> commentPage = commentRepository.findCommentsByPostId(pageable, postId);
         return new CommentListResponse(commentPage);
     }
 
     @Transactional
-    public void commentModify(Long postNumber, Long commentNumber, CommentModifyRequest commentModifyRequest, String loginUsername) {
-        Comment comment = commentRepository.findCommentJoinFetchMember(postNumber, commentNumber)
+    public void commentModify(Long postId, Long commentId, CommentModifyRequest commentModifyRequest, Long memberId) {
+        Comment comment = commentRepository.findCommentByPostIdAndCommentId(postId, commentId)
                 .orElseThrow(NotFoundCommentException::new);
-        if (!comment.isOwner(loginUsername)) {
+        if (!comment.isOwner(memberId)) {
             throw new CommentModifyAccessDeniedException();
         }
         if (comment.isDelete()) {
@@ -86,23 +83,16 @@ public class CommentService {
     }
 
     @Transactional
-    public void commentDelete(Long postNumber, Long commentNumber, String loginUsername) {
-        Comment comment = commentRepository.findCommentJoinFetchMember(postNumber, commentNumber)
+    public void commentDelete(Long postId, Long commentId, Long memberId) {
+        Comment comment = commentRepository.findCommentByPostIdAndCommentId(postId, commentId)
                 .orElseThrow(NotFoundCommentException::new);
-        if (!comment.isOwner(loginUsername)) {
+        if (!comment.isOwner(memberId)) {
             throw new CommentDeleteAccessDeniedException();
         }
         if (comment.isDelete()) {
             throw new AlreadyDeleteCommentException();
         }
         comment.delete();
-    }
-
-    @Transactional(readOnly = true)
-    public CommentListResponse commentListFromMember(int page, String username) {
-        Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.Direction.ASC, PROPERTIES);
-        Page<Comment> commentPage = commentRepository.findCommentsByMemberUsername(pageable, username);
-        return new CommentListResponse(commentPage);
     }
 
 }

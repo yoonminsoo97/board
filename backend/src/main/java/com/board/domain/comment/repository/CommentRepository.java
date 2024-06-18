@@ -10,15 +10,11 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 
-public interface CommentRepository extends JpaRepository<Comment, Long> {
+public interface CommentRepository extends JpaRepository<Comment, Long>, CommentCustomRepository {
 
     @Query("SELECT c FROM Comment AS c WHERE c.post.id = :postId AND c.id = :commentId")
     Optional<Comment> findCommentByPostIdAndCommentId(@Param("postId") Long postId, @Param("commentId") Long commentId);
 
-    @Query("SELECT c FROM Comment AS c JOIN FETCH c.member WHERE c.post.id = :postId AND c.id = :commentId")
-    Optional<Comment> findCommentJoinFetchMember(@Param("postId") Long postId, @Param("commentId") Long commentId);
-
     Page<Comment> findCommentsByPostId(Pageable pageable, Long postId);
-    Page<Comment> findCommentsByMemberUsername(Pageable pageable, String username);
 
 }
