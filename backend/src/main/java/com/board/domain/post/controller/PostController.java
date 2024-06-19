@@ -6,6 +6,7 @@ import com.board.domain.post.dto.PostModifyRequest;
 import com.board.domain.post.dto.PostWriteRequest;
 import com.board.domain.post.service.PostService;
 import com.board.global.common.dto.ApiResponse;
+import com.board.global.security.annotation.LoginMember;
 
 import jakarta.validation.Valid;
 
@@ -13,7 +14,6 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -34,7 +34,7 @@ public class PostController {
     @Secured("ROLE_MEMBER")
     @PostMapping
     public ResponseEntity<ApiResponse<Void>> postWrite(@RequestBody @Valid PostWriteRequest postWriteRequest,
-                                                       @AuthenticationPrincipal Long memberId) {
+                                                       @LoginMember Long memberId) {
         postService.postWrite(postWriteRequest, memberId);
         return ResponseEntity.ok().body(ApiResponse.success());
     }
@@ -65,7 +65,7 @@ public class PostController {
     @PutMapping("/{postId}")
     public ResponseEntity<ApiResponse<Void>> postModify(@PathVariable("postId") Long postId,
                                                         @RequestBody @Valid PostModifyRequest postModifyRequest,
-                                                        @AuthenticationPrincipal Long memberId) {
+                                                        @LoginMember Long memberId) {
         postService.postModify(postId, postModifyRequest, memberId);
         return ResponseEntity.ok().body(ApiResponse.success());
     }
@@ -73,7 +73,7 @@ public class PostController {
     @Secured("ROLE_MEMBER")
     @DeleteMapping("/{postId}")
     public ResponseEntity<ApiResponse<Void>> postDelete(@PathVariable("postId") Long postId,
-                                                        @AuthenticationPrincipal Long memberId) {
+                                                        @LoginMember Long memberId) {
         postService.postDelete(postId, memberId);
         return ResponseEntity.ok().body(ApiResponse.success());
     }
