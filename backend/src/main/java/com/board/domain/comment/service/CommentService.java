@@ -89,10 +89,31 @@ public class CommentService {
         if (!comment.isOwner(memberId)) {
             throw new CommentDeleteAccessDeniedException();
         }
+        if (!comment.isReply()) {
+            commentDelete(comment);
+        } else {
+            replyDelete(comment);
+        }
+    }
+
+    private void commentDelete(Comment comment) {
         if (comment.isDelete()) {
             throw new AlreadyDeleteCommentException();
         }
-        comment.delete();
+        if (comment.hasReplies()) {
+            comment.softDelete();
+        } else {
+            commentRepository.delete(comment);
+        }
+    }
+
+    private void replyDelete(Comment reply) {
+        Comment reference = reply.getReference();
+        reference.deleteReply(reply);
+        commentRepository.delete(reply);
+        if (!reference.hasReplies() && reference.isDelete()) {
+            commentRepository.delete(reference);
+        }
     }
 
 }
