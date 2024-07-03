@@ -2,6 +2,8 @@ package com.board.domain.comment.controller;
 
 import com.board.domain.comment.dto.CommentModifyRequest;
 import com.board.domain.comment.dto.CommentWriteRequest;
+import com.board.domain.comment.exception.AlreadyDeleteCommentException;
+import com.board.domain.comment.exception.CommentDeleteAccessDeniedException;
 import com.board.domain.comment.exception.NotFoundCommentException;
 import com.board.domain.comment.service.CommentService;
 import com.board.domain.post.exception.NotFoundPostException;
@@ -546,6 +548,74 @@ class CommentControllerTest extends ControllerTest {
                     .andExpect(jsonPath("$.status").value("fail"))
                     .andExpect(jsonPath("$.error.code").value("E404003"))
                     .andExpect(jsonPath("$.error.message").value("댓글을 찾을 수 없습니다."))
+                    .andExpect(jsonPath("$.error.fields").isEmpty())
+                    .andDo(restDocs.document(
+                            pathParameters(
+                                    parameterWithName("postId").description("게시글 번호"),
+                                    parameterWithName("commentId").description("댓글 번호")
+                            ),
+                            requestHeaders(
+                                    headerWithName("Authorization").description("액세스 토큰")
+                            ),
+                            responseFields(
+                                    commonErrorResponse()
+                            )
+                    ));
+        }
+
+        @Test
+        @DisplayName("이미 삭제된 댓글을 삭제를 시도하면 예외가 발생한다")
+        void commentDeleteAlreadyDeleteComment() throws Exception {
+            Claims claims = Jwts.claims()
+                    .subject(String.valueOf(1L))
+                    .add("nickname", "yoonkun")
+                    .add("authority", "ROLE_MEMBER")
+                    .build();
+
+            given(jwtManager.getPayload(anyString())).willReturn(claims);
+            willThrow(new AlreadyDeleteCommentException()).given(commentService).commentDelete(anyLong(), anyLong(), anyLong());
+
+            mockMvc.perform(delete("/api/posts/{postId}/comments/{commentId}", 1, 1)
+                            .header("Authorization", "Bearer access-token")
+                    )
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.status").value("fail"))
+                    .andExpect(jsonPath("$.error.code").value("E404004"))
+                    .andExpect(jsonPath("$.error.message").value("이미 삭제된 댓글입니다."))
+                    .andExpect(jsonPath("$.error.fields").isEmpty())
+                    .andDo(restDocs.document(
+                            pathParameters(
+                                    parameterWithName("postId").description("게시글 번호"),
+                                    parameterWithName("commentId").description("댓글 번호")
+                            ),
+                            requestHeaders(
+                                    headerWithName("Authorization").description("액세스 토큰")
+                            ),
+                            responseFields(
+                                    commonErrorResponse()
+                            )
+                    ));
+        }
+
+        @Test
+        @DisplayName("댓글 작성자가 아닌데 삭제를 시도하면 예외가 발생한다")
+        void commentDeleteNotCommentOwner() throws Exception {
+            Claims claims = Jwts.claims()
+                    .subject(String.valueOf(1L))
+                    .add("nickname", "yoonkun")
+                    .add("authority", "ROLE_MEMBER")
+                    .build();
+
+            given(jwtManager.getPayload(anyString())).willReturn(claims);
+            willThrow(new CommentDeleteAccessDeniedException()).given(commentService).commentDelete(anyLong(), anyLong(), anyLong());
+
+            mockMvc.perform(delete("/api/posts/{postId}/comments/{commentId}", 1, 1)
+                            .header("Authorization", "Bearer access-token")
+                    )
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.status").value("fail"))
+                    .andExpect(jsonPath("$.error.code").value("E403004"))
+                    .andExpect(jsonPath("$.error.message").value("댓글 삭제는 작성자만 할 수 있습니다."))
                     .andExpect(jsonPath("$.error.fields").isEmpty())
                     .andDo(restDocs.document(
                             pathParameters(

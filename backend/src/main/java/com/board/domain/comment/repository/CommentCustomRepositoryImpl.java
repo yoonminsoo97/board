@@ -30,7 +30,7 @@ public class CommentCustomRepositoryImpl implements CommentCustomRepository {
                 .select(Projections.constructor(CommentItem.class,
                         comment.id,
                         comment.writer,
-                        comment.count(),
+                        comment.content,
                         comment.createdAt))
                 .from(comment)
                 .where(comment.member.id.eq(memberId).and(comment.isDelete.eq(false)))

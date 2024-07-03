@@ -247,8 +247,8 @@ class CommentRepositoryTest extends RepositoryTest {
     class CommentDeleteTest {
 
         @Test
-        @DisplayName("댓글을 삭제한다")
-        void delete() {
+        @DisplayName("댓글을 논리 삭제한다")
+        void softDelete() {
             Comment comment = Comment.builder()
                     .writer(member.getNickname())
                     .content("comment")
@@ -260,9 +260,28 @@ class CommentRepositoryTest extends RepositoryTest {
             Comment findComment = commentRepository.findCommentByPostIdAndCommentId(post.getId(), comment.getId())
                     .orElseThrow(NotFoundCommentException::new);
 
-            findComment.delete();
+            findComment.softDelete();
 
             assertThat(findComment.isDelete()).isTrue();
+        }
+
+        @Test
+        @DisplayName("댓글을 물리 삭제한다")
+        void hardDelete() {
+            Comment comment = Comment.builder()
+                    .writer(member.getNickname())
+                    .content("comment")
+                    .member(member)
+                    .post(post)
+                    .build();
+            commentRepository.save(comment);
+
+            Comment findComment = commentRepository.findCommentByPostIdAndCommentId(post.getId(), comment.getId())
+                    .orElseThrow(NotFoundCommentException::new);
+
+            commentRepository.delete(findComment);
+
+            assertThat(commentRepository.findCommentByPostIdAndCommentId(post.getId(), comment.getId())).isEmpty();
         }
 
     }

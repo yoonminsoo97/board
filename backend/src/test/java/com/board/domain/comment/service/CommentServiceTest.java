@@ -39,8 +39,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 
 class CommentServiceTest extends ServiceTest {
 
@@ -251,7 +253,7 @@ class CommentServiceTest extends ServiceTest {
                     .member(member)
                     .post(post)
                     .build();
-            comment.delete();
+            comment.softDelete();
 
             given(commentRepository.findCommentByPostIdAndCommentId(anyLong(), anyLong())).willReturn(Optional.of(comment));
 
@@ -289,21 +291,91 @@ class CommentServiceTest extends ServiceTest {
     @DisplayName("댓글 삭제")
     class CommentDeleteTest {
 
-        @Test
-        @DisplayName("댓글을 삭제한다")
-        void commentDelete() {
-            Comment comment = Comment.builder()
-                    .writer(member.getNickname())
+        private Comment comment;
+
+        @BeforeEach
+        void setUp() {
+            comment = Comment.builder()
+                    .writer("yoonkun")
                     .content("comment")
-                    .member(member)
                     .post(post)
+                    .member(member)
                     .build();
+        }
+
+        @Test
+        @DisplayName("대댓글이 존재하면 댓글을 논리 삭제한다")
+        void commentSoftDeleteHasReplies() {
+            Comment reply = Comment.builder()
+                    .writer("yoonkun")
+                    .content("reply")
+                    .post(post)
+                    .member(member)
+                    .reference(comment)
+                    .build();
+            comment.addReply(reply);
 
             given(commentRepository.findCommentByPostIdAndCommentId(anyLong(), anyLong())).willReturn(Optional.of(comment));
 
             commentService.commentDelete(1L, 1L, 1L);
 
             then(commentRepository).should().findCommentByPostIdAndCommentId(anyLong(), anyLong());
+            then(commentRepository).should(never()).delete(any(Comment.class));
+        }
+
+        @Test
+        @DisplayName("대댓글이 존재하지 않으면 댓글을 물리 삭제한다")
+        void commentHardDeleteHasNoReplies() {
+            given(commentRepository.findCommentByPostIdAndCommentId(anyLong(), anyLong())).willReturn(Optional.of(comment));
+            willDoNothing().given(commentRepository).delete(any(Comment.class));
+
+            commentService.commentDelete(1L, 1L, 1L);
+
+            then(commentRepository).should().findCommentByPostIdAndCommentId(anyLong(), anyLong());
+            then(commentRepository).should().delete(any(Comment.class));
+        }
+
+        @Test
+        @DisplayName("대댓글을 삭제한다")
+        void commentReplyDelete() {
+            Comment reply = Comment.builder()
+                    .writer("yoonkun")
+                    .content("reply")
+                    .post(post)
+                    .member(member)
+                    .reference(comment)
+                    .build();
+            comment.addReply(reply);
+
+            given(commentRepository.findCommentByPostIdAndCommentId(anyLong(), anyLong())).willReturn(Optional.of(reply));
+            willDoNothing().given(commentRepository).delete(any(Comment.class));
+
+            commentService.commentDelete(1L, 1L, 1L);
+
+            then(commentRepository).should().findCommentByPostIdAndCommentId(anyLong(), anyLong());
+            then(commentRepository).should().delete(any(Comment.class));
+        }
+
+        @Test
+        @DisplayName("논리 삭제된 댓글에 작성된 대댓글을 삭제 후 대댓글이 없는 경우 댓글도 물리 삭제한다")
+        void commentDeleteReplyDeleteHasNoReplies() {
+            Comment reply = Comment.builder()
+                    .writer("yoonkun")
+                    .content("reply")
+                    .post(post)
+                    .member(member)
+                    .reference(comment)
+                    .build();
+            comment.addReply(reply);
+            comment.softDelete();
+
+            given(commentRepository.findCommentByPostIdAndCommentId(anyLong(), anyLong())).willReturn(Optional.of(reply));
+            willDoNothing().given(commentRepository).delete(any(Comment.class));
+
+            commentService.commentDelete(1L, 1L, 1L);
+
+            then(commentRepository).should().findCommentByPostIdAndCommentId(anyLong(), anyLong());
+            then(commentRepository).should(times(2)).delete(any(Comment.class));
         }
 
         @Test
@@ -326,7 +398,7 @@ class CommentServiceTest extends ServiceTest {
                     .member(member)
                     .post(post)
                     .build();
-            comment.delete();
+            comment.softDelete();
 
             given(commentRepository.findCommentByPostIdAndCommentId(anyLong(), anyLong())).willReturn(Optional.of(comment));
 
