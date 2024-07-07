@@ -1,6 +1,8 @@
 package com.board.domain.comment.service;
 
 import com.board.domain.comment.dto.CommentListResponse;
+import com.board.domain.comment.dto.CommentListResponse.CommentItem;
+import com.board.domain.comment.dto.CommentListResponse.CommentItem.ReplyItem;
 import com.board.domain.comment.dto.CommentModifyRequest;
 import com.board.domain.comment.dto.CommentWriteRequest;
 import com.board.domain.comment.entity.Comment;
@@ -17,18 +19,21 @@ import com.board.domain.post.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 @Service
 @RequiredArgsConstructor
 public class CommentService {
 
-    private static final int PAGE_SIZE = 10;
-    private static final String PROPERTIES = "id";
+    private static final int COMMENT_PER_PAGE = 10;
 
     private final MemberRepository memberRepository;
     private final PostRepository postRepository;
@@ -64,9 +69,47 @@ public class CommentService {
 
     @Transactional(readOnly = true)
     public CommentListResponse commentList(Long postId, int page) {
-        Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.Direction.ASC, PROPERTIES);
-        Page<Comment> commentPage = commentRepository.findCommentsByPostId(pageable, postId);
-        return new CommentListResponse(commentPage);
+        List<CommentItem> commentList = commentRepository.findCommentListByPostId(postId);
+        List<ReplyItem> replyList = commentRepository.findReplyListByPostId(postId);
+        Page<CommentItem> commentPage = convertCommentPage(commentList, replyList, PageRequest.of(page, COMMENT_PER_PAGE));
+        long totalComments = calcTotalComments(commentList, replyList);
+        return CommentListResponse.of(commentPage, totalComments);
+    }
+
+    private Page<CommentItem> convertCommentPage(List<CommentItem> commentList, List<ReplyItem> replyList, Pageable pageable) {
+        List<CommentItem> sliceCommentList = sliceCommentListPerPage(commentList, pageable);
+        List<CommentItem> content = setReplyListPerComment(sliceCommentList, replyList);
+        return new PageImpl<>(content, pageable, commentList.size());
+    }
+
+    private List<CommentItem> setReplyListPerComment(List<CommentItem> commentList, List<ReplyItem> replyList) {
+        ConcurrentMap<Long, CommentItem> commentMap = new ConcurrentHashMap<>();
+        for (CommentItem commentItem : commentList) {
+            commentMap.put(commentItem.getCommentId(), commentItem);
+        }
+        for (ReplyItem replyItem : replyList) {
+            CommentItem commentItem = commentMap.get(replyItem.getReferenceId());
+            if (commentItem != null) {
+                commentItem.getReplies().add(replyItem);
+            }
+        }
+        return commentList;
+    }
+
+    private List<CommentItem> sliceCommentListPerPage(List<CommentItem> commentList, Pageable pageable) {
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), commentList.size());
+        return commentList.subList(start, end);
+    }
+
+    private long calcTotalComments(List<CommentItem> commentList, List<ReplyItem> replyList) {
+        long commentCount = 0;
+        for (CommentItem commentItem : commentList) {
+            if (!commentItem.isDelete()) {
+                commentCount++;
+            }
+        }
+        return commentCount + replyList.size();
     }
 
     @Transactional

@@ -1,5 +1,6 @@
 package com.board.domain.comment.repository;
 
+import com.board.domain.comment.dto.CommentListResponse;
 import com.board.domain.comment.entity.Comment;
 import com.board.domain.comment.exception.NotFoundCommentException;
 import com.board.domain.member.dto.MemberCommentListResponse;
@@ -16,9 +17,7 @@ import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.util.List;
@@ -199,45 +198,82 @@ class CommentRepositoryTest extends RepositoryTest {
 
         @Test
         @DisplayName("특정 게시글에 속한 댓글 목록을 조회한다")
-        void findCommentsByPostId() {
-            commentRepository.saveAll(commentList());
+        void findCommentListByPostId() {
+            Comment comment = Comment.builder()
+                    .writer(member.getNickname())
+                    .content("comment")
+                    .member(member)
+                    .post(post)
+                    .build();
+            Comment reply = Comment.builder()
+                    .writer(member.getNickname())
+                    .content("reply")
+                    .member(member)
+                    .post(post)
+                    .reference(comment)
+                    .build();
+            commentRepository.save(comment);
+            commentRepository.save(reply);
 
-            Page<Comment> commentPage = commentRepository.findCommentsByPostId(PageRequest.of(0, 10, Sort.Direction.DESC, "id"), post.getId());
+            List<CommentListResponse.CommentItem> commentList = commentRepository.findCommentListByPostId(post.getId());
 
-            assertThat(commentPage.getNumber()).isEqualTo(0);
-            assertThat(commentPage.getTotalElements()).isEqualTo(6);
-            assertThat(commentPage.getTotalPages()).isEqualTo(1);
-            assertThat(commentPage.isLast()).isTrue();
-            assertThat(commentPage.isFirst()).isTrue();
-            assertThat(commentPage.hasNext()).isFalse();
-            assertThat(commentPage.hasPrevious()).isFalse();
+            assertThat(commentList.isEmpty()).isFalse();
+            assertThat(commentList.size()).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("특정 게시글에 속한 대댓글 목록을 조회한다")
+        void findReplyListByPostId() {
+            Comment comment = Comment.builder()
+                    .writer(member.getNickname())
+                    .content("comment")
+                    .member(member)
+                    .post(post)
+                    .build();
+            Comment reply = Comment.builder()
+                    .writer(member.getNickname())
+                    .content("reply")
+                    .member(member)
+                    .post(post)
+                    .reference(comment)
+                    .build();
+            commentRepository.save(comment);
+            commentRepository.save(reply);
+
+            List<CommentListResponse.CommentItem.ReplyItem> replyList = commentRepository.findReplyListByPostId(post.getId());
+
+            assertThat(replyList.isEmpty()).isFalse();
+            assertThat(replyList.size()).isEqualTo(1);
         }
 
         @Test
         @DisplayName("회원이 작성한 댓글 목록을 조회한다")
         void findMemberCommentList() {
-            commentRepository.saveAll(commentList());
+            Comment comment = Comment.builder()
+                    .writer(member.getNickname())
+                    .content("comment")
+                    .member(member)
+                    .post(post)
+                    .build();
+            Comment reply = Comment.builder()
+                    .writer(member.getNickname())
+                    .content("reply")
+                    .member(member)
+                    .post(post)
+                    .reference(comment)
+                    .build();
+            commentRepository.save(comment);
+            commentRepository.save(reply);
 
             MemberCommentListResponse memberCommentList = commentRepository.findMemberCommentList(PageRequest.of(0, 10), member.getId());
 
             assertThat(memberCommentList.getPage()).isEqualTo(1);
-            assertThat(memberCommentList.getTotalElements()).isEqualTo(6);
+            assertThat(memberCommentList.getTotalElements()).isEqualTo(2);
             assertThat(memberCommentList.getTotalPages()).isEqualTo(1);
             assertThat(memberCommentList.isFirst()).isTrue();
             assertThat(memberCommentList.isLast()).isTrue();
             assertThat(memberCommentList.isPrev()).isFalse();
             assertThat(memberCommentList.isNext()).isFalse();
-        }
-
-        private List<Comment> commentList() {
-            return List.of(
-                    Comment.builder().writer(member.getNickname()).content("comment").member(member).post(post).build(),
-                    Comment.builder().writer(member.getNickname()).content("comment").member(member).post(post).build(),
-                    Comment.builder().writer(member.getNickname()).content("comment").member(member).post(post).build(),
-                    Comment.builder().writer(member.getNickname()).content("comment").member(member).post(post).build(),
-                    Comment.builder().writer(member.getNickname()).content("comment").member(member).post(post).build(),
-                    Comment.builder().writer(member.getNickname()).content("comment").member(member).post(post).build()
-            );
         }
 
     }
