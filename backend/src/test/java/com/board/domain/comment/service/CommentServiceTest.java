@@ -25,11 +25,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -174,28 +173,36 @@ class CommentServiceTest extends ServiceTest {
         @Test
         @DisplayName("특정 게시글에 속한 댓글 목록을 조회한다")
         void commentList() {
-            List<Comment> content = List.of(
-                    Comment.builder().writer(member.getNickname()).content("comment").member(member).post(post).build(),
-                    Comment.builder().writer(member.getNickname()).content("comment").member(member).post(post).build(),
-                    Comment.builder().writer(member.getNickname()).content("comment").member(member).post(post).build(),
-                    Comment.builder().writer(member.getNickname()).content("comment").member(member).post(post).build(),
-                    Comment.builder().writer(member.getNickname()).content("comment").member(member).post(post).build(),
-                    Comment.builder().writer(member.getNickname()).content("comment").member(member).post(post).build()
-            );
-            PageImpl<Comment> commentPage = new PageImpl<>(content);
+            List<CommentListResponse.CommentItem> commentList = List.of(CommentListResponse.CommentItem.builder()
+                    .commentId(1L)
+                    .writer("yoonkun")
+                    .content("comment")
+                    .createdAt(LocalDateTime.of(2024, 6, 17, 0, 0))
+                    .isDelete(false)
+                    .build());
+            List<CommentListResponse.CommentItem.ReplyItem> replyList = List.of(CommentListResponse.CommentItem.ReplyItem.builder()
+                    .commentId(2L)
+                    .referenceId(1L)
+                    .writer("yoonkun")
+                    .content("reply")
+                    .createdAt(LocalDateTime.of(2024, 6, 17, 0, 0))
+                    .isDelete(false)
+                    .build());
 
-            given(commentRepository.findCommentsByPostId(any(Pageable.class), anyLong())).willReturn(commentPage);
+            given(commentRepository.findCommentListByPostId(anyLong())).willReturn(commentList);
+            given(commentRepository.findReplyListByPostId(anyLong())).willReturn(replyList);
 
-            CommentListResponse response = commentService.commentList(1L, 0);
+            CommentListResponse commentListResponse = commentService.commentList(1L, 0);
 
-            assertThat(response.getPage()).isEqualTo(1);
-            assertThat(response.getTotalElements()).isEqualTo(6);
-            assertThat(response.getTotalPages()).isEqualTo(1);
-            assertThat(response.isFirst()).isTrue();
-            assertThat(response.isLast()).isTrue();
-            assertThat(response.isPrev()).isFalse();
-            assertThat(response.isNext()).isFalse();
-            then(commentRepository).should().findCommentsByPostId(any(Pageable.class), anyLong());
+            assertThat(commentListResponse.getPage()).isEqualTo(1);
+            assertThat(commentListResponse.getTotalPages()).isEqualTo(1);
+            assertThat(commentListResponse.getTotalComments()).isEqualTo(2);
+            assertThat(commentListResponse.isFirst()).isTrue();
+            assertThat(commentListResponse.isLast()).isTrue();
+            assertThat(commentListResponse.isPrev()).isFalse();
+            assertThat(commentListResponse.isNext()).isFalse();
+            then(commentRepository).should().findCommentListByPostId(anyLong());
+            then(commentRepository).should().findReplyListByPostId(anyLong());
         }
 
     }

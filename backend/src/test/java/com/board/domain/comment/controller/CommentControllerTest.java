@@ -1,5 +1,6 @@
 package com.board.domain.comment.controller;
 
+import com.board.domain.comment.dto.CommentListResponse;
 import com.board.domain.comment.dto.CommentModifyRequest;
 import com.board.domain.comment.dto.CommentWriteRequest;
 import com.board.domain.comment.exception.AlreadyDeleteCommentException;
@@ -22,7 +23,11 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
@@ -32,6 +37,7 @@ import static org.mockito.BDDMockito.willThrow;
 import static org.springframework.restdocs.headers.HeaderDocumentation.headerWithName;
 import static org.springframework.restdocs.headers.HeaderDocumentation.requestHeaders;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.delete;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.put;
 import static org.springframework.restdocs.payload.JsonFieldType.STRING;
@@ -40,6 +46,7 @@ import static org.springframework.restdocs.payload.PayloadDocumentation.requestF
 import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
 import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
+import static org.springframework.restdocs.request.RequestDocumentation.queryParameters;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -283,6 +290,82 @@ class CommentControllerTest extends ControllerTest {
                             ),
                             responseFields(
                                     commonErrorResponse()
+                            )
+                    ));
+        }
+
+    }
+
+    @Nested
+    @DisplayName("댓글 목록 요청")
+    class CommentListTest {
+
+        @Test
+        @DisplayName("특정 게시글에 속한 댓글 목록을 조회한다")
+        void commentList() throws Exception {
+            CommentListResponse.CommentItem commentItem = CommentListResponse.CommentItem.builder()
+                    .commentId(1L)
+                    .writer("yoonkun")
+                    .content("comment")
+                    .createdAt(LocalDateTime.of(2024, 6, 17, 0, 0))
+                    .isDelete(false)
+                    .build();
+
+            CommentListResponse.CommentItem.ReplyItem replyItem = CommentListResponse.CommentItem.ReplyItem.builder()
+                    .commentId(2L)
+                    .referenceId(1L)
+                    .writer("yoonkun")
+                    .content("reply")
+                    .createdAt(LocalDateTime.of(2024, 6, 17, 0, 0))
+                    .isDelete(false)
+                    .build();
+
+            commentItem.getReplies().add(replyItem);
+
+            CommentListResponse commentListResponse = CommentListResponse.builder()
+                    .comments(List.of(commentItem))
+                    .page(1)
+                    .totalPages(1)
+                    .totalComments(2)
+                    .first(true)
+                    .last(true)
+                    .prev(false)
+                    .next(false)
+                    .build();
+
+            given(commentService.commentList(anyLong(), anyInt())).willReturn(commentListResponse);
+
+            mockMvc.perform(get("/api/posts/{postId}/comments", 1)
+                            .param("page", "1"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value("success"))
+                    .andExpect(jsonPath("$.data.comments[0].commentId").value("1"))
+                    .andExpect(jsonPath("$.data.comments[0].writer").value("yoonkun"))
+                    .andExpect(jsonPath("$.data.comments[0].content").value("comment"))
+                    .andExpect(jsonPath("$.data.comments[0].createdAt").value("2024-06-17T00:00:00"))
+                    .andExpect(jsonPath("$.data.comments[0].delete").value("false"))
+                    .andExpect(jsonPath("$.data.comments[0].replies[0].commentId").value("2"))
+                    .andExpect(jsonPath("$.data.comments[0].replies[0].referenceId").value("1"))
+                    .andExpect(jsonPath("$.data.comments[0].replies[0].writer").value("yoonkun"))
+                    .andExpect(jsonPath("$.data.comments[0].replies[0].content").value("reply"))
+                    .andExpect(jsonPath("$.data.comments[0].replies[0].createdAt").value("2024-06-17T00:00:00"))
+                    .andExpect(jsonPath("$.data.comments[0].replies[0].delete").value("false"))
+                    .andExpect(jsonPath("$.data.page").value("1"))
+                    .andExpect(jsonPath("$.data.totalPages").value("1"))
+                    .andExpect(jsonPath("$.data.totalComments").value("2"))
+                    .andExpect(jsonPath("$.data.first").value("true"))
+                    .andExpect(jsonPath("$.data.last").value("true"))
+                    .andExpect(jsonPath("$.data.prev").value("false"))
+                    .andExpect(jsonPath("$.data.next").value("false"))
+                    .andDo(restDocs.document(
+                            pathParameters(
+                                    parameterWithName("postId").description("게시글 번호")
+                            ),
+                            queryParameters(
+                                    parameterWithName("page").description("페이지 번호")
+                            ),
+                            responseFields(
+                                    commonSuccessResponse()
                             )
                     ));
         }
