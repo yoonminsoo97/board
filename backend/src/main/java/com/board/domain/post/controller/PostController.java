@@ -8,12 +8,12 @@ import com.board.domain.post.service.PostService;
 import com.board.global.common.dto.ApiResponse;
 import com.board.global.security.annotation.LoginMember;
 
+import com.board.global.security.annotation.RoleMember;
 import jakarta.validation.Valid;
 
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,7 +31,7 @@ public class PostController {
 
     private final PostService postService;
 
-    @Secured("ROLE_MEMBER")
+    @RoleMember
     @PostMapping
     public ResponseEntity<ApiResponse<Void>> postWrite(@RequestBody @Valid PostWriteRequest postWriteRequest,
                                                        @LoginMember Long memberId) {
@@ -61,7 +61,7 @@ public class PostController {
         return ResponseEntity.ok().body(ApiResponse.success(postListResponse));
     }
 
-    @Secured("ROLE_MEMBER")
+    @RoleMember
     @PutMapping("/{postId}")
     public ResponseEntity<ApiResponse<Void>> postModify(@PathVariable("postId") Long postId,
                                                         @RequestBody @Valid PostModifyRequest postModifyRequest,
@@ -70,7 +70,7 @@ public class PostController {
         return ResponseEntity.ok().body(ApiResponse.success());
     }
 
-    @Secured("ROLE_MEMBER")
+    @RoleMember
     @DeleteMapping("/{postId}")
     public ResponseEntity<ApiResponse<Void>> postDelete(@PathVariable("postId") Long postId,
                                                         @LoginMember Long memberId) {

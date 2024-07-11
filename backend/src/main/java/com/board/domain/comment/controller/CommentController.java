@@ -7,12 +7,12 @@ import com.board.domain.comment.service.CommentService;
 import com.board.global.common.dto.ApiResponse;
 import com.board.global.security.annotation.LoginMember;
 
+import com.board.global.security.annotation.RoleMember;
 import jakarta.validation.Valid;
 
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,7 +30,7 @@ public class CommentController {
 
     private final CommentService commentService;
 
-    @Secured("ROLE_MEMBER")
+    @RoleMember
     @PostMapping("/{postId}/comments")
     public ResponseEntity<ApiResponse<Void>> commentWrite(@PathVariable("postId") Long postId,
                                                           @RequestBody @Valid CommentWriteRequest commentWriteRequest,
@@ -39,7 +39,7 @@ public class CommentController {
         return ResponseEntity.ok().body(ApiResponse.success());
     }
 
-    @Secured("ROLE_MEMBER")
+    @RoleMember
     @PostMapping("/{postId}/comments/{commentId}/replies")
     public ResponseEntity<ApiResponse<Void>> replyWrite(@PathVariable("postId") Long postId,
                                                         @PathVariable("commentId") Long commentId,
@@ -57,7 +57,7 @@ public class CommentController {
         return ResponseEntity.ok().body(ApiResponse.success(commentListResponse));
     }
 
-    @Secured("ROLE_MEMBER")
+    @RoleMember
     @PutMapping("/{postId}/comments/{commentId}")
     public ResponseEntity<ApiResponse<Void>> commentModify(@PathVariable("postId") Long postId,
                                                            @PathVariable("commentId") Long commentId,
@@ -67,7 +67,7 @@ public class CommentController {
         return ResponseEntity.ok().body(ApiResponse.success());
     }
 
-    @Secured("ROLE_MEMBER")
+    @RoleMember
     @DeleteMapping("/{postId}/comments/{commentId}")
     public ResponseEntity<ApiResponse<Void>> commentDelete(@PathVariable("postId") Long postId,
                                                            @PathVariable("commentId") Long commentId,
