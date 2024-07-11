@@ -10,12 +10,12 @@ import com.board.domain.post.dto.PostListResponse;
 import com.board.global.common.dto.ApiResponse;
 import com.board.global.security.annotation.LoginMember;
 
+import com.board.global.security.annotation.RoleMember;
 import jakarta.validation.Valid;
 
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -50,14 +50,14 @@ public class MemberController {
         return ResponseEntity.ok().body(ApiResponse.success());
     }
 
-    @Secured("ROLE_MEMBER")
+    @RoleMember
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<MemberProfileResponse>> memberProfile(@LoginMember Long memberId) {
         MemberProfileResponse memberProfileResponse = memberService.memberProfile(memberId);
         return ResponseEntity.ok().body(ApiResponse.success(memberProfileResponse));
     }
 
-    @Secured("ROLE_MEMBER")
+    @RoleMember
     @GetMapping("/me/posts")
     public ResponseEntity<ApiResponse<PostListResponse>> memberPostList(@RequestParam("page") int page,
                                                                         @LoginMember Long memberId) {
@@ -66,7 +66,7 @@ public class MemberController {
         return ResponseEntity.ok().body(ApiResponse.success(postListResponse));
     }
 
-    @Secured("ROLE_MEMBER")
+    @RoleMember
     @GetMapping("/me/comments")
     public ResponseEntity<ApiResponse<MemberCommentListResponse>> memberCommentList(@RequestParam("page") int page,
                                                                                     @LoginMember Long memberId) {
@@ -75,7 +75,7 @@ public class MemberController {
         return ResponseEntity.ok().body(ApiResponse.success(memberCommentListResponse));
     }
 
-    @Secured("ROLE_MEMBER")
+    @RoleMember
     @PutMapping("/me/nickname")
     public ResponseEntity<ApiResponse<Void>> memberNicknameChange(@RequestBody @Valid MemberNicknameRequest memberNicknameRequest,
                                                                   @LoginMember Long memberId) {
@@ -83,7 +83,7 @@ public class MemberController {
         return ResponseEntity.ok(ApiResponse.success());
     }
 
-    @Secured("ROLE_MEMBER")
+    @RoleMember
     @PutMapping("/me/password")
     public ResponseEntity<ApiResponse<Void>> memberPasswordChange(@RequestBody @Valid MemberPasswordRequest memberPasswordRequest,
                                                                   @LoginMember Long memberId) {
