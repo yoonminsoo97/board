@@ -4,7 +4,6 @@ import com.board.domain.comment.entity.Comment;
 import com.board.domain.member.entity.Member;
 import com.board.global.common.entity.BaseEntity;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -45,7 +44,7 @@ public class Post extends BaseEntity {
     @JoinColumn(nullable = false)
     private Member member;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "post", cascade = CascadeType.REMOVE)
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "post")
     private List<Comment> comments = new ArrayList<>();
 
     @Builder

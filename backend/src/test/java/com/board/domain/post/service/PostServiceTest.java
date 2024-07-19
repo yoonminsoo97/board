@@ -1,5 +1,6 @@
 package com.board.domain.post.service;
 
+import com.board.domain.comment.repository.CommentRepository;
 import com.board.domain.member.entity.Member;
 import com.board.domain.member.exception.NotFoundMemberException;
 import com.board.domain.member.repository.MemberRepository;
@@ -49,6 +50,9 @@ class PostServiceTest extends ServiceTest {
 
     @Mock
     private PostRepository postRepository;
+
+    @Mock
+    private CommentRepository commentRepository;
 
     @InjectMocks
     private PostService postService;
@@ -312,11 +316,13 @@ class PostServiceTest extends ServiceTest {
                     .build();
 
             given(postRepository.findByPostId(anyLong())).willReturn(post);
+            willDoNothing().given(commentRepository).deleteByPostId(anyLong());
             willDoNothing().given(postRepository).delete(any(Post.class));
 
             postService.postDelete(1L, 1L);
 
             then(postRepository).should().findByPostId(anyLong());
+            then(commentRepository).should().deleteByPostId(anyLong());
             then(postRepository).should().delete(any(Post.class));
         }
 
@@ -329,6 +335,7 @@ class PostServiceTest extends ServiceTest {
                     .isInstanceOf(NotFoundPostException.class);
 
             then(postRepository).should().findByPostId(anyLong());
+            then(commentRepository).should(never()).deleteByPostId(anyLong());
             then(postRepository).should(never()).delete(any(Post.class));
         }
 
@@ -348,6 +355,7 @@ class PostServiceTest extends ServiceTest {
                     .isInstanceOf(PostDeleteAccessDeniedException.class);
 
             then(postRepository).should().findByPostId(anyLong());
+            then(commentRepository).should(never()).deleteByPostId(anyLong());
             then(postRepository).should(never()).delete(any(Post.class));
         }
 

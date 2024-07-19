@@ -1,5 +1,6 @@
 package com.board.domain.post.service;
 
+import com.board.domain.comment.repository.CommentRepository;
 import com.board.domain.member.entity.Member;
 import com.board.domain.member.repository.MemberRepository;
 import com.board.domain.post.dto.PostDetailResponse;
@@ -25,6 +26,7 @@ public class PostService {
 
     private final MemberRepository memberRepository;
     private final PostRepository postRepository;
+    private final CommentRepository commentRepository;
 
     @Transactional
     public void postWrite(PostWriteRequest postWriteRequest, Long memberId) {
@@ -69,6 +71,7 @@ public class PostService {
         if (!post.isOwner(memberId)) {
             throw new PostDeleteAccessDeniedException();
         }
+        commentRepository.deleteByPostId(postId);
         postRepository.delete(post);
     }
 
