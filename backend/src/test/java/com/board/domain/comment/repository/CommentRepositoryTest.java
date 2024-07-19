@@ -320,6 +320,29 @@ class CommentRepositoryTest extends RepositoryTest {
             assertThat(commentRepository.findCommentByPostIdAndCommentId(post.getId(), comment.getId())).isEmpty();
         }
 
+        @Test
+        @DisplayName("특정 게시글에 속한 댓글들을 삭제한다")
+        void deleteByPostId() {
+            Comment commentA = Comment.builder()
+                    .writer(member.getNickname())
+                    .content("comment")
+                    .member(member)
+                    .post(post)
+                    .build();
+            Comment commentB = Comment.builder()
+                    .writer(member.getNickname())
+                    .content("comment")
+                    .member(member)
+                    .post(post)
+                    .build();
+            commentRepository.save(commentA);
+            commentRepository.save(commentB);
+
+            commentRepository.deleteByPostId(post.getId());
+
+            assertThat(commentRepository.findCommentListByPostId(post.getId()).size()).isEqualTo(0);
+        }
+
     }
 
 }
