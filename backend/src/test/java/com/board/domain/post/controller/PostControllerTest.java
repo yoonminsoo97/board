@@ -348,8 +348,6 @@ class PostControllerTest extends ControllerTest {
 
             mockMvc.perform(get("/api/posts")
                             .param("page", "1")
-                            .param("type", "title")
-                            .param("keyword", "hello")
                     )
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("success"))
@@ -367,9 +365,7 @@ class PostControllerTest extends ControllerTest {
                     .andExpect(jsonPath("$.data.next").value(false))
                     .andDo(restDocs.document(
                             queryParameters(
-                                    parameterWithName("page").description("페이지 번호"),
-                                    parameterWithName("type").description("검색 조건"),
-                                    parameterWithName("keyword").description("검색 단어")
+                                    parameterWithName("page").description("페이지 번호")
                             ),
                             responseFields(
                                     commonSuccessResponse()
