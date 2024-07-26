@@ -1,109 +1,112 @@
-== 3. 게시글
+== 게시글
 
-=== 3.1. 게시글 작성
-
-==== 요청
-
-include::{snippets}/post-controller-test/post-write/http-request.adoc[]
-include::{snippets}/post-controller-test/post-write/request-headers.adoc[]
-include::{snippets}/post-controller-test/post-write/request-fields.adoc[]
-
-==== 응답
-
-===== 200 OK
-
-include::{snippets}/post-controller-test/post-write/http-response.adoc[]
-
-===== 400 Bad Request
-
-include::{snippets}/post-controller-test/post-write-invalid-input-value/http-response.adoc[]
-
-=== 3.2. 게시글 상세조회
+=== 게시글 작성 요청
 
 ==== 요청
 
-include::{snippets}/post-controller-test/post-detail/http-request.adoc[]
-include::{snippets}/post-controller-test/post-detail/path-parameters.adoc[]
+include::{snippets}/post-write-test/post-write/http-request.adoc[]
+include::{snippets}/post-write-test/post-write/request-headers.adoc[]
+include::{snippets}/post-write-test/post-write/request-fields.adoc[]
 
 ==== 응답
 
-===== 200 OK
+===== 200 OK - 성공
 
-include::{snippets}/post-controller-test/post-detail/http-response.adoc[]
-include::{snippets}/post-controller-test/post-detail/response-fields.adoc[]
+include::{snippets}/post-write-test/post-write/http-response.adoc[]
 
-===== 404 Not Found
+===== 400 Bad Request - 잘못된 입력값
 
-include::{snippets}/post-controller-test/post-detail-not-found-post/http-response.adoc[]
+include::{snippets}/post-write-test/post-write-invalid-content-value/http-response.adoc[]
 
-=== 3.3. 게시글 목록조회
+===== 401 Unauthorized - 유효하지 않은 액세스 토큰
+
+include::{snippets}/post-write-test/post-write-invalid-access-token/http-response.adoc[]
+
+===== 401 Unauthorized - 만료된 액세스 토큰
+
+include::{snippets}/post-write-test/post-write-expired-access-token/http-response.adoc[]
+
+=== 게시글 수정 요청
 
 ==== 요청
 
-include::{snippets}/post-controller-test/post-list/http-request.adoc[]
-include::{snippets}/post-controller-test/post-list/query-parameters.adoc[]
+include::{snippets}/post-modify-test/post-modify/http-request.adoc[]
+include::{snippets}/post-modify-test/post-modify/path-parameters.adoc[]
+include::{snippets}/post-modify-test/post-modify/request-headers.adoc[]
+include::{snippets}/post-modify-test/post-modify/request-fields.adoc[]
 
 ==== 응답
 
-===== 200 OK
+===== 200 OK - 성공
 
-include::{snippets}/post-controller-test/post-list/http-response.adoc[]
-include::{snippets}/post-controller-test/post-list/response-fields.adoc[]
+include::{snippets}/post-modify-test/post-modify/http-response.adoc[]
 
-=== 3.4. 게시글 수정
+===== 401 Unauthorized - 유효하지 않은 액세스 토큰
+
+include::{snippets}/post-modify-test/post-modify-invalid-access-token/http-response.adoc[]
+
+===== 401 Unauthorized - 만료된 액세스 토큰
+
+include::{snippets}/post-modify-test/post-modify-expired-access-token/http-response.adoc[]
+
+===== 403 Forbidden - 수정 권한 없음
+
+include::{snippets}/post-modify-test/post-modify-not-post-owner/http-response.adoc[]
+
+===== 404 Not Found - 존재하지 않는 게시글
+
+include::{snippets}/post-modify-test/post-modify-not-found-post/http-response.adoc[]
+
+=== 게시글 삭제 요청
 
 ==== 요청
 
-include::{snippets}/post-controller-test/post-modify/http-request.adoc[]
-include::{snippets}/post-controller-test/post-modify/path-parameters.adoc[]
-include::{snippets}/post-controller-test/post-modify/request-headers.adoc[]
+include::{snippets}/post-delete-test/post-delete/http-request.adoc[]
+include::{snippets}/post-delete-test/post-delete/path-parameters.adoc[]
+include::{snippets}/post-delete-test/post-delete/request-headers.adoc[]
 
 ==== 응답
 
-===== 200 OK
+===== 200 OK - 응답
 
-include::{snippets}/post-controller-test/post-modify/http-response.adoc[]
+include::{snippets}/post-delete-test/post-delete/http-response.adoc[]
 
-===== 403 Forbidden
+==== 401 Unauthorized - 유효하지 않은 액세스 토큰
 
-include::{snippets}/post-controller-test/post-modify-not-post-owner/http-response.adoc[]
+include::{snippets}/post-delete-test/post-delete-invalid-access-token/http-response.adoc[]
 
-===== 404 Not Found
+==== 401 Unauthorieze - 만료된 액세스 토큰
 
-include::{snippets}/post-controller-test/post-modify-not-found-post/http-response.adoc[]
+include::{snippets}/post-delete-test/post-delete-expired-access-token/http-response.adoc[]
 
-=== 3.5. 게시글 삭제
+==== 403 Forbidden - 삭제 권한 없음
+
+include::{snippets}/post-delete-test/post-delet-not-post-owner/http-response.adoc[]
+
+==== 404 Not Found - 존재하지 않은 게시글
+
+include::{snippets}/post-delete-test/post-delete-not-found-post/http-response.adoc[]
+
+=== 게시글 목록조회 요청
 
 ==== 요청
 
-include::{snippets}/post-controller-test/post-delete/http-request.adoc[]
-include::{snippets}/post-controller-test/post-delete/path-parameters.adoc[]
-include::{snippets}/post-controller-test/post-delete/request-headers.adoc[]
+include::{snippets}/post-list-test/post-list/http-request.adoc[]
+include::{snippets}/post-list-test/post-list/query-parameters.adoc[]
 
 ==== 응답
 
-===== 200 OK
+===== 200 OK - 성공
 
-include::{snippets}/post-controller-test/post-delete/http-response.adoc[]
+include::{snippets}/post-list-test/post-list/http-response.adoc[]
 
-===== 403 Forbidden
-
-include::{snippets}/post-controller-test/post-delete-not-post-owner/http-response.adoc[]
-
-===== 404 Not Found
-
-include::{snippets}/post-controller-test/post-delete-not-found-post/http-response.adoc[]
-
-=== 3.6. 게시글 검색
+=== 게시글 검색 요청
 
 ==== 요청
 
-include::{snippets}/post-controller-test/post-list-search/http-request.adoc[]
-include::{snippets}/post-controller-test/post-list-search/query-parameters.adoc[]
+include::{snippets}/post-list-test/post-search-title-list/http-request.adoc[]
+include::{snippets}/post-list-test/post-search-title-list/query-parameters.adoc[]
 
-==== 응답
+===== 200 OK - 성공
 
-===== 200 OK
-
-include::{snippets}/post-controller-test/post-list-search/http-response.adoc[]
-include::{snippets}/post-controller-test/post-list-search/response-fields.adoc[]
+include::{snippets}/post-list-test/post-search-title-list/http-response.adoc[]

@@ -1,0 +1,62 @@
+== 로그인/로그아웃
+
+=== 로그인 요청
+
+==== 요청
+
+include::{snippets}/member-login-test/member-login/http-request.adoc[]
+include::{snippets}/member-login-test/member-login/form-parameters.adoc[]
+
+==== 응답
+
+===== 200 OK - 성공
+
+include::{snippets}/member-login-test/member-login/http-response.adoc[]
+
+===== 401 Unauthorized - 아이디 또는 비밀번호 불일치
+
+include::{snippets}/member-login-test/member-login-bad-credentials/http-response.adoc[]
+
+=== 로그아웃 요청
+
+==== 요청
+
+include::{snippets}/member-logout-test/member-logout/http-request.adoc[]
+include::{snippets}/member-logout-test/member-logout/request-headers.adoc[]
+
+==== 응답
+
+===== 200 OK - 성공
+
+include::{snippets}/member-logout-test/member-logout/http-response.adoc[]
+
+===== 401 Unauthorized - 유효하지 않은 액세스 토큰
+
+include::{snippets}/member-logout-test/member-logout-invalid-access-token/http-response.adoc[]
+
+===== 401 Unauthorized - 만료된 액세스 토큰
+
+include::{snippets}/member-logout-test/member-logout-expired-access-token/http-response.adoc[]
+
+== 토큰
+
+=== 액세스 토큰 재발급 요청
+
+==== 요청
+
+include::{snippets}/re-issue-access-token-test/re-issue-access-token/http-request.adoc[]
+include::{snippets}/re-issue-access-token-test/re-issue-access-token/request-headers.adoc[]
+
+==== 응답
+
+===== 200 OK - 성공
+
+include::{snippets}/re-issue-access-token-test/re-issue-access-token/http-response.adoc[]
+
+===== 401 Unauthorized - 유효하지 않은 리프레시 토큰
+
+include::{snippets}/re-issue-access-token-test/re-issue-access-token-invalid-refresh-token/http-response.adoc[]
+
+===== 401 Unauthorized - 만료된 리프레시 토큰
+
+include::{snippets}/re-issue-access-token-test/re-issue-access-token-expired-refresh-token/http-response.adoc[]

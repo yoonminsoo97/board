@@ -1,0 +1,64 @@
+== 회원가입
+
+=== 닉네임 중복 요청
+
+==== 요청
+
+include::{snippets}/member-nickname-exists-test/member-nickname-exists/http-request.adoc[]
+include::{snippets}/member-nickname-exists-test/member-nickname-exists/path-parameters.adoc[]
+
+==== 응답
+
+===== 200 OK - 성공
+
+include::{snippets}/member-nickname-exists-test/member-nickname-exists/http-response.adoc[]
+
+===== 409 Conflict - 닉네임 중복
+
+include::{snippets}/member-nickname-exists-test/member-nickname-exists-duplicate-nickname/http-response.adoc[]
+
+=== 아이디 중복 요청
+
+==== 요청
+
+include::{snippets}/member-username-exists-test/member-username-exists/http-request.adoc[]
+include::{snippets}/member-username-exists-test/member-username-exists/path-parameters.adoc[]
+
+==== 응답
+
+===== 200 OK - 성공
+
+include::{snippets}/member-username-exists-test/member-username-exists/http-response.adoc[]
+
+===== 409 Conflict - 아이디 중복
+
+include::{snippets}/member-username-exists-test/member-username-exists-duplicate-username/http-response.adoc[]
+
+=== 회원가입 요청
+
+==== 요청
+
+include::{snippets}/member-signup-test/member-signup/http-request.adoc[]
+include::{snippets}/member-signup-test/member-signup/request-fields.adoc[]
+
+==== 응답
+
+===== 200 OK - 성공
+
+include::{snippets}/member-signup-test/member-signup/http-response.adoc[]
+
+===== 400 Bad Request - 잘못된 입력값
+
+include::{snippets}/member-signup-test/member-signup-invalid-nickname-value/http-response.adoc[]
+
+===== 400 Bad Request - 비밀번호 및 비밀번호 확인 불일치
+
+include::{snippets}/member-signup-test/member-signup-password-and-password-confirm-mismatch/http-response.adoc[]
+
+===== 409 Conflict - 닉네임 중복
+
+include::{snippets}/member-signup-test/member-signup-duplicate-nickname/http-response.adoc[]
+
+===== 409 Conflict - 아이디 중복
+
+include::{snippets}/member-signup-test/member-signup-duplicate-username/http-response.adoc[]

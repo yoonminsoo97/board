@@ -1,161 +1,162 @@
 = 게시판 REST API 문서
-:doctype: book
+:sectnums:
+:sectnumlevels: 2
+:doctype: article
 :icons: font
-:source-highlighter: highlightjs
+:source-highlighter: rouge
 :toc-title: 목차
 :toc: left
 :toclevels: 2
 
-== 1. 개요
+== 개요
 
-게시판 프로젝트 REST API 문서입니다.
+이 API문서는 게시판 서버 프로젝트의 산출물입니다.
 
-=== 1.1. 응답 형식
+=== 응답 형식
 
-NOTE: *프로젝트는 다음과 같은 응답 형식을 제공합니다.*
+요청 성공 여부에 따른 응답 형식은 다음과 같습니다.
 
-==== 1.1.1. 성공
-
-[cols="2*^",options=header]
-|===
-|결과 데이터가 없는 경우|결과 데이터가 있는 경우
-<.^a|[source,json]
-----
-{
-  "message": "success",
-  "status": 200,
-  "result": null
-}
-----
-<a|[source,json]
-----
-{
-  "message": "success",
-  "status": 200,
-  "result": {
-    "postNumber": 1,
-    "title": "제목",
-    "writer": "작성자",
-    "content": "내용",
-    "createdAt": "2024.06.17"
-  }
-}
-----
-|===
-
-[cols="3*^",options=header]
-|===
-|Property|Type|Description
-<|message
-<|String
-<|요청 성공/실패 여부
-<|status
-<|Number
-<|Http 상태 코드
-<|result
-<|Null
-<|요청 결과 데이터
-|===
-
-
-==== 1.1.2. 실패
+==== 요청 성공
 
 [cols="2*^",options=header]
 |===
-|필드 예외가 없는 경우|필드 예외가 있는 경우
-<.^a|[source,json]
+|응답 데이터가 없는 경우|응답 데이터가 있는 경우
+<.^a|
+[source,json]
 ----
 {
-  "message": "fail",
-  "status": 404,
-  "result": {
-    "timeStamp": "2024-04-14T18:38:25.021828",
-    "path": "/api/posts/1",
-    "error": {
-      "code": "E404002",
-      "message": "게시글을 찾을 수 없습니다.",
-      "fieldErrors": []
-    }
-  }
+  "status": "success"
 }
 ----
-<a|[source,json]
+<a|
+[source,json]
 ----
 {
-  "message": "fail",
-  "status": 400,
-  "result": {
-    "timeStamp": "2024-04-14T18:38:24.919021",
-    "path": "/api/posts/write",
-    "error": {
-      "code": "E400001",
-      "message": "입력값이 잘못되었습니다.",
-      "fieldErrors": [{
-        "field": "title",
-        "input": "",
-        "message": "제목을 입력해 주세요."
-      }]
-    }
+  "status": "success",
+  "data": {
+    "postId": 1,
+    "title": "title",
+    "writer": "writer",
+    "content": "content",
+    "createdAt": "2024-06-17T00:00:00"
   }
 }
 ----
 |===
 
-[cols="3*^",options=header]
+[cols="3^",options=header]
 |===
-|Property|Type|Description
-<|message
-<|String
-<|요청 성공/실패 여부
-<|status
-<|Number
-<|Http 상태 코드
-<|result
-<|Object
-<|에러 결과 데이터
-<|result.timeStamp
-<|String
-<|에러 발생 시간
-<|result.path
-<|String
-<|요청 API 경로
-<|result.error.code
-<|String
-<|에러 코드
-<|result.error.message
-<|String
-<|에러 메시지
-<|result.eerror.fieldErrors
-<|Array
-<|유효성 검증 에러 필드 목록
+|Path|Type|Description
+<|status <|String <|요청 성공/실패 여부
+<|data <|Object <|요청 응답 데이터
 |===
 
+==== 요청 실패
 
-=== 1.2. 예외 유형
+[cols="2*^",options=header]
+|===
+|입력값 유효성 예외가 없는 경우|입력값 유효성 예외가 있는 경우
+<.^a|
+[source,json]
+----
+{
+  "status": "fail",
+  "error": {
+    "code": "error-code",
+    "message": "error-message",
+    "fields": []
+  }
+}
+----
+<a|
+[source,json]
+----
+{
+  "status": "fail",
+  "error": {
+    "code": "error-code",
+    "message": "error-message",
+    "fields": [
+      {
+        "field":"content",
+        "input":"",
+        "message":"내용을 입력해 주세요."
+      }
+    ]
+  }
+}
+----
+|===
 
-NOTE: *프로젝트에서 발생하는 예외의 상태 코드, 에러 코드, 에러 메시지는 다음과 같습니다.*
+[cols="3^",options=header]
+|===
+|Path|Type|Description
+<|status <|String <|요청 성공/실패 여부
+<|error <|Object <|에러 결과 데이터
+<|error.code <|String <|에러 코드
+<|error.message <|String <|에러 메세지
+<|error.fields <|Array <|입력값 유효성 에러 필드 목록
+<|error.fields.field <|String <|에러 필드 이름
+<|error.fields.input <|String <|에러 필드 입력값
+<|error.fields.message <|String <|에러 필드 메시지
+|===
 
-[cols="1,1,2"]
+=== 예외 유형
+
+요청 실패 시 발생하는 예외는 다음과 같습니다.
+
+==== 400 Bad Request
+
+[cols="2^",options=header]
 |====
-|*상태 코드*|*에러 코드*|*에러 메시지*
-|400 Bad Request|E400001|입력값이 잘못되었습니다.
-|400 Bad Request|E400002|비밀번호가 일치하지 않습니다.
-|401 Unauthorized|E401001|아이디 또는 비밀번호가 일치하지 않습니다.
-|401 Unauthorized|E401002|토큰이 유효하지 않습니다.
-|401 Unauthorized|E401003|토큰이 만료되었습니다.
-|403 Forbidden|E403001|게시글 수정은 작성자만 할 수 있습니다.
-|403 Forbidden|E403002|게시글 삭제는 작성자만 할 수 있습니다.
-|403 Forbidden|E403003|댓글 수정은 작성자만 할 수 있습니다.
-|403 Forbidden|E403004|댓글 삭제는 작성자만 할 수 있습니다.
-|404 Not Found|E400000|지원하지 않는 예외 유형입니다.
-|404 Not Found|E404001|회원을 찾을 수 없습니다.
-|404 Not Found|E404002|게시글을 찾을 수 없습니다.
-|404 Not Found|E404003|댓글을 찾을 수 없습니다.
-|409 Conflict|E404004|사용 중인 닉네임입니다.
-|409 Conflict|E404005|사용 중인 아이디입니다.
+|*에러 코드*|*에러 메시지*
+<|E400001 <|입력값이 잘못되었습니다.
+<|E400002 <|비밀번호가 일치하지 않습니다.
 |====
 
+==== 401 Unauthorized
+
+[cols="2^",options=header]
+|====
+|*에러 코드*|*에러 메시지*
+<|E401001 <|아이디 또는 비밀번호가 일치하지 않습니다.
+<|E401002 <|토큰이 유효하지 않습니다.
+<|E401003 <|토큰이 만료되었습니다.
+|====
+
+==== 403 Forbidden
+
+[cols="2^",options=header]
+|====
+|*에러 코드*|*에러 메시지*
+<|E403001 <|게시글 수정은 작성자만 할 수 있습니다.
+<|E403002 <|게시글 삭제는 작성자만 할 수 있습니다.
+<|E403003 <|댓글 수정은 작성자만 할 수 있습니다.
+<|E403004 <|댓글 삭제는 작성자만 할 수 있습니다.
+|====
+
+==== 404 Not Found
+
+[cols="2^",options=header]
+|====
+|*에러 코드*|*에러 메시지*
+<|E000000 <|지원하지 않는 예외 유형입니다.
+<|E404001 <|회원을 찾을 수 없습니다.
+<|E404002 <|게시글을 찾을 수 없습니다.
+<|E404003 <|댓글을 찾을 수 없습니다.
+|====
+
+==== 409 Conflict
+
+[cols="2^",options=header]
+|====
+|*에러 코드*|*에러 메시지*
+<|E409001 <|사용 중인 닉네임입니다.
+<|E409002 <|사용 중인 아이디입니다.
+|====
+
+include::fragments/signup.adoc[]
+include::fragments/auth.adoc[]
 include::fragments/member.adoc[]
 include::fragments/post.adoc[]
 include::fragments/comment.adoc[]
-include::fragments/token.adoc[]
