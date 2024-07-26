@@ -80,7 +80,7 @@ public abstract class ControllerTest {
     protected FieldDescriptor[] commonErrorResponse() {
         return new FieldDescriptor[] {
                 fieldWithPath("status").type(STRING).description("API 요청 성공/실패 상태"),
-                subsectionWithPath("error").type(OBJECT).description("에러 데이터"),
+                fieldWithPath("error").type(OBJECT).description("에러 데이터"),
                 fieldWithPath("error.code").type(STRING).description("에러 코드"),
                 fieldWithPath("error.message").type(STRING).description("에러 메시지"),
                 subsectionWithPath("error.fields").type(ARRAY).description("유효성 에러 필드"),

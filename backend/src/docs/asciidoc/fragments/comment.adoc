@@ -1,108 +1,118 @@
-== 4. 댓글
+== 댓글
 
-=== 4.1. 댓글 작성
-
-==== 요청
-
-include::{snippets}/comment-controller-test/comment-write/http-request.adoc[]
-include::{snippets}/comment-controller-test/comment-write/path-parameters.adoc[]
-include::{snippets}/comment-controller-test/comment-write/request-headers.adoc[]
-include::{snippets}/comment-controller-test/comment-write/request-fields.adoc[]
-
-==== 응답
-
-===== 200 OK
-
-include::{snippets}/comment-controller-test/comment-write/http-response.adoc[]
-
-===== 404 Not Found
-
-include::{snippets}/comment-controller-test/comment-write-not-found-post/http-response.adoc[]
-
-=== 4.2. 댓글 목록조회
+=== 댓글 작성 요청
 
 ==== 요청
 
-include::{snippets}/comment-controller-test/comment-list/http-request.adoc[]
-include::{snippets}/comment-controller-test/comment-list/query-parameters.adoc[]
+include::{snippets}/comment-write-test/comment-write/http-request.adoc[]
+include::{snippets}/comment-write-test/comment-write/request-headers.adoc[]
+include::{snippets}/comment-write-test/comment-write/request-fields.adoc[]
 
 ==== 응답
 
-===== 200 OK
+===== 200 OK - 성공
 
-include::{snippets}/comment-controller-test/comment-list/http-response.adoc[]
-include::{snippets}/comment-controller-test/comment-list/response-fields.adoc[]
+include::{snippets}/comment-write-test/comment-write/http-response.adoc[]
 
-=== 4.3. 댓글 수정
+===== 400 Bad Request - 잘못된 입력값
+
+include::{snippets}/comment-write-test/comment-write-invalid-content-value/http-response.adoc[]
+
+===== 401 Unauthorized - 유효하지 않은 액세스 토큰
+
+include::{snippets}/comment-write-test/comment-write-invalid-access-token/http-response.adoc[]
+
+===== 401 Unauthorized - 만료된 액세스 토큰
+
+include::{snippets}/comment-write-test/comment-write-expired-access-token/http-response.adoc[]
+
+===== 404 Not Found - 존재하지 않는 게시글
+
+include::{snippets}/comment-write-test/comment-write-not-found-post/http-response.adoc[]
+
+=== 댓글 수정 요청
 
 ==== 요청
 
-include::{snippets}/comment-controller-test/comment-modify/http-request.adoc[]
-include::{snippets}/comment-controller-test/comment-modify/path-parameters.adoc[]
-include::{snippets}/comment-controller-test/comment-modify/request-headers.adoc[]
-include::{snippets}/comment-controller-test/comment-modify/request-fields.adoc[]
+include::{snippets}/comment-modify-test/comment-modify/http-request.adoc[]
+include::{snippets}/comment-modify-test/comment-modify/path-parameters.adoc[]
+include::{snippets}/comment-modify-test/comment-modify/request-headers.adoc[]
+include::{snippets}/comment-modify-test/comment-modify/request-fields.adoc[]
 
 ==== 응답
 
-===== 200 OK
+===== 200 OK - 성공
 
-include::{snippets}/comment-controller-test/comment-modify/http-response.adoc[]
+include::{snippets}/comment-modify-test/comment-modify/http-response.adoc[]
 
-===== 400 Bad Request
+===== 400 Bad Request - 잘못된 입력값
 
-include::{snippets}/comment-controller-test/comment-modify-invalid-input-value/http-response.adoc[]
+include::{snippets}/comment-modify-test/comment-modify-invalid-content-value/http-response.adoc[]
 
-===== 403 Forbidden
+===== 401 Unauthorized - 유효하지 않은 액세스 토큰
 
-include::{snippets}/comment-controller-test/comment-modify-not-comment-owner/http-response.adoc[]
+include::{snippets}/comment-modify-test/comment-modify-invalid-access-token/http-response.adoc[]
 
-===== 404 Not Found
+===== 401 Unauthorized - 만료된 액세스 토큰
 
-include::{snippets}/comment-controller-test/comment-modify-not-found-comment/http-response.adoc[]
-include::{snippets}/comment-controller-test/comment-modify-already-delete-comment/http-response.adoc[]
+include::{snippets}/comment-modify-test/comment-modify-expired-access-token/http-response.adoc[]
 
-=== 4.4. 댓글 삭제
+===== 403 Forbidden - 수정 권한 없음
+
+include::{snippets}/comment-modify-test/comment-modify-not-comment-owner/http-response.adoc[]
+
+===== 404 Not Found - 존재하지 않는 댓글
+
+include::{snippets}/comment-modify-test/comment-modify-not-found-comment/http-response.adoc[]
+
+===== 404 Not Found - 이미 삭제된 댓글
+
+include::{snippets}/comment-modify-test/comment-modify-already-deletecomment/http-response.adoc[]
+
+=== 댓글 삭제 요청
 
 ==== 요청
 
-include::{snippets}/comment-controller-test/comment-delete/http-request.adoc[]
-include::{snippets}/comment-controller-test/comment-delete/path-parameters.adoc[]
-include::{snippets}/comment-controller-test/comment-delete/request-headers.adoc[]
+include::{snippets}/comment-delete-test/comment-delete/http-request.adoc[]
+include::{snippets}/comment-delete-test/comment-delete/path-parameters.adoc[]
+include::{snippets}/comment-delete-test/comment-delete/request-headers.adoc[]
 
 ==== 응답
 
-===== 200 OK
+===== 200 OK - 성공
 
-include::{snippets}/comment-controller-test/comment-delete/http-response.adoc[]
+include::{snippets}/comment-delete-test/comment-delete/http-response.adoc[]
 
-===== 403 Forbidden
+===== 401 Unauthorized - 유효하지 않은 액세스 토큰
 
-include::{snippets}/comment-controller-test/comment-delete-not-comment-onwer/http-response.adoc[]
+include::{snippets}/comment-delete-test/comment-delete-invalid-access-token/http-response.adoc[]
 
-===== 404 Not Found
+===== 401 Unauthorized - 만료된 액세스 토큰
 
-include::{snippets}/comment-controller-test/comment-delete-not-found-comment/http-response.adoc[]
-include::{snippets}/comment-controller-test/comment-delete-already-delete-comment/http-response.adoc[]
+include::{snippets}/comment-delete-test/comment-delete-expired-access-token/http-response.adoc[]
 
-=== 4.5. 대댓글 작성
+===== 403 Forbidden - 삭제 권한 없음
+
+include::{snippets}/comment-delete-test/comment-delete-not-comment-owner/http-response.adoc[]
+
+===== 404 Not Found - 존재하지 않는 댓글
+
+include::{snippets}/comment-delete-test/comment-delete-not-found-comment/http-response.adoc[]
+
+===== 404 Not Found - 이미 삭제된 댓글
+
+include::{snippets}/comment-delete-test/comment-delete-already-delete-comment/http-response.adoc[]
+
+=== 댓글 목록조회 요청
 
 ==== 요청
 
-include::{snippets}/comment-controller-test/reply-write/http-request.adoc[]
-include::{snippets}/comment-controller-test/reply-write/request-headers.adoc[]
-include::{snippets}/comment-controller-test/reply-write/path-parameters.adoc[]
-include::{snippets}/comment-controller-test/reply-write/request-fields.adoc[]
+include::{snippets}/comment-list-test/comment-list/http-request.adoc[]
+include::{snippets}/comment-list-test/comment-list/path-parameters.adoc[]
+include::{snippets}/comment-list-test/comment-list/query-parameters.adoc[]
 
 ==== 응답
 
-===== 200 OK
+===== 200 OK - 성공
 
-include::{snippets}/comment-controller-test/reply-write/http-response.adoc[]
-
-===== 400 Bad Request
-
-include::{snippets}/comment-controller-test/reply-write-invalid-input-value/http-response.adoc[]
-
-===== 404 Not Found
-
-include::{snippets}/comment-controller-test/reply-write-not-found-comment/http-response.adoc[]
+include::{snippets}/comment-list-test/comment-list/http-response.adoc[]
