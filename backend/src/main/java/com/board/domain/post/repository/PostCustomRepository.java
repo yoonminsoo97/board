@@ -1,14 +1,13 @@
 package com.board.domain.post.repository;
 
-import com.board.domain.post.dto.PostListItem;
+import com.board.domain.post.dto.PostListResponse;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface PostCustomRepository {
 
-    Page<PostListItem> findPosts(Pageable pageable);
-    Page<PostListItem> findPostsSearch(Pageable pageable, String type, String keyword);
-    Page<PostListItem> findPostsFromMember(Pageable pageable, String username);
+    PostListResponse findPostList(Pageable pageable);
+    PostListResponse findPostSearchList(Pageable pageable, String type, String keyword);
+    PostListResponse findPostMemberList(Pageable pageable, Long memberId);
 
 }

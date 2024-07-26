@@ -4,7 +4,6 @@ import com.board.domain.comment.entity.Comment;
 import com.board.domain.member.entity.Member;
 import com.board.global.common.entity.BaseEntity;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -45,13 +44,13 @@ public class Post extends BaseEntity {
     @JoinColumn(nullable = false)
     private Member member;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "post", cascade = CascadeType.REMOVE)
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "post")
     private List<Comment> comments = new ArrayList<>();
 
     @Builder
-    public Post(String title, String content, Member member) {
+    public Post(String title, String writer, String content, Member member) {
         this.title = title;
-        this.writer = member.getNickname();
+        this.writer = writer;
         this.content = content;
         this.member = member;
     }
@@ -61,8 +60,8 @@ public class Post extends BaseEntity {
         this.content = content;
     }
 
-    public boolean isOwner(String loginUsername) {
-        return member.getUsername().equals(loginUsername);
+    public boolean isOwner(Long memberId) {
+        return member.getId().equals(memberId);
     }
 
 }

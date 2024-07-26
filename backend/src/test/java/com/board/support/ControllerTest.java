@@ -1,13 +1,12 @@
 package com.board.support;
 
 import com.board.domain.token.service.TokenService;
+import com.board.global.common.config.ObjectMapperConfig;
 import com.board.global.security.config.SecurityConfig;
+import com.board.global.security.support.JwtManager;
 import com.board.support.config.RestDocsConfig;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,15 +28,18 @@ import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.filter.CharacterEncodingFilter;
 
 import static org.springframework.restdocs.payload.JsonFieldType.ARRAY;
-import static org.springframework.restdocs.payload.JsonFieldType.NUMBER;
 import static org.springframework.restdocs.payload.JsonFieldType.OBJECT;
 import static org.springframework.restdocs.payload.JsonFieldType.STRING;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.restdocs.payload.PayloadDocumentation.subsectionWithPath;
 
-@Import({SecurityConfig.class, RestDocsConfig.class})
+@Import({
+        SecurityConfig.class,
+        RestDocsConfig.class,
+        ObjectMapperConfig.class
+})
 @ExtendWith(RestDocumentationExtension.class)
-public abstract class RestDocsTestSupport {
+public abstract class ControllerTest {
 
     @Autowired
     protected ObjectMapper objectMapper;
@@ -54,6 +56,9 @@ public abstract class RestDocsTestSupport {
     @MockBean
     protected TokenService tokenService;
 
+    @MockBean
+    protected JwtManager jwtManager;
+
     @BeforeEach
     void setUp(WebApplicationContext context, RestDocumentationContextProvider provider) {
         this.mockMvc = MockMvcBuilders.webAppContextSetup(context)
@@ -65,31 +70,20 @@ public abstract class RestDocsTestSupport {
                 .build();
     }
 
-    protected Claims mockClaims() {
-        return Jwts.claims().subject("yoon1234")
-                .add("nickname", "yoonkun")
-                .add("authority", "ROLE_MEMBER")
-                .build();
-    }
-
     protected FieldDescriptor[] commonSuccessResponse() {
         return new FieldDescriptor[] {
-                fieldWithPath("message").type(STRING).description("요청 성공/실패 여부"),
-                fieldWithPath("status").type(NUMBER).description("Http 상태 코드"),
-                subsectionWithPath("result").description("요청 결과 데이터"),
+                fieldWithPath("status").type(STRING).description("API 요청 성공/실패 상태"),
+                subsectionWithPath("data").type(OBJECT).description("응답 데이터").optional()
         };
     }
 
     protected FieldDescriptor[] commonErrorResponse() {
         return new FieldDescriptor[] {
-                fieldWithPath("message").type(STRING).description("요청 성공/실패 여부"),
-                fieldWithPath("status").type(NUMBER).description("Http 상태 코드"),
-                fieldWithPath("result").type(OBJECT).description("에러 결과 데이터"),
-                fieldWithPath("result.timeStamp").type(STRING).description("에러 발생 시간"),
-                fieldWithPath("result.path").type(STRING).description("요청 api 경로"),
-                fieldWithPath("result.error.code").type(STRING).description("에러 코드"),
-                fieldWithPath("result.error.message").type(STRING).description("에러 메시지"),
-                subsectionWithPath("result.error.fieldErrors").type(ARRAY).description("유효성 검증 에러 필드 목록"),
+                fieldWithPath("status").type(STRING).description("API 요청 성공/실패 상태"),
+                fieldWithPath("error").type(OBJECT).description("에러 데이터"),
+                fieldWithPath("error.code").type(STRING).description("에러 코드"),
+                fieldWithPath("error.message").type(STRING).description("에러 메시지"),
+                subsectionWithPath("error.fields").type(ARRAY).description("유효성 에러 필드"),
         };
     }
 

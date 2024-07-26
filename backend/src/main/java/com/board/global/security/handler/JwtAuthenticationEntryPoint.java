@@ -14,7 +14,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
-import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 
@@ -27,20 +26,11 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
     public void commence(HttpServletRequest request,
                          HttpServletResponse response,
                          AuthenticationException authException) throws IOException {
-        final String errorCode = authException.getMessage();
-        final ErrorType errorType = ErrorType.of(errorCode);
-        final ErrorResponse errorResponse = ErrorResponse.of(errorType, requestPath(request));
+        ErrorType errorType = ErrorType.of(authException.getMessage());
+        ErrorResponse errorResponse = ErrorResponse.of(errorType);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setStatus(errorType.getStatus());
-        objectMapper.writeValue(response.getOutputStream(), ApiResponse.fail(errorType.getStatus(), errorResponse));
-    }
-
-    private String requestPath(HttpServletRequest request) {
-        String queryString = request.getQueryString();
-        if (StringUtils.hasText(queryString)) {
-            return request.getRequestURI() + "?" + queryString;
-        }
-        return request.getRequestURI();
+        objectMapper.writeValue(response.getOutputStream(), ApiResponse.fail(errorResponse));
     }
 
 }

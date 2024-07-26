@@ -21,6 +21,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Entity
 @NoArgsConstructor
@@ -57,13 +58,13 @@ public class Comment extends BaseEntity {
     private List<Comment> replies = new ArrayList<>();
 
     @Builder
-    public Comment(String content, Member member, Post post, Comment reference) {
-        this.writer = member.getNickname();
+    public Comment(String content, String writer, Member member, Post post, Comment reference) {
+        this.writer = writer;
         this.content = content;
         this.member = member;
         this.reference = reference;
         this.isDelete = false;
-        setPost(post);
+        this.post = post;
     }
 
     public void addReply(Comment reply) {
@@ -75,20 +76,25 @@ public class Comment extends BaseEntity {
         this.content = content;
     }
 
-    public void delete() {
+    public void softDelete() {
         this.isDelete = true;
     }
 
-    public boolean isOwner(String loginUsername) {
-        return member.getUsername().equals(loginUsername);
+    public void deleteReply(Comment reply) {
+        reply.getReplies().remove(this);
+        replies.remove(reply);
     }
 
-    private void setPost(Post post) {
-        if (this.post != null) {
-            this.post.getComments().remove(this);
-        }
-        this.post = post;
-        post.getComments().add(this);
+    public boolean isReply() {
+        return Objects.nonNull(reference);
+    }
+
+    public boolean isOwner(Long memberId) {
+        return member.getId().equals(memberId);
+    }
+
+    public boolean hasReplies() {
+        return !replies.isEmpty();
     }
 
 }

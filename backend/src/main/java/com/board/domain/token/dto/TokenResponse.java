@@ -1,16 +1,23 @@
 package com.board.domain.token.dto;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
+@Builder
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class TokenResponse {
 
-    private final String accessToken;
-    private final String refreshToken;
+    private String accessToken;
 
-    public TokenResponse(String accessToken, String refreshToken) {
-        this.accessToken = accessToken;
-        this.refreshToken = refreshToken;
+    public static TokenResponse of(String accessToken) {
+        return TokenResponse.builder()
+                .accessToken(accessToken)
+                .build();
     }
 
 }

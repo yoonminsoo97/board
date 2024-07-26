@@ -6,14 +6,14 @@ import com.board.domain.post.dto.PostModifyRequest;
 import com.board.domain.post.dto.PostWriteRequest;
 import com.board.domain.post.service.PostService;
 import com.board.global.common.dto.ApiResponse;
+import com.board.global.security.annotation.LoginMember;
 
+import com.board.global.security.annotation.RoleMember;
 import jakarta.validation.Valid;
 
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,11 +31,11 @@ public class PostController {
 
     private final PostService postService;
 
-    @Secured("ROLE_MEMBER")
+    @RoleMember
     @PostMapping
     public ResponseEntity<ApiResponse<Void>> postWrite(@RequestBody @Valid PostWriteRequest postWriteRequest,
-                                                       @AuthenticationPrincipal String username) {
-        postService.postWrite(postWriteRequest, username);
+                                                       @LoginMember Long memberId) {
+        postService.postWrite(postWriteRequest, memberId);
         return ResponseEntity.ok().body(ApiResponse.success());
     }
 
@@ -53,28 +53,28 @@ public class PostController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<ApiResponse<PostListResponse>> postListSearch(@RequestParam("page") int page,
+    public ResponseEntity<ApiResponse<PostListResponse>> postSearchList(@RequestParam("page") int page,
                                                                         @RequestParam("type") String type,
                                                                         @RequestParam("keyword") String keyword) {
         page = page <= 0 ? 0 : page - 1;
-        PostListResponse postListResponse = postService.postListSearch(page, type, keyword);
+        PostListResponse postListResponse = postService.postSearchList(page, type, keyword);
         return ResponseEntity.ok().body(ApiResponse.success(postListResponse));
     }
 
-    @Secured("ROLE_MEMBER")
+    @RoleMember
     @PutMapping("/{postId}")
     public ResponseEntity<ApiResponse<Void>> postModify(@PathVariable("postId") Long postId,
                                                         @RequestBody @Valid PostModifyRequest postModifyRequest,
-                                                        @AuthenticationPrincipal String username) {
-        postService.postModify(postId, postModifyRequest, username);
+                                                        @LoginMember Long memberId) {
+        postService.postModify(postId, postModifyRequest, memberId);
         return ResponseEntity.ok().body(ApiResponse.success());
     }
 
-    @Secured("ROLE_MEMBER")
+    @RoleMember
     @DeleteMapping("/{postId}")
     public ResponseEntity<ApiResponse<Void>> postDelete(@PathVariable("postId") Long postId,
-                                                        @AuthenticationPrincipal String username) {
-        postService.postDelete(postId, username);
+                                                        @LoginMember Long memberId) {
+        postService.postDelete(postId, memberId);
         return ResponseEntity.ok().body(ApiResponse.success());
     }
 

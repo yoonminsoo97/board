@@ -1,4 +1,4 @@
-package com.board.domain.token.exception;
+package com.board.global.security.exception;
 
 import com.board.global.error.ErrorType;
 

@@ -1,5 +1,7 @@
 package com.board.domain.member.service;
 
+import com.board.domain.comment.repository.CommentRepository;
+import com.board.domain.member.dto.MemberCommentListResponse;
 import com.board.domain.member.dto.MemberNicknameRequest;
 import com.board.domain.member.dto.MemberPasswordRequest;
 import com.board.domain.member.dto.MemberProfileResponse;
@@ -7,12 +9,14 @@ import com.board.domain.member.dto.MemberSignupRequest;
 import com.board.domain.member.entity.Member;
 import com.board.domain.member.exception.DuplicateNicknameException;
 import com.board.domain.member.exception.DuplicateUsernameException;
-import com.board.domain.member.exception.NotFoundMemberException;
 import com.board.domain.member.exception.PasswordMismatchException;
 import com.board.domain.member.repository.MemberRepository;
+import com.board.domain.post.dto.PostListResponse;
+import com.board.domain.post.repository.PostRepository;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,19 +25,24 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class MemberService {
 
+    private static final int POST_PER_PAGE = 10;
+    private static final int COMMENT_PER_PAGE = 10;
+
     private final MemberRepository memberRepository;
+    private final PostRepository postRepository;
+    private final CommentRepository commentRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
     public void memberNicknameExists(String nickname) {
-        if (memberRepository.existsMemberByNickname(nickname)) {
+        if (memberRepository.existsByNickname(nickname)) {
             throw new DuplicateNicknameException();
         }
     }
 
     @Transactional
     public void memberUsernameExists(String username) {
-        if (memberRepository.existsMemberByUsername(username)) {
+        if (memberRepository.existsByUsername(username)) {
             throw new DuplicateUsernameException();
         }
     }
@@ -55,24 +64,31 @@ public class MemberService {
     }
 
     @Transactional(readOnly = true)
-    public MemberProfileResponse memberProfile(String username) {
-        Member member = memberRepository.findMemberByUsername(username)
-                .orElseThrow(NotFoundMemberException::new);
-        return new MemberProfileResponse(member);
+    public MemberProfileResponse memberProfile(Long memberId) {
+        Member member = memberRepository.findByMemberId(memberId);
+        return MemberProfileResponse.of(member);
+    }
+
+    @Transactional(readOnly = true)
+    public PostListResponse memberPostList(int page, Long memberId) {
+        return postRepository.findPostMemberList(PageRequest.of(page, POST_PER_PAGE), memberId);
+    }
+
+    @Transactional(readOnly = true)
+    public MemberCommentListResponse memberCommentList(int page, Long memberId) {
+        return commentRepository.findMemberCommentList(PageRequest.of(page, COMMENT_PER_PAGE), memberId);
     }
 
     @Transactional
-    public void memberNicknameChange(MemberNicknameRequest memberNicknameRequest, String username) {
+    public void memberNicknameChange(MemberNicknameRequest memberNicknameRequest, Long memberId) {
         memberNicknameExists(memberNicknameRequest.getNickname());
-        Member member = memberRepository.findMemberByUsername(username)
-                .orElseThrow(NotFoundMemberException::new);
+        Member member = memberRepository.findByMemberId(memberId);
         member.changeNickname(memberNicknameRequest.getNickname());
     }
 
     @Transactional
-    public void memberPasswordChange(MemberPasswordRequest memberPasswordRequest, String username) {
-        Member member = memberRepository.findMemberByUsername(username)
-                .orElseThrow(NotFoundMemberException::new);
+    public void memberPasswordChange(MemberPasswordRequest memberPasswordRequest, Long memberId) {
+        Member member = memberRepository.findByMemberId(memberId);
         if (notMatchCurPassword(memberPasswordRequest.getCurPassword(), member.getPassword())) {
             throw new PasswordMismatchException();
         }

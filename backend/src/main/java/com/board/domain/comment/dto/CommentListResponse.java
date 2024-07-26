@@ -1,39 +1,114 @@
 package com.board.domain.comment.dto;
 
-import com.board.domain.comment.entity.Comment;
-
-import lombok.AllArgsConstructor;
+import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import org.springframework.data.domain.Page;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Getter
-@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class CommentListResponse {
 
-    private final List<CommentListItem> comments;
-    private final int page;
-    private final int totalPages;
-    private final long totalElements;
-    private final boolean prev;
-    private final boolean next;
-    private final boolean first;
-    private final boolean last;
+    private List<CommentItem> comments;
+    private int page;
+    private long totalPages;
+    private long totalComments;
+    private boolean first;
+    private boolean last;
+    private boolean prev;
+    private boolean next;
 
-    public CommentListResponse(Page<Comment> commentPage) {
-        this.comments = commentPage.getContent().stream()
-                .map(CommentListItem::new)
-                .collect(Collectors.toList());
-        this.page = commentPage.getNumber() + 1;
-        this.totalPages = commentPage.getTotalPages();
-        this.totalElements = commentPage.getTotalElements();
-        this.prev = commentPage.hasPrevious();
-        this.next = commentPage.hasNext();
-        this.first = commentPage.isFirst();
-        this.last = commentPage.isLast();
+    @Builder
+    private CommentListResponse(List<CommentItem> comments,
+                               int page,
+                               long totalComments,
+                               long totalPages,
+                               boolean first,
+                               boolean last,
+                               boolean prev,
+                               boolean next) {
+        this.comments = comments;
+        this.page = page;
+        this.totalComments = totalComments;
+        this.totalPages = totalPages;
+        this.first = first;
+        this.last = last;
+        this.prev = prev;
+        this.next = next;
+    }
+
+    public static CommentListResponse of(Page<CommentItem> commentPage, long totalComments) {
+        return CommentListResponse.builder()
+                .comments(commentPage.getContent())
+                .page(commentPage.getNumber() + 1)
+                .totalPages(commentPage.getTotalPages())
+                .totalComments(totalComments)
+                .first(commentPage.isFirst())
+                .last(commentPage.isLast())
+                .prev(commentPage.hasPrevious())
+                .next(commentPage.hasNext())
+                .build();
+    }
+
+    @Getter
+    @NoArgsConstructor(access = AccessLevel.PRIVATE)
+    public static class CommentItem {
+
+        private Long commentId;
+        private String writer;
+        private String content;
+        private LocalDateTime createdAt;
+        private boolean isDelete;
+        private List<ReplyItem> replies;
+
+        @Builder
+        public CommentItem(Long commentId,
+                           String writer,
+                           String content,
+                           LocalDateTime createdAt,
+                           boolean isDelete) {
+            this.commentId = commentId;
+            this.writer = writer;
+            this.content = content;
+            this.createdAt = createdAt;
+            this.isDelete = isDelete;
+            this.replies = new ArrayList<>();
+        }
+
+        @Getter
+        @NoArgsConstructor(access = AccessLevel.PRIVATE)
+        public static class ReplyItem {
+
+            private Long commentId;
+            private Long referenceId;
+            private String writer;
+            private String content;
+            private LocalDateTime createdAt;
+            private boolean isDelete;
+
+            @Builder
+            public ReplyItem(Long commentId,
+                             Long referenceId,
+                             String writer,
+                             String content,
+                             LocalDateTime createdAt,
+                             boolean isDelete) {
+                this.commentId = commentId;
+                this.referenceId = referenceId;
+                this.writer = writer;
+                this.content = content;
+                this.createdAt = createdAt;
+                this.isDelete = isDelete;
+            }
+
+        }
+
     }
 
 }

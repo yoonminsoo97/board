@@ -1,32 +1,31 @@
 package com.board.domain.comment.repository;
 
+import com.board.domain.comment.dto.CommentListResponse;
 import com.board.domain.comment.entity.Comment;
+import com.board.domain.comment.exception.NotFoundCommentException;
+import com.board.domain.member.dto.MemberCommentListResponse;
 import com.board.domain.member.entity.Member;
 import com.board.domain.member.repository.MemberRepository;
 import com.board.domain.post.entity.Post;
 import com.board.domain.post.repository.PostRepository;
-import com.board.global.common.config.JpaAuditConfig;
-import com.board.support.config.QuerydslConfig;
+import com.board.support.RepositoryTest;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.data.domain.Page;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@DataJpaTest
-@Import({JpaAuditConfig.class, QuerydslConfig.class})
-class CommentRepositoryTest {
+class CommentRepositoryTest extends RepositoryTest {
 
     @Autowired
     private MemberRepository memberRepository;
@@ -42,111 +41,308 @@ class CommentRepositoryTest {
 
     @BeforeEach
     void setUp() {
-        member = memberRepository.save(Member.builder()
+        member = Member.builder()
                 .nickname("yoonkun")
                 .username("yoon1234")
-                .password("12345678")
-                .build());
-        post = postRepository.save(Post.builder()
-                .title("제목")
-                .content("내용")
-                .member(member)
-                .build());
-    }
-
-    @Test
-    @DisplayName("댓글을 저장한다")
-    void commentSave() {
-        Comment comment = Comment.builder()
-                .content("댓글")
-                .member(member)
-                .post(post)
+                .password(new BCryptPasswordEncoder().encode("12345678"))
                 .build();
-
-        Comment saveComment = commentRepository.save(comment);
-
-        assertThat(saveComment.getId()).isNotNull();
-    }
-
-    @Test
-    @DisplayName("댓글 목록을 조회한다")
-    void findCommentsByPostId() {
-        List<Comment> commentList = List.of(
-                Comment.builder().content("댓글").member(member).post(post).build(),
-                Comment.builder().content("댓글").member(member).post(post).build(),
-                Comment.builder().content("댓글").member(member).post(post).build(),
-                Comment.builder().content("댓글").member(member).post(post).build(),
-                Comment.builder().content("댓글").member(member).post(post).build()
-        );
-        commentRepository.saveAll(commentList);
-
-        Pageable pageable = PageRequest.of(0, 5, Sort.Direction.ASC, "id");
-        Page<Comment> commentPage = commentRepository.findCommentsByPostId(pageable, post.getId());
-
-        assertThat(commentPage.getNumber()).isEqualTo(0);
-        assertThat(commentPage.getTotalElements()).isEqualTo(5);
-        assertThat(commentPage.getTotalPages()).isEqualTo(1);
-        assertThat(commentPage.hasPrevious()).isFalse();
-        assertThat(commentPage.hasNext()).isFalse();
-        assertThat(commentPage.isFirst()).isTrue();
-        assertThat(commentPage.isLast()).isTrue();
-    }
-
-    @Test
-    @DisplayName("댓글과 댓글을 작성한 회원을 한 번에 조회한다")
-    void findCommentJoinFetchMember() {
-        Comment comment = Comment.builder()
-                .content("댓글")
+        memberRepository.save(member);
+        post = Post.builder()
+                .title("title")
+                .writer(member.getNickname())
+                .content("content")
                 .member(member)
-                .post(post)
                 .build();
-        Comment saveComment = commentRepository.save(comment);
-
-        Comment findComment = commentRepository.findCommentJoinFetchMember(post.getId(), saveComment.getId()).get();
-
-        assertThat(findComment.getContent()).isEqualTo("댓글");
-        assertThat(findComment.getMember().getNickname()).isEqualTo("yoonkun");
-        assertThat(findComment.getMember().getUsername()).isEqualTo("yoon1234");
+        postRepository.save(post);
     }
 
-    @Test
-    @DisplayName("댓글을 삭제한다")
-    void commentDelete() {
-        Comment comment = Comment.builder()
-                .content("댓글")
-                .member(member)
-                .post(post)
-                .build();
-        Comment saveComment = commentRepository.save(comment);
-        Comment findComment = commentRepository.findCommentJoinFetchMember(post.getId(), saveComment.getId()).get();
+    @Nested
+    @DisplayName("댓글 저장")
+    class CommentSaveTest {
 
-        findComment.delete();
+        @Test
+        @DisplayName("댓글을 저장한다")
+        void save() {
+            Comment comment = Comment.builder()
+                    .writer(member.getNickname())
+                    .content("comment")
+                    .member(member)
+                    .post(post)
+                    .build();
 
-        assertThat(findComment.isDelete()).isTrue();
+            Comment saveComment = commentRepository.save(comment);
+
+            assertThat(saveComment.getId()).isNotNull();
+        }
+
+        @Test
+        @DisplayName("작성자가 null이면 에외가 발생한다")
+        void saveNullWriter() {
+            Comment comment = Comment.builder()
+                    .writer(null)
+                    .content("comment")
+                    .member(member)
+                    .post(post)
+                    .build();
+
+            assertThatThrownBy(() -> commentRepository.save(comment))
+                    .isInstanceOf(DataIntegrityViolationException.class);
+        }
+
+        @Test
+        @DisplayName("내용이 null이면 예외가 발생한다")
+        void saveNullContent() {
+            Comment comment = Comment.builder()
+                    .writer(member.getNickname())
+                    .content(null)
+                    .member(member)
+                    .post(post)
+                    .build();
+
+            assertThatThrownBy(() -> commentRepository.save(comment))
+                    .isInstanceOf(DataIntegrityViolationException.class);
+        }
+
+        @Test
+        @DisplayName("회원이 null이면 예외가 발생한다")
+        void saveNullMember() {
+            Comment comment = Comment.builder()
+                    .writer(member.getNickname())
+                    .content("comment")
+                    .member(null)
+                    .post(post)
+                    .build();
+
+            assertThatThrownBy(() -> commentRepository.save(comment))
+                    .isInstanceOf(DataIntegrityViolationException.class);
+        }
+
+        @Test
+        @DisplayName("게시글이 null이면 예외가 발생한다")
+        void saveNullPost() {
+            Comment comment = Comment.builder()
+                    .writer(member.getNickname())
+                    .content("comment")
+                    .member(member)
+                    .post(null)
+                    .build();
+
+            assertThatThrownBy(() -> commentRepository.save(comment))
+                    .isInstanceOf(DataIntegrityViolationException.class);
+        }
+
+        @Test
+        @DisplayName("대댓글을 저장한다")
+        void saveReply() {
+            Comment comment = Comment.builder()
+                    .writer(member.getNickname())
+                    .content("comment")
+                    .member(member)
+                    .post(post)
+                    .build();
+            commentRepository.save(comment);
+
+            Comment reply = Comment.builder()
+                    .writer(member.getNickname())
+                    .content("reply")
+                    .member(member)
+                    .post(post)
+                    .reference(comment)
+                    .build();
+
+            Comment saveReply = commentRepository.save(reply);
+
+            assertThat(saveReply.getId()).isNotNull();
+            assertThat(reply.getReference()).isEqualTo(comment);
+        }
+
     }
 
-    @Test
-    @DisplayName("특정 회원이 작성한 댓글 목록을 조회한다")
-    void findCommentsByMemberUsername() {
-        List<Comment> commentList = List.of(
-                Comment.builder().content("댓글").member(member).post(post).build(),
-                Comment.builder().content("댓글").member(member).post(post).build(),
-                Comment.builder().content("댓글").member(member).post(post).build(),
-                Comment.builder().content("댓글").member(member).post(post).build(),
-                Comment.builder().content("댓글").member(member).post(post).build()
-        );
-        commentRepository.saveAll(commentList);
 
-        Pageable pageable = PageRequest.of(0, 5, Sort.Direction.ASC, "id");
-        Page<Comment> commentPage = commentRepository.findCommentsByMemberUsername(pageable, member.getUsername());
+    @Nested
+    @DisplayName("댓글 조회")
+    class CommentFindTest {
 
-        assertThat(commentPage.getNumber()).isEqualTo(0);
-        assertThat(commentPage.getTotalElements()).isEqualTo(5);
-        assertThat(commentPage.getTotalPages()).isEqualTo(1);
-        assertThat(commentPage.hasPrevious()).isFalse();
-        assertThat(commentPage.hasNext()).isFalse();
-        assertThat(commentPage.isFirst()).isTrue();
-        assertThat(commentPage.isLast()).isTrue();
+        @Test
+        @DisplayName("댓글 기본키와 게시글 기본키로 조회한다")
+        void findByPostIdAndCommentId() {
+            Comment comment = Comment.builder()
+                    .writer(member.getNickname())
+                    .content("comment")
+                    .member(member)
+                    .post(post)
+                    .build();
+            commentRepository.save(comment);
+
+            Comment findComment = commentRepository.findCommentByPostIdAndCommentId(post.getId(), comment.getId())
+                    .orElseThrow(NotFoundCommentException::new);
+
+            assertThat(findComment.getWriter()).isEqualTo("yoonkun");
+            assertThat(findComment.getContent()).isEqualTo("comment");
+            assertThat(findComment.isDelete()).isFalse();
+        }
+
+        @Test
+        @DisplayName("댓글이 존재하지 않으면 예외가 발생한다")
+        void findByPostIdAndCommentIdNotFoundComment() {
+            assertThatThrownBy(() -> commentRepository.findCommentByPostIdAndCommentId(post.getId(), 1L)
+                    .orElseThrow(NotFoundCommentException::new))
+                    .isInstanceOf(NotFoundCommentException.class);
+        }
+
+    }
+
+    @Nested
+    @DisplayName("댓글 목록 조회")
+    class CommentListFindTest {
+
+        @Test
+        @DisplayName("특정 게시글에 속한 댓글 목록을 조회한다")
+        void findCommentListByPostId() {
+            Comment comment = Comment.builder()
+                    .writer(member.getNickname())
+                    .content("comment")
+                    .member(member)
+                    .post(post)
+                    .build();
+            Comment reply = Comment.builder()
+                    .writer(member.getNickname())
+                    .content("reply")
+                    .member(member)
+                    .post(post)
+                    .reference(comment)
+                    .build();
+            commentRepository.save(comment);
+            commentRepository.save(reply);
+
+            List<CommentListResponse.CommentItem> commentList = commentRepository.findCommentListByPostId(post.getId());
+
+            assertThat(commentList.isEmpty()).isFalse();
+            assertThat(commentList.size()).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("특정 게시글에 속한 대댓글 목록을 조회한다")
+        void findReplyListByPostId() {
+            Comment comment = Comment.builder()
+                    .writer(member.getNickname())
+                    .content("comment")
+                    .member(member)
+                    .post(post)
+                    .build();
+            Comment reply = Comment.builder()
+                    .writer(member.getNickname())
+                    .content("reply")
+                    .member(member)
+                    .post(post)
+                    .reference(comment)
+                    .build();
+            commentRepository.save(comment);
+            commentRepository.save(reply);
+
+            List<CommentListResponse.CommentItem.ReplyItem> replyList = commentRepository.findReplyListByPostId(post.getId());
+
+            assertThat(replyList.isEmpty()).isFalse();
+            assertThat(replyList.size()).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("회원이 작성한 댓글 목록을 조회한다")
+        void findMemberCommentList() {
+            Comment comment = Comment.builder()
+                    .writer(member.getNickname())
+                    .content("comment")
+                    .member(member)
+                    .post(post)
+                    .build();
+            Comment reply = Comment.builder()
+                    .writer(member.getNickname())
+                    .content("reply")
+                    .member(member)
+                    .post(post)
+                    .reference(comment)
+                    .build();
+            commentRepository.save(comment);
+            commentRepository.save(reply);
+
+            MemberCommentListResponse memberCommentList = commentRepository.findMemberCommentList(PageRequest.of(0, 10), member.getId());
+
+            assertThat(memberCommentList.getPage()).isEqualTo(1);
+            assertThat(memberCommentList.getTotalElements()).isEqualTo(2);
+            assertThat(memberCommentList.getTotalPages()).isEqualTo(1);
+            assertThat(memberCommentList.isFirst()).isTrue();
+            assertThat(memberCommentList.isLast()).isTrue();
+            assertThat(memberCommentList.isPrev()).isFalse();
+            assertThat(memberCommentList.isNext()).isFalse();
+        }
+
+    }
+
+    @Nested
+    @DisplayName("댓글 삭제")
+    class CommentDeleteTest {
+
+        @Test
+        @DisplayName("댓글을 논리 삭제한다")
+        void softDelete() {
+            Comment comment = Comment.builder()
+                    .writer(member.getNickname())
+                    .content("comment")
+                    .member(member)
+                    .post(post)
+                    .build();
+            commentRepository.save(comment);
+
+            Comment findComment = commentRepository.findCommentByPostIdAndCommentId(post.getId(), comment.getId())
+                    .orElseThrow(NotFoundCommentException::new);
+
+            findComment.softDelete();
+
+            assertThat(findComment.isDelete()).isTrue();
+        }
+
+        @Test
+        @DisplayName("댓글을 물리 삭제한다")
+        void hardDelete() {
+            Comment comment = Comment.builder()
+                    .writer(member.getNickname())
+                    .content("comment")
+                    .member(member)
+                    .post(post)
+                    .build();
+            commentRepository.save(comment);
+
+            Comment findComment = commentRepository.findCommentByPostIdAndCommentId(post.getId(), comment.getId())
+                    .orElseThrow(NotFoundCommentException::new);
+
+            commentRepository.delete(findComment);
+
+            assertThat(commentRepository.findCommentByPostIdAndCommentId(post.getId(), comment.getId())).isEmpty();
+        }
+
+        @Test
+        @DisplayName("특정 게시글에 속한 댓글들을 삭제한다")
+        void deleteByPostId() {
+            Comment commentA = Comment.builder()
+                    .writer(member.getNickname())
+                    .content("comment")
+                    .member(member)
+                    .post(post)
+                    .build();
+            Comment commentB = Comment.builder()
+                    .writer(member.getNickname())
+                    .content("comment")
+                    .member(member)
+                    .post(post)
+                    .build();
+            commentRepository.save(commentA);
+            commentRepository.save(commentB);
+
+            commentRepository.deleteByPostId(post.getId());
+
+            assertThat(commentRepository.findCommentListByPostId(post.getId()).size()).isEqualTo(0);
+        }
+
     }
 
 }

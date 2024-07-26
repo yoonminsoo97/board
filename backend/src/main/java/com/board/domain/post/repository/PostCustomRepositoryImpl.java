@@ -1,7 +1,9 @@
 package com.board.domain.post.repository;
 
-import com.board.domain.post.dto.PostListItem;
+import com.board.domain.post.dto.PostListResponse;
+import com.board.domain.post.dto.PostListResponse.PostItem;
 
+import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -17,90 +19,97 @@ import java.util.List;
 import static com.board.domain.comment.entity.QComment.comment;
 import static com.board.domain.post.entity.QPost.post;
 
-import static com.querydsl.core.types.Projections.constructor;
-
 @RequiredArgsConstructor
 public class PostCustomRepositoryImpl implements PostCustomRepository {
+
+    private static final String TITLE = "title";
+    private static final String WRITER = "writer";
 
     private final JPAQueryFactory jpaQueryFactory;
 
     @Override
-    public Page<PostListItem> findPosts(Pageable pageable) {
-        List<PostListItem> content = jpaQueryFactory
-                .select(constructor(PostListItem.class,
+    public PostListResponse findPostList(Pageable pageable) {
+        List<PostItem> content = jpaQueryFactory
+                .select(Projections.constructor(PostItem.class,
                         post.id,
                         post.title,
                         post.writer,
                         comment.count().intValue(),
-                        post.createdAt))
+                        post.createdAt)
+                )
                 .from(post)
-                .leftJoin(post.comments, comment)
+                .leftJoin(post.comments, comment).on(comment.isDelete.eq(false))
                 .groupBy(post.id)
                 .orderBy(post.id.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
-        JPAQuery<Long> countQuery = jpaQueryFactory
+        JPAQuery<Long> count = jpaQueryFactory
                 .select(post.count())
                 .from(post);
-        return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
+        Page<PostItem> postPage = PageableExecutionUtils.getPage(content, pageable, count::fetchOne);
+        return PostListResponse.of(postPage);
     }
 
     @Override
-    public Page<PostListItem> findPostsSearch(Pageable pageable, String type, String keyword) {
-        List<PostListItem> content = jpaQueryFactory
-                .select(constructor(PostListItem.class,
+    public PostListResponse findPostSearchList(Pageable pageable, String type, String keyword) {
+        List<PostItem> content = jpaQueryFactory
+                .select(Projections.constructor(PostItem.class,
                         post.id,
                         post.title,
                         post.writer,
                         comment.count().intValue(),
-                        post.createdAt))
+                        post.createdAt)
+                )
                 .from(post)
-                .leftJoin(post.comments, comment)
+                .leftJoin(post.comments, comment).on(comment.isDelete.eq(false))
                 .groupBy(post.id)
-                .orderBy(post.id.desc())
                 .having(contanins(type, keyword))
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
-        JPAQuery<Long> countQuery = jpaQueryFactory
-                .select(post.count())
-                .from(post)
-                .where();
-        return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
-    }
-
-    @Override
-    public Page<PostListItem> findPostsFromMember(Pageable pageable, String username) {
-        List<PostListItem> content = jpaQueryFactory
-                .select(constructor(PostListItem.class,
-                        post.id,
-                        post.title,
-                        post.writer,
-                        comment.count().intValue(),
-                        post.createdAt))
-                .from(post)
-                .leftJoin(post.comments, comment)
-                .groupBy(post.id)
                 .orderBy(post.id.desc())
-                .having(post.member.username.eq(username))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
-        JPAQuery<Long> countQuery = jpaQueryFactory
+        JPAQuery<Long> count = jpaQueryFactory
                 .select(post.count())
-                .from(post)
-                .where();
-        return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
+                .where(contanins(type, keyword))
+                .from(post);
+        Page<PostItem> postPage = PageableExecutionUtils.getPage(content, pageable, count::fetchOne);
+        return PostListResponse.of(postPage);
     }
 
     private BooleanExpression contanins(String type, String keyword) {
-        if (type.equals("title")) {
+        if (type.equals(TITLE)) {
             return post.title.contains(keyword);
-        } else if (type.equals("writer")) {
-            return post.writer.contains(keyword);
+        } else if (type.equals(WRITER)) {
+            return post.writer.eq(keyword);
         }
         return null;
+    }
+
+    @Override
+    public PostListResponse findPostMemberList(Pageable pageable, Long memberId) {
+        List<PostItem> content = jpaQueryFactory
+                .select(Projections.constructor(PostItem.class,
+                        post.id,
+                        post.title,
+                        post.writer,
+                        comment.count().intValue(),
+                        post.createdAt)
+                )
+                .from(post)
+                .leftJoin(post.comments, comment).on(comment.isDelete.eq(false))
+                .groupBy(post.id)
+                .having(post.member.id.eq(memberId))
+                .orderBy(post.id.desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+        JPAQuery<Long> count = jpaQueryFactory
+                .select(post.count())
+                .where(post.member.id.eq(memberId))
+                .from(post);
+        Page<PostItem> postPage = PageableExecutionUtils.getPage(content, pageable, count::fetchOne);
+        return PostListResponse.of(postPage);
     }
 
 }
