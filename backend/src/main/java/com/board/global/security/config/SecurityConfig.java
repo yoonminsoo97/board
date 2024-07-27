@@ -71,6 +71,7 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET,
+                                RequestURI.REST_API_DOCS.pattern(),
                                 RequestURI.MEMBER_NICKNAME_EXISTS.pattern(),
                                 RequestURI.MEMBER_USERNAME_EXISTS.pattern(),
                                 RequestURI.POST_DETAIL.pattern(),

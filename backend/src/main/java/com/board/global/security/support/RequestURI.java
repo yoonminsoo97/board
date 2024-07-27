@@ -10,6 +10,7 @@ import static org.springframework.security.web.util.matcher.AntPathRequestMatche
 
 public enum RequestURI {
 
+    REST_API_DOCS(HttpMethod.GET, "/docs/board.html", true),
     MEMBER_NICKNAME_EXISTS(HttpMethod.GET, "/api/members/nickname/*", true),
     MEMBER_USERNAME_EXISTS(HttpMethod.GET, "/api/members/username/*", true),
     MEMBER_SIGNUP(HttpMethod.POST, "/api/members/signup", true),
