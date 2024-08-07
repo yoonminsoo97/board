@@ -6,16 +6,19 @@ import com.board.domain.member.dto.MemberPasswordRequest;
 import com.board.domain.member.dto.MemberProfileResponse;
 import com.board.domain.member.dto.MemberSignupRequest;
 import com.board.domain.member.service.MemberService;
+import com.board.domain.member.validator.annotation.Nickname;
+import com.board.domain.member.validator.annotation.Username;
 import com.board.domain.post.dto.PostListResponse;
 import com.board.global.common.dto.ApiResponse;
 import com.board.global.security.annotation.LoginMember;
-
 import com.board.global.security.annotation.RoleMember;
+
 import jakarta.validation.Valid;
 
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+@Validated
 @RestController
 @RequestMapping("/api/members")
 @RequiredArgsConstructor
@@ -33,13 +37,13 @@ public class MemberController {
     private final MemberService memberService;
 
     @GetMapping("/nickname/{nickname}")
-    public ResponseEntity<ApiResponse<Void>> memberNicknameExists(@PathVariable("nickname") String nickname) {
+    public ResponseEntity<ApiResponse<Void>> memberNicknameExists(@PathVariable("nickname") @Nickname String nickname) {
         memberService.memberNicknameExists(nickname);
         return ResponseEntity.ok().body(ApiResponse.success());
     }
 
     @GetMapping("/username/{username}")
-    public ResponseEntity<ApiResponse<Void>> memberUsernameExists(@PathVariable("username") String username) {
+    public ResponseEntity<ApiResponse<Void>> memberUsernameExists(@PathVariable("username") @Username String username) {
         memberService.memberUsernameExists(username);
         return ResponseEntity.ok().body(ApiResponse.success());
     }

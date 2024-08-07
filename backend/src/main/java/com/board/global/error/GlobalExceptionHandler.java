@@ -4,6 +4,8 @@ import com.board.global.common.dto.ApiResponse;
 import com.board.global.common.dto.ErrorResponse;
 import com.board.global.error.exception.BaseException;
 
+import jakarta.validation.ConstraintViolationException;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.BindingResult;
@@ -18,27 +20,26 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<ErrorResponse>> handle(BaseException e) {
         ErrorType errorType = e.getErrorType();
         ErrorResponse errorResponse = ErrorResponse.of(errorType);
-        return ResponseEntity
-                .status(errorType.getStatus())
-                .body(ApiResponse.fail(errorResponse));
+        return ResponseEntity.status(errorType.getStatus()).body(ApiResponse.fail(errorResponse));
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiResponse<ErrorResponse>> handle(ConstraintViolationException e) {
+        ErrorResponse errorResponse = ErrorResponse.of(ErrorType.INVALID_INPUT_VALUE, e.getConstraintViolations());
+        return ResponseEntity.badRequest().body(ApiResponse.fail(errorResponse));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<ErrorResponse>> handle(BindingResult bindingResult) {
-        ErrorType errorType = ErrorType.INVALID_INPUT_VALUE;
-        ErrorResponse errorResponse = ErrorResponse.of(errorType, bindingResult);
-        return ResponseEntity
-                .badRequest()
-                .body(ApiResponse.fail(errorResponse));
+        ErrorResponse errorResponse = ErrorResponse.of(ErrorType.INVALID_INPUT_VALUE, bindingResult);
+        return ResponseEntity.badRequest().body(ApiResponse.fail(errorResponse));
     }
 
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ApiResponse<ErrorResponse>> handle(AuthenticationException e) {
         ErrorType errorType = ErrorType.of(e.getMessage());
         ErrorResponse errorResponse = ErrorResponse.of(errorType);
-        return ResponseEntity
-                .status(errorType.getStatus())
-                .body(ApiResponse.fail(errorResponse));
+        return ResponseEntity.status(errorType.getStatus()).body(ApiResponse.fail(errorResponse));
     }
 
 }

@@ -1,6 +1,6 @@
 package com.board.domain.member.dto;
 
-import jakarta.validation.constraints.NotBlank;
+import com.board.domain.member.validator.annotation.Nickname;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class MemberNicknameRequest {
 
-    @NotBlank(message = "닉네임을 입력해 주세요.")
+    @Nickname
     private String nickname;
 
 }
