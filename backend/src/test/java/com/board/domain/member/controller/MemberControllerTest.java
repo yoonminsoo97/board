@@ -90,6 +90,27 @@ class MemberControllerTest extends ControllerTest {
         }
 
         @Test
+        @DisplayName("닉네임이 정규표현식에 일치하지 않으면 예외가 발생한다")
+        void memberNicknameRegexpException() throws Exception {
+            mockMvc.perform(get("/api/members/nickname/{nickname}", "오렌지@"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.status").value("fail"))
+                    .andExpect(jsonPath("$.error.code").value("E400001"))
+                    .andExpect(jsonPath("$.error.message").value("입력값이 잘못되었습니다."))
+                    .andExpect(jsonPath("$.error.fields[0].field").value("nickname"))
+                    .andExpect(jsonPath("$.error.fields[0].input").value("오렌지@"))
+                    .andExpect(jsonPath("$.error.fields[0].message").value("5~10자의 영문 소문자, 숫자를 사용해 주세요."))
+                    .andDo(restDocs.document(
+                            pathParameters(
+                                    parameterWithName("nickname").description("닉네임")
+                            ),
+                            responseFields(
+                                    commonErrorResponse()
+                            )
+                    ));
+        }
+
+        @Test
         @DisplayName("닉네임이 중복되면 예외가 발생한다")
         void memberNicknameExistsDuplicateNickname() throws Exception {
             willThrow(new DuplicateNicknameException()).given(memberService).memberNicknameExists(anyString());
@@ -130,6 +151,27 @@ class MemberControllerTest extends ControllerTest {
                             ),
                             responseFields(
                                     commonSuccessResponse()
+                            )
+                    ));
+        }
+
+        @Test
+        @DisplayName("아이디가 정규표현식에 일치하지 않으면 예외가 발생한다")
+        void memberUsernameRegexpException() throws Exception {
+            mockMvc.perform(get("/api/members/username/{username}", "yoon1234@"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.status").value("fail"))
+                    .andExpect(jsonPath("$.error.code").value("E400001"))
+                    .andExpect(jsonPath("$.error.message").value("입력값이 잘못되었습니다."))
+                    .andExpect(jsonPath("$.error.fields[0].field").value("username"))
+                    .andExpect(jsonPath("$.error.fields[0].input").value("yoon1234@"))
+                    .andExpect(jsonPath("$.error.fields[0].message").value("5~15자의 영문 소문자, 숫자를 사용해 주세요."))
+                    .andDo(restDocs.document(
+                            pathParameters(
+                                    parameterWithName("username").description("아이디")
+                            ),
+                            responseFields(
+                                    commonErrorResponse()
                             )
                     ));
         }
@@ -314,7 +356,143 @@ class MemberControllerTest extends ControllerTest {
                     .andExpect(jsonPath("$.error.message").value("입력값이 잘못되었습니다."))
                     .andExpect(jsonPath("$.error.fields[0].field").value("passwordConfirm"))
                     .andExpect(jsonPath("$.error.fields[0].input").value(""))
-                    .andExpect(jsonPath("$.error.fields[0].message").value("비밀번호를 한 번 더 입력해 주세요."))
+                    .andExpect(jsonPath("$.error.fields[0].message").value("비밀번호 확인을 입력해 주세요."))
+                    .andDo(restDocs.document(
+                            requestFields(
+                                    fieldWithPath("nickname").type(STRING).description("닉네임"),
+                                    fieldWithPath("username").type(STRING).description("아이디"),
+                                    fieldWithPath("password").type(STRING).description("비밀번호"),
+                                    fieldWithPath("passwordConfirm").type(STRING).description("비밀번호 확인")
+                            ),
+                            responseFields(
+                                    commonErrorResponse()
+                            )
+                    ));
+        }
+
+        @Test
+        @DisplayName("닉네임이 정규표현식에 일치하지 않으면 예외가 발생한다")
+        void memberSignupInvalidNicknameRegexp() throws Exception {
+            MemberSignupRequest memberSignupRequest = MemberSignupRequest.builder()
+                    .nickname("yoonkun@")
+                    .username("yoon1234")
+                    .password("12345678")
+                    .passwordConfirm("12345678")
+                    .build();
+
+            mockMvc.perform(post("/api/members/signup")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(memberSignupRequest))
+                    )
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.status").value("fail"))
+                    .andExpect(jsonPath("$.error.code").value("E400001"))
+                    .andExpect(jsonPath("$.error.message").value("입력값이 잘못되었습니다."))
+                    .andExpect(jsonPath("$.error.fields[0].field").value("nickname"))
+                    .andExpect(jsonPath("$.error.fields[0].input").value("yoonkun@"))
+                    .andExpect(jsonPath("$.error.fields[0].message").value("5~10자의 영문 소문자, 숫자를 사용해 주세요."))
+                    .andDo(restDocs.document(
+                            requestFields(
+                                    fieldWithPath("nickname").type(STRING).description("닉네임"),
+                                    fieldWithPath("username").type(STRING).description("아이디"),
+                                    fieldWithPath("password").type(STRING).description("비밀번호"),
+                                    fieldWithPath("passwordConfirm").type(STRING).description("비밀번호 확인")
+                            ),
+                            responseFields(
+                                    commonErrorResponse()
+                            )
+                    ));
+        }
+
+        @Test
+        @DisplayName("아이디가 정규표현식에 일치하지 않으면 예외가 발생한다")
+        void memberSignupInvalidUsernameRegexp() throws Exception {
+            MemberSignupRequest memberSignupRequest = MemberSignupRequest.builder()
+                    .nickname("yoonkun")
+                    .username("yoon123 4")
+                    .password("12345678")
+                    .passwordConfirm("12345678")
+                    .build();
+
+            mockMvc.perform(post("/api/members/signup")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(memberSignupRequest))
+                    )
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.status").value("fail"))
+                    .andExpect(jsonPath("$.error.code").value("E400001"))
+                    .andExpect(jsonPath("$.error.message").value("입력값이 잘못되었습니다."))
+                    .andExpect(jsonPath("$.error.fields[0].field").value("username"))
+                    .andExpect(jsonPath("$.error.fields[0].input").value("yoon123 4"))
+                    .andExpect(jsonPath("$.error.fields[0].message").value("5~15자의 영문 소문자, 숫자를 사용해 주세요."))
+                    .andDo(restDocs.document(
+                            requestFields(
+                                    fieldWithPath("nickname").type(STRING).description("닉네임"),
+                                    fieldWithPath("username").type(STRING).description("아이디"),
+                                    fieldWithPath("password").type(STRING).description("비밀번호"),
+                                    fieldWithPath("passwordConfirm").type(STRING).description("비밀번호 확인")
+                            ),
+                            responseFields(
+                                    commonErrorResponse()
+                            )
+                    ));
+        }
+
+        @Test
+        @DisplayName("비밀번호가 정규표현식에 일치하지 않으면 예외가 발생한다")
+        void memberSignupInvalidPasswordRegexp() throws Exception {
+            MemberSignupRequest memberSignupRequest = MemberSignupRequest.builder()
+                    .nickname("yoonkun")
+                    .username("yoon1234")
+                    .password("12")
+                    .passwordConfirm("12345678")
+                    .build();
+
+            mockMvc.perform(post("/api/members/signup")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(memberSignupRequest))
+                    )
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.status").value("fail"))
+                    .andExpect(jsonPath("$.error.code").value("E400001"))
+                    .andExpect(jsonPath("$.error.message").value("입력값이 잘못되었습니다."))
+                    .andExpect(jsonPath("$.error.fields[0].field").value("password"))
+                    .andExpect(jsonPath("$.error.fields[0].input").value("12"))
+                    .andExpect(jsonPath("$.error.fields[0].message").value("8~16자의 영문 대/소문자, 숫자, 특수문자를 사용해 주세요."))
+                    .andDo(restDocs.document(
+                            requestFields(
+                                    fieldWithPath("nickname").type(STRING).description("닉네임"),
+                                    fieldWithPath("username").type(STRING).description("아이디"),
+                                    fieldWithPath("password").type(STRING).description("비밀번호"),
+                                    fieldWithPath("passwordConfirm").type(STRING).description("비밀번호 확인")
+                            ),
+                            responseFields(
+                                    commonErrorResponse()
+                            )
+                    ));
+        }
+
+        @Test
+        @DisplayName("비밀번호 확인이 정규표현식에 일치하지 않으면 예외가 발생한다")
+        void memberSignupInvalidPasswordConfirmRegexp() throws Exception {
+            MemberSignupRequest memberSignupRequest = MemberSignupRequest.builder()
+                    .nickname("yoonkun")
+                    .username("yoon1234")
+                    .password("12345678")
+                    .passwordConfirm("12")
+                    .build();
+
+            mockMvc.perform(post("/api/members/signup")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(memberSignupRequest))
+                    )
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.status").value("fail"))
+                    .andExpect(jsonPath("$.error.code").value("E400001"))
+                    .andExpect(jsonPath("$.error.message").value("입력값이 잘못되었습니다."))
+                    .andExpect(jsonPath("$.error.fields[0].field").value("passwordConfirm"))
+                    .andExpect(jsonPath("$.error.fields[0].input").value("12"))
+                    .andExpect(jsonPath("$.error.fields[0].message").value("8~16자의 영문 대/소문자, 숫자, 특수문자를 사용해 주세요."))
                     .andDo(restDocs.document(
                             requestFields(
                                     fieldWithPath("nickname").type(STRING).description("닉네임"),
@@ -934,7 +1112,7 @@ class MemberControllerTest extends ControllerTest {
         @DisplayName("닉네임을 변경한다")
         void memberNicknameChange() throws Exception {
             MemberNicknameRequest memberNicknameRequest = MemberNicknameRequest.builder()
-                    .nickname("newNickname")
+                    .nickname("yoonkun")
                     .build();
 
             Claims claims = Jwts.claims()
@@ -1007,10 +1185,50 @@ class MemberControllerTest extends ControllerTest {
         }
 
         @Test
+        @DisplayName("닉네임이 정규표현식에 일치하지 않으면 예외가 발생한다")
+        void memberNicknameChangeInvalidNicknameRegexp() throws Exception {
+            MemberNicknameRequest memberNicknameRequest = MemberNicknameRequest.builder()
+                    .nickname("new@")
+                    .build();
+
+            Claims claims = Jwts.claims()
+                    .subject(String.valueOf(1L))
+                    .add("nickname", "yoonkun")
+                    .add("authority", "ROLE_MEMBER")
+                    .build();
+
+            given(jwtManager.getPayload(anyString())).willReturn(claims);
+
+            mockMvc.perform(put("/api/members/me/nickname")
+                            .header("Authorization", "Bearer access-token")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(memberNicknameRequest))
+                    )
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.status").value("fail"))
+                    .andExpect(jsonPath("$.error.code").value("E400001"))
+                    .andExpect(jsonPath("$.error.message").value("입력값이 잘못되었습니다."))
+                    .andExpect(jsonPath("$.error.fields[0].field").value("nickname"))
+                    .andExpect(jsonPath("$.error.fields[0].input").value("new@"))
+                    .andExpect(jsonPath("$.error.fields[0].message").value("5~10자의 영문 소문자, 숫자를 사용해 주세요."))
+                    .andDo(restDocs.document(
+                            requestHeaders(
+                                    headerWithName("Authorization").description("액세스 토큰")
+                            ),
+                            requestFields(
+                                    fieldWithPath("nickname").type(STRING).description("변경할 닉네임")
+                            ),
+                            responseFields(
+                                    commonErrorResponse()
+                            )
+                    ));
+        }
+
+        @Test
         @DisplayName("회원이 존재하지 않으면 예외가 발생한다")
         void memberNicknameChangeNotFoundMember() throws Exception {
             MemberNicknameRequest memberNicknameRequest = MemberNicknameRequest.builder()
-                    .nickname("newNickname")
+                    .nickname("yookun")
                     .build();
 
             Claims claims = Jwts.claims()
@@ -1049,7 +1267,7 @@ class MemberControllerTest extends ControllerTest {
         @DisplayName("닉네임이 중복되면 예외가 발생한다")
         void memberNicknameChangeDuplicateNickname() throws Exception {
             MemberNicknameRequest memberNicknameRequest = MemberNicknameRequest.builder()
-                    .nickname("newNickname")
+                    .nickname("yoonkun")
                     .build();
 
             Claims claims = Jwts.claims()
@@ -1310,7 +1528,7 @@ class MemberControllerTest extends ControllerTest {
                     .andExpect(jsonPath("$.error.message").value("입력값이 잘못되었습니다."))
                     .andExpect(jsonPath("$.error.fields[0].field").value("newPasswordConfirm"))
                     .andExpect(jsonPath("$.error.fields[0].input").value(""))
-                    .andExpect(jsonPath("$.error.fields[0].message").value("새로운 비밀번호를 한 번 더 입력해 주세요."))
+                    .andExpect(jsonPath("$.error.fields[0].message").value("새로운 비밀번호 확인을 입력해 주세요."))
                     .andDo(restDocs.document(
                             requestHeaders(
                                     headerWithName("Authorization").description("액세스 토큰")
@@ -1327,10 +1545,10 @@ class MemberControllerTest extends ControllerTest {
         }
 
         @Test
-        @DisplayName("회원이 존재하지 않으면 예외가 발생한다")
-        void memberPasswordChangeNotFoundMember() throws Exception {
+        @DisplayName("현재 비밀번호가 정규표현식에 일치하지 않으면 예외가 발생한다")
+        void memberPasswordInvalidCurPaswordRegexp() throws Exception {
             MemberPasswordRequest memberPasswordRequest = MemberPasswordRequest.builder()
-                    .curPassword("12345678")
+                    .curPassword("1234")
                     .newPassword("87654321")
                     .newPasswordConfirm("87654321")
                     .build();
@@ -1342,17 +1560,107 @@ class MemberControllerTest extends ControllerTest {
                     .build();
 
             given(jwtManager.getPayload(anyString())).willReturn(claims);
-            willThrow(new NotFoundMemberException()).given(memberService).memberPasswordChange(any(MemberPasswordRequest.class), anyLong());
 
             mockMvc.perform(put("/api/members/me/password")
                             .header("Authorization", "Bearer access-token")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(memberPasswordRequest))
                     )
-                    .andExpect(status().isNotFound())
+                    .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.status").value("fail"))
-                    .andExpect(jsonPath("$.error.code").value("E404001"))
-                    .andExpect(jsonPath("$.error.message").value("회원을 찾을 수 없습니다."))
+                    .andExpect(jsonPath("$.error.code").value("E400001"))
+                    .andExpect(jsonPath("$.error.message").value("입력값이 잘못되었습니다."))
+                    .andExpect(jsonPath("$.error.fields[0].field").value("curPassword"))
+                    .andExpect(jsonPath("$.error.fields[0].input").value("1234"))
+                    .andExpect(jsonPath("$.error.fields[0].message").value("8~16자의 영문 대/소문자, 숫자, 특수문자를 사용해 주세요."))
+                    .andDo(restDocs.document(
+                            requestHeaders(
+                                    headerWithName("Authorization").description("액세스 토큰")
+                            ),
+                            requestFields(
+                                    fieldWithPath("curPassword").type(STRING).description("현재 사용 중인 비밀번호"),
+                                    fieldWithPath("newPassword").type(STRING).description("변경할 비밀번호"),
+                                    fieldWithPath("newPasswordConfirm").type(STRING).description("변경할 비밀번호 확인")
+                            ),
+                            responseFields(
+                                    commonErrorResponse()
+                            )
+                    ));
+        }
+
+        @Test
+        @DisplayName("새로운 비밀번호가 정규표현식에 일치하지 않으면 예외가 발생한다")
+        void memberPasswordInvalidNewPasswordRegexp() throws Exception {
+            MemberPasswordRequest memberPasswordRequest = MemberPasswordRequest.builder()
+                    .curPassword("12345678@")
+                    .newPassword("8765")
+                    .newPasswordConfirm("87654321")
+                    .build();
+
+            Claims claims = Jwts.claims()
+                    .subject(String.valueOf(1L))
+                    .add("nickname", "yoonkun")
+                    .add("authority", "ROLE_MEMBER")
+                    .build();
+
+            given(jwtManager.getPayload(anyString())).willReturn(claims);
+
+            mockMvc.perform(put("/api/members/me/password")
+                            .header("Authorization", "Bearer access-token")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(memberPasswordRequest))
+                    )
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.status").value("fail"))
+                    .andExpect(jsonPath("$.error.code").value("E400001"))
+                    .andExpect(jsonPath("$.error.message").value("입력값이 잘못되었습니다."))
+                    .andExpect(jsonPath("$.error.fields[0].field").value("newPassword"))
+                    .andExpect(jsonPath("$.error.fields[0].input").value("8765"))
+                    .andExpect(jsonPath("$.error.fields[0].message").value("8~16자의 영문 대/소문자, 숫자, 특수문자를 사용해 주세요."))
+                    .andDo(restDocs.document(
+                            requestHeaders(
+                                    headerWithName("Authorization").description("액세스 토큰")
+                            ),
+                            requestFields(
+                                    fieldWithPath("curPassword").type(STRING).description("현재 사용 중인 비밀번호"),
+                                    fieldWithPath("newPassword").type(STRING).description("변경할 비밀번호"),
+                                    fieldWithPath("newPasswordConfirm").type(STRING).description("변경할 비밀번호 확인")
+                            ),
+                            responseFields(
+                                    commonErrorResponse()
+                            )
+                    ));
+        }
+
+        @Test
+        @DisplayName("새로운 비밀번호 확인이 정규표현식에 일치하지 않으면 예외가 발생한다")
+        void memberPasswordInvalidNewPasswordConfirmRegexp() throws Exception {
+            MemberPasswordRequest memberPasswordRequest = MemberPasswordRequest.builder()
+                    .curPassword("12345678@")
+                    .newPassword("87654321@")
+                    .newPasswordConfirm("8765")
+                    .build();
+
+            Claims claims = Jwts.claims()
+                    .subject(String.valueOf(1L))
+                    .add("nickname", "yoonkun")
+                    .add("authority", "ROLE_MEMBER")
+                    .build();
+
+            given(jwtManager.getPayload(anyString())).willReturn(claims);
+
+            mockMvc.perform(put("/api/members/me/password")
+                            .header("Authorization", "Bearer access-token")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(memberPasswordRequest))
+                    )
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.status").value("fail"))
+                    .andExpect(jsonPath("$.error.code").value("E400001"))
+                    .andExpect(jsonPath("$.error.message").value("입력값이 잘못되었습니다."))
+                    .andExpect(jsonPath("$.error.fields[0].field").value("newPasswordConfirm"))
+                    .andExpect(jsonPath("$.error.fields[0].input").value("8765"))
+                    .andExpect(jsonPath("$.error.fields[0].message").value("8~16자의 영문 대/소문자, 숫자, 특수문자를 사용해 주세요."))
                     .andDo(restDocs.document(
                             requestHeaders(
                                     headerWithName("Authorization").description("액세스 토큰")
@@ -1439,6 +1747,48 @@ class MemberControllerTest extends ControllerTest {
                     .andExpect(jsonPath("$.error.code").value("E400002"))
                     .andExpect(jsonPath("$.error.message").value("비밀번호가 일치하지 않습니다."))
                     .andExpect(jsonPath("$.error.fields").isEmpty())
+                    .andDo(restDocs.document(
+                            requestHeaders(
+                                    headerWithName("Authorization").description("액세스 토큰")
+                            ),
+                            requestFields(
+                                    fieldWithPath("curPassword").type(STRING).description("현재 사용 중인 비밀번호"),
+                                    fieldWithPath("newPassword").type(STRING).description("변경할 비밀번호"),
+                                    fieldWithPath("newPasswordConfirm").type(STRING).description("변경할 비밀번호 확인")
+                            ),
+                            responseFields(
+                                    commonErrorResponse()
+                            )
+                    ));
+        }
+
+        @Test
+        @DisplayName("회원이 존재하지 않으면 예외가 발생한다")
+        void memberPasswordChangeNotFoundMember() throws Exception {
+            MemberPasswordRequest memberPasswordRequest = MemberPasswordRequest.builder()
+                    .curPassword("12345678")
+                    .newPassword("87654321")
+                    .newPasswordConfirm("87654321")
+                    .build();
+
+            Claims claims = Jwts.claims()
+                    .subject(String.valueOf(1L))
+                    .add("nickname", "yoonkun")
+                    .add("authority", "ROLE_MEMBER")
+                    .build();
+
+            given(jwtManager.getPayload(anyString())).willReturn(claims);
+            willThrow(new NotFoundMemberException()).given(memberService).memberPasswordChange(any(MemberPasswordRequest.class), anyLong());
+
+            mockMvc.perform(put("/api/members/me/password")
+                            .header("Authorization", "Bearer access-token")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(memberPasswordRequest))
+                    )
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.status").value("fail"))
+                    .andExpect(jsonPath("$.error.code").value("E404001"))
+                    .andExpect(jsonPath("$.error.message").value("회원을 찾을 수 없습니다."))
                     .andDo(restDocs.document(
                             requestHeaders(
                                     headerWithName("Authorization").description("액세스 토큰")
