@@ -9,3 +9,7 @@
 - **refactor:** 코드 리팩토링
 - **test:** 테스트 코드 추가 및 리팩토링
 - **chore:** 빌드 task 및 패키지 매니저 수정
+
+### ERD
+
+![board-erd](./docs/board-erd.png)
