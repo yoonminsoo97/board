@@ -1,5 +1,17 @@
 # 게시판
 
+### 사용 기술
+
+- Java 17
+- Spring Boot
+  - Spring Security
+  - Spring Data Jpa
+  - Spring Web MVC
+  - Spring Rest Docs
+- Lombok
+- H2 Database
+- Gradle
+
 ### 커밋 메시지 규칙
 
 - **feat:** 새로운 기능 추가
