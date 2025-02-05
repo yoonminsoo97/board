@@ -1,5 +1,7 @@
 # 게시판
 
+[API 문서 바로가기](https://htmlpreview.github.io/?https://github.com/yoonminsoo97/board/blob/main/backend/src/main/resources/static/docs/index.html)
+
 ### 사용 기술
 
 - Java 17
