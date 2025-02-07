@@ -1,4 +1,4 @@
-package com.board.domain.auth.entity;
+package com.board.domain.token.entity;
 
 import com.board.domain.member.entity.Member;
 import com.board.global.common.entity.BaseEntity;
