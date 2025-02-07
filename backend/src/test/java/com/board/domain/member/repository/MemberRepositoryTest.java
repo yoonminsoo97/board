@@ -16,6 +16,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
 
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -82,6 +83,33 @@ class MemberRepositoryTest {
         boolean exists = memberRepository.existsByUsername("yoon1234");
 
         assertThat(exists).isTrue();
+    }
+
+    @DisplayName("아이디로 회원 엔티티를 조회한다.")
+    @Test
+    void memberFindByUsername() {
+        Member member = Member.builder()
+                .nickname("yoonkun")
+                .username("yoon1234")
+                .password("12345678")
+                .build();
+        memberRepository.save(member);
+
+        Optional<Member> findMember = memberRepository.findByUsername("yoon1234");
+
+        assertThat(findMember).isNotEmpty();
+        assertThat(findMember.get().getNickname()).isEqualTo("yoonkun");
+        assertThat(findMember.get().getUsername()).isEqualTo("yoon1234");
+        assertThat(findMember.get().getPassword()).isEqualTo("12345678");
+        assertThat(findMember.get().getRole()).isEqualTo(Role.MEMBER);
+    }
+
+    @DisplayName("아이디에 해당하는 회원 엔티티가 존재하지 않는 경우 빈 Optional 객체를 반환한다.")
+    @Test
+    void memberFindByUsernameNotFoundMember() {
+        Optional<Member> findMember = memberRepository.findByUsername("yoon1234");
+
+        assertThat(findMember).isEmpty();
     }
 
     private static Stream<Arguments> memberNullFields() {

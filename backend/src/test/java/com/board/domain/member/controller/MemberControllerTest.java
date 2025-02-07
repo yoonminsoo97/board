@@ -1,9 +1,15 @@
 package com.board.domain.member.controller;
 
 import com.board.domain.member.dto.MemberSignupRequest;
+import com.board.domain.member.entity.Member;
 import com.board.domain.member.exception.DuplicateNicknameException;
 import com.board.domain.member.exception.DuplicateUsernameException;
 import com.board.domain.member.service.MemberService;
+import com.board.domain.token.dto.TokenResponse;
+import com.board.domain.token.service.TokenService;
+import com.board.global.security.dto.AuthPrincipal;
+import com.board.global.security.dto.MemberLoginRequest;
+import com.board.global.security.service.MemberUserDetailsService;
 import com.board.restdocs.RestDocs;
 
 import org.junit.jupiter.api.DisplayName;
@@ -16,14 +22,19 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.restdocs.payload.JsonFieldType;
+import org.springframework.restdocs.payload.PayloadDocumentation;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.util.stream.Stream;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
-
 import static org.mockito.BDDMockito.willThrow;
+
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.restdocs.payload.PayloadDocumentation.requestFields;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -32,6 +43,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(controllers = MemberController.class)
 class MemberControllerTest extends RestDocs {
+
+    @MockitoBean
+    private MemberUserDetailsService memberUserDetailsService;
+
+    @MockitoBean
+    private TokenService tokenService;
 
     @MockitoBean
     private MemberService memberService;
@@ -113,6 +130,58 @@ class MemberControllerTest extends RestDocs {
                         status().isConflict(),
                         jsonPath("$.errorCode").value(errorCode),
                         jsonPath("$.message").value(message)
+                );
+    }
+
+    @DisplayName("로그인에 성공하면 access token, refresh token과 200 상태 코드를 반환한다.")
+    @Test
+    void memberLogin() throws Exception {
+        MemberLoginRequest memberLoginRequest = new MemberLoginRequest("yoon1234", "12345678");
+        Member member = Member.builder()
+                .username("yoon1234")
+                .password(new BCryptPasswordEncoder().encode("12345678"))
+                .build();
+        AuthPrincipal authPrincipal = new AuthPrincipal(member);
+        TokenResponse tokenResponse = new TokenResponse("access-token", "refresh-token");
+
+        given(memberUserDetailsService.loadUserByUsername(anyString())).willReturn(authPrincipal);
+        given(tokenService.saveToken(any(Member.class))).willReturn(tokenResponse);
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(memberLoginRequest))
+                )
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$.accessToken").value("access-token"),
+                        jsonPath("$.refreshToken").value("refresh-token")
+                ).andDo(restdocs.document(
+                        PayloadDocumentation.requestFields(
+                                fieldWithPath("username").type(JsonFieldType.STRING).description("아이디"),
+                                fieldWithPath("password").type(JsonFieldType.STRING).description("비밀번호")
+                        ),
+                        PayloadDocumentation.responseFields(
+                                fieldWithPath("accessToken").description("액세스 토큰"),
+                                fieldWithPath("refreshToken").description("리프레시 토큰")
+                        )
+                ));
+    }
+
+    @DisplayName("로그인 시 아이디 또는 비밀번호가 일치하지 않으면 예외 응답과 401 상태 코드를 반환한다.")
+    @Test
+    void memberLoginBadCredentials() throws Exception {
+        MemberLoginRequest memberLoginRequest = new MemberLoginRequest("yoon1234", "12345678");
+
+        willThrow(UsernameNotFoundException.class).given(memberUserDetailsService).loadUserByUsername(anyString());
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(memberLoginRequest))
+                )
+                .andExpectAll(
+                        status().isUnauthorized(),
+                        jsonPath("$.errorCode").value("3001"),
+                        jsonPath("$.message").value("아이디 또는 비밀번호가 일치하지 않습니다.")
                 );
     }
 

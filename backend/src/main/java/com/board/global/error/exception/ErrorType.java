@@ -7,8 +7,14 @@ import org.springframework.http.HttpStatus;
 @Getter
 public enum ErrorType {
 
+    // HTTP 500 Internal Server Error
+    UNSUPPORTED_ERROR_TYPE("0000", "지원하지 않는 예외 유형입니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+
     // HTTP 400 Bad Request
     INVALID_INPUT_VALUE("1001", "입력값이 잘못되었습니다.", HttpStatus.BAD_REQUEST),
+
+    // HTTP 401 Unauthorized
+    BAD_CRDENTIALS("3001", "아이디 또는 비밀번호가 일치하지 않습니다.", HttpStatus.UNAUTHORIZED),
 
     // HTTP 409 Conflict
     DUPLICATE_NICKNAME("2001", "사용 중인 닉네임입니다.", HttpStatus.CONFLICT),
