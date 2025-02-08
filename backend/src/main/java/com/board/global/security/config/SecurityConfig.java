@@ -2,8 +2,10 @@ package com.board.global.security.config;
 
 import com.board.domain.token.service.TokenService;
 import com.board.global.security.filter.LoginAuthenticationFilter;
+import com.board.global.security.filter.TokenAuthenticationFilter;
 import com.board.global.security.handler.LoginFailureHandler;
 import com.board.global.security.handler.LoginSuccessHandler;
+import com.board.global.security.handler.TokenAuthenticationEntryPoint;
 import com.board.global.security.service.MemberUserDetailsService;
 
 import lombok.RequiredArgsConstructor;
@@ -20,12 +22,13 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-@EnableWebSecurity
+@EnableWebSecurity(debug = true)
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfig {
@@ -81,6 +84,16 @@ public class SecurityConfig {
         provider.setUserDetailsService(memberUserDetailsService);
         provider.setPasswordEncoder(passwordEncoder());
         return new ProviderManager(provider);
+    }
+
+    @Bean
+    public TokenAuthenticationFilter tokenAuthenticationFilter() {
+        return new TokenAuthenticationFilter(tokenService, authenticationEntryPoint());
+    }
+
+    @Bean
+    public AuthenticationEntryPoint authenticationEntryPoint() {
+        return new TokenAuthenticationEntryPoint();
     }
 
 }
