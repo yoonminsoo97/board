@@ -6,6 +6,7 @@ import com.board.domain.token.repository.TokenRepository;
 import com.board.domain.member.entity.Member;
 import com.board.domain.token.util.JwtUtil;
 
+import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Service;
@@ -26,6 +27,10 @@ public class TokenService {
                 .build();
         tokenRepository.save(token);
         return new TokenResponse(accessToken, refreshToken);
+    }
+
+    public Claims getClaims(String token) {
+        return jwtUtil.getClaims(token);
     }
 
 }
