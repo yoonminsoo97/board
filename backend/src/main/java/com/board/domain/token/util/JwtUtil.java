@@ -1,9 +1,14 @@
 package com.board.domain.token.util;
 
+import com.board.global.error.exception.ErrorType;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -46,6 +51,24 @@ public class JwtUtil {
                 .issuedAt(iat)
                 .expiration(exp)
                 .compact();
+    }
+
+    public Claims getClaims(String token) {
+        return extractClaims(token);
+    }
+
+    private Claims extractClaims(String token) {
+        try {
+            return Jwts.parser()
+                    .verifyWith(secretKey)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+        } catch (ExpiredJwtException ex) {
+            throw new AuthenticationServiceException(ErrorType.EXPIRED_TOKEN.getErrorCode());
+        } catch (IllegalArgumentException | JwtException ex) {
+            throw new AuthenticationServiceException(ErrorType.INVALID_TOKEN.getErrorCode());
+        }
     }
 
 }
