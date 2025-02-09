@@ -12,6 +12,9 @@ import com.board.global.security.dto.MemberLoginRequest;
 import com.board.global.security.service.MemberUserDetailsService;
 import com.board.restdocs.RestDocs;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Named;
 import org.junit.jupiter.api.Test;
@@ -23,6 +26,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.restdocs.payload.PayloadDocumentation;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -35,6 +39,8 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
 
+import static org.springframework.restdocs.headers.HeaderDocumentation.headerWithName;
+import static org.springframework.restdocs.headers.HeaderDocumentation.requestHeaders;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.restdocs.payload.PayloadDocumentation.requestFields;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -182,6 +188,60 @@ class MemberControllerTest extends RestDocs {
                         status().isUnauthorized(),
                         jsonPath("$.errorCode").value("3001"),
                         jsonPath("$.message").value("아이디 또는 비밀번호가 일치하지 않습니다.")
+                );
+    }
+
+    @DisplayName("로그아웃에 성공하면 200 상태 코드를 반환한다.")
+    @Test
+    void memberLogout() throws Exception {
+        Claims claims = Jwts.claims()
+                .subject("yoon1234")
+                .add("authority", "ROLE_MEMBER")
+                .build();
+
+        given(tokenService.getClaims(anyString())).willReturn(claims);
+        willDoNothing().given(tokenService).deleteToken(anyString());
+
+        mockMvc.perform(post("/api/auth/logout")
+                        .header("Authorization", "Bearer access-token")
+                )
+                .andExpect(
+                        status().isOk()
+                )
+                .andDo(restdocs.document(
+                        requestHeaders(
+                                headerWithName("Authorization").description("인증을 위한 Bearer 액세스 토큰")
+                        )
+                ));
+    }
+
+    @DisplayName("로그아웃 시 access token이 만료되면 예외 응답과 401 상태 코드를 반환한다.")
+    @Test
+    void memberLogoutExpiredAccessToken() throws Exception {
+        willThrow(new AuthenticationServiceException("3002")).given(tokenService).getClaims(anyString());
+
+        mockMvc.perform(post("/api/auth/logout")
+                        .header("Authorization", "Bearer access-token")
+                )
+                .andExpectAll(
+                        status().isUnauthorized(),
+                        jsonPath("$.errorCode").value("3002"),
+                        jsonPath("$.message").value("토큰이 만료되었습니다.")
+                );
+    }
+
+    @DisplayName("로그아웃 시 access token 형식이 잘못되면 예외 응답과 401 상태 코드를 반환한다.")
+    @Test
+    void memberLogoutInvalidAccessToken() throws Exception {
+        willThrow(new AuthenticationServiceException("3003")).given(tokenService).getClaims(anyString());
+
+        mockMvc.perform(post("/api/auth/logout")
+                        .header("Authorization", "Bearer access-token")
+                )
+                .andExpectAll(
+                        status().isUnauthorized(),
+                        jsonPath("$.errorCode").value("3003"),
+                        jsonPath("$.message").value("토큰 형식이 잘못되었습니다.")
                 );
     }
 
