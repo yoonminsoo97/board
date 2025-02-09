@@ -1,6 +1,7 @@
 package com.board.domain.token.util;
 
 import com.board.global.error.exception.ErrorType;
+
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;

@@ -29,8 +29,8 @@ public class Token extends BaseEntity {
     @Column(name = "refreshToken", nullable = false, unique = true)
     private String refreshToken;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id", nullable = false)
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "member_id")
     private Member member;
 
     @Builder
