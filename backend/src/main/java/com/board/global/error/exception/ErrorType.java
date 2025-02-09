@@ -20,6 +20,9 @@ public enum ErrorType {
     EXPIRED_TOKEN("3002", "토큰이 만료되었습니다.", HttpStatus.UNAUTHORIZED),
     INVALID_TOKEN("3003", "토큰 형식이 잘못되었습니다.", HttpStatus.UNAUTHORIZED),
 
+    // HTTP 404 Not Found
+    NOT_FOUND_TOKEN("4001", "토큰이 존재하지 않습니다.", HttpStatus.NOT_FOUND),
+
     // HTTP 409 Conflict
     DUPLICATE_NICKNAME("2001", "사용 중인 닉네임입니다.", HttpStatus.CONFLICT),
     DUPLICATE_USERNAME("2002", "사용 중인 아이디입니다.", HttpStatus.CONFLICT);
