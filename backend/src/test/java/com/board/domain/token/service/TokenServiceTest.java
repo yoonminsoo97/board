@@ -3,24 +3,29 @@ package com.board.domain.token.service;
 import com.board.domain.member.entity.Member;
 import com.board.domain.token.dto.TokenResponse;
 import com.board.domain.token.entity.Token;
+import com.board.domain.token.exception.NotFoundTokenException;
 import com.board.domain.token.repository.TokenRepository;
 import com.board.domain.token.util.JwtUtil;
 
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import org.mockito.BDDMockito;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Optional;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willDoNothing;
+import static org.mockito.BDDMockito.willThrow;
+import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 class TokenServiceTest {
@@ -57,6 +62,40 @@ class TokenServiceTest {
         assertThat(tokenResponse.getRefreshToken()).isEqualTo("refresh-token");
         then(jwtUtil).should().createAccessToken(anyString(), anyString());
         then(jwtUtil).should().createRefreshToken();
+    }
+
+    @DisplayName("refresh token을 삭제한다.")
+    @Test
+    void tokenDelete() {
+        Member member = Member.builder()
+                .nickname("yoonkun")
+                .username("yoon1234")
+                .password("12345678")
+                .build();
+        Token token = Token.builder()
+                .refreshToken("refresh-token")
+                .member(member)
+                .build();
+
+        given(tokenRepository.findByMemberUsername(anyString())).willReturn(Optional.of(token));
+        willDoNothing().given(tokenRepository).delete(any(Token.class));
+
+        tokenService.deleteToken("yoon1234");
+
+        then(tokenRepository).should().findByMemberUsername(anyString());
+        then(tokenRepository).should().delete(any(Token.class));
+    }
+
+    @DisplayName("refresh token이 존재하지 않으면 예외가 발생한다.")
+    @Test
+    void tokenDeleteNotFoundToken() {
+        willThrow(new NotFoundTokenException()).given(tokenRepository).findByMemberUsername(anyString());
+
+        assertThatThrownBy(() -> tokenService.deleteToken("yoon1234"))
+                .isInstanceOf(NotFoundTokenException.class);
+
+        then(tokenRepository).should().findByMemberUsername(anyString());
+        then(tokenRepository).should(never()).delete(any(Token.class));
     }
 
 }
