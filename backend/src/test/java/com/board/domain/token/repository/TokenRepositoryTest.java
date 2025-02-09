@@ -14,6 +14,8 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
 
+import java.util.Optional;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -74,6 +76,29 @@ class TokenRepositoryTest {
 
         assertThatThrownBy(() -> tokenRepository.save(token))
                 .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @DisplayName("회원 아이디로 토큰 엔티티를 조회한다.")
+    @Test
+    void tokenFindByMemberUsername() {
+        Token token = Token.builder()
+                .refreshToken("refresh-token")
+                .member(saveMember)
+                .build();
+        tokenRepository.save(token);
+
+        Optional<Token> findToken = tokenRepository.findByMemberUsername(saveMember.getUsername());
+
+        assertThat(findToken).isNotEmpty();
+        assertThat(findToken.get().getRefreshToken()).isEqualTo("refresh-token");
+    }
+
+    @DisplayName("회원 아이디에 해당하는 토큰 엔티티가 존재하지 않을 경우 빈 Optional 객체를 반환한다.")
+    @Test
+    void tokenFindByMemberUsernameNotFoundToken() {
+        Optional<Token> findToken = tokenRepository.findByMemberUsername("yoon1234");
+
+        assertThat(findToken).isEmpty();
     }
 
 }
