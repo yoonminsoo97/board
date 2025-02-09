@@ -3,8 +3,9 @@ package com.board.global.security.config;
 import com.board.domain.token.service.TokenService;
 import com.board.global.security.filter.LoginAuthenticationFilter;
 import com.board.global.security.filter.TokenAuthenticationFilter;
-import com.board.global.security.handler.LoginFailureHandler;
-import com.board.global.security.handler.LoginSuccessHandler;
+import com.board.global.security.handler.MemberLoginFailureHandler;
+import com.board.global.security.handler.MemberLoginSuccessHandler;
+import com.board.global.security.handler.MemberLogoutSuccessHandler;
 import com.board.global.security.handler.TokenAuthenticationEntryPoint;
 import com.board.global.security.service.MemberUserDetailsService;
 
@@ -27,8 +28,10 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.logout.LogoutFilter;
+import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 
-@EnableWebSecurity(debug = true)
+@EnableWebSecurity
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfig {
@@ -42,9 +45,15 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
+                .logout(logout -> logout
+                        .logoutUrl("/api/auth/logout")
+                        .logoutSuccessHandler(memberLogoutSuccessHandler())
+                        .permitAll(false)
+                )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
+                .addFilterBefore(tokenAuthenticationFilter(), LogoutFilter.class)
                 .addFilterAt(loginAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST,
@@ -62,20 +71,25 @@ public class SecurityConfig {
     @Bean
     public LoginAuthenticationFilter loginAuthenticationFilter() {
         LoginAuthenticationFilter loginAuthenticationFilter = new LoginAuthenticationFilter();
-        loginAuthenticationFilter.setAuthenticationSuccessHandler(loginSuccessHandler());
-        loginAuthenticationFilter.setAuthenticationFailureHandler(loginFailureHandler());
+        loginAuthenticationFilter.setAuthenticationSuccessHandler(memberLoginSuccessHandler());
+        loginAuthenticationFilter.setAuthenticationFailureHandler(memberLoginFailureHandler());
         loginAuthenticationFilter.setAuthenticationManager(authenticationManager());
         return loginAuthenticationFilter;
     }
 
     @Bean
-    public AuthenticationSuccessHandler loginSuccessHandler() {
-        return new LoginSuccessHandler(tokenService);
+    public AuthenticationSuccessHandler memberLoginSuccessHandler() {
+        return new MemberLoginSuccessHandler(tokenService);
     }
 
     @Bean
-    public AuthenticationFailureHandler loginFailureHandler() {
-        return new LoginFailureHandler();
+    public AuthenticationFailureHandler memberLoginFailureHandler() {
+        return new MemberLoginFailureHandler();
+    }
+
+    @Bean
+    public LogoutSuccessHandler memberLogoutSuccessHandler() {
+        return new MemberLogoutSuccessHandler(tokenService);
     }
 
     @Bean

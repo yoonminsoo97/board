@@ -38,7 +38,6 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
         try {
-            System.out.println("TokenAuthenticationFilter RUN!!!!");
             String token = parseToken(request);
             Claims payload = tokenService.getClaims(token);
             Authentication authentication = createAuthentication(payload);
@@ -80,7 +79,8 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
     private enum RequestPath {
 
         MEMBER_SIGNUP(HttpMethod.POST, "/api/members/signup", "ALL"),
-        MEMBER_LOGIN(HttpMethod.POST, "/api/auth/login", "ALL");
+        MEMBER_LOGIN(HttpMethod.POST, "/api/auth/login", "ALL"),
+        MEMBER_LOGOUT(HttpMethod.POST, "/api/auth/logout", "MEMBER");
 
         private final HttpMethod httpMethod;
         private final String pattern;
