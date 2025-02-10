@@ -84,7 +84,8 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
         MEMBER_LOGOUT(HttpMethod.POST, "/api/auth/logout", "MEMBER"),
 
         // Post
-        POST_WRITE(HttpMethod.POST, "/api/posts/write", "MEMBER");
+        POST_WRITE(HttpMethod.POST, "/api/posts/write", "MEMBER"),
+        POST_MODIFY(HttpMethod.PUT, "/api/posts/*", "MEMBER");
 
         private final HttpMethod httpMethod;
         private final String pattern;
