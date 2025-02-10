@@ -60,6 +60,8 @@ public class SecurityConfig {
                                 "/api/members/signup").permitAll()
                         .requestMatchers(HttpMethod.POST,
                                 "/api/posts/write").hasRole("MEMBER")
+                        .requestMatchers(HttpMethod.PUT,
+                                "/api/posts/*").hasRole("MEMBER")
                         .anyRequest().denyAll()
                 );
         return httpSecurity.build();
