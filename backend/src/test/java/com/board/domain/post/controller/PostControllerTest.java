@@ -1,5 +1,6 @@
 package com.board.domain.post.controller;
 
+import com.board.domain.post.dto.PostModifyRequest;
 import com.board.domain.post.dto.PostWriteRequest;
 import com.board.domain.post.service.PostService;
 import com.board.domain.token.service.TokenService;
@@ -25,6 +26,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import java.util.stream.Stream;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
@@ -34,7 +36,10 @@ import static org.springframework.restdocs.headers.HeaderDocumentation.headerWit
 import static org.springframework.restdocs.headers.HeaderDocumentation.requestHeaders;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.restdocs.payload.PayloadDocumentation.requestFields;
+import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
+import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -128,7 +133,88 @@ class PostControllerTest extends RestDocs {
                 );
     }
 
-    // 게시글 작성 시 PostWriteRequest 입력값 빈값 검증 반복 테스트 시 사용하는 메서드
+    @DisplayName("게시글 수정에 성공하면 200 상태 코드를 반환한다.")
+    @Test
+    void postModify() throws Exception {
+        PostModifyRequest postModifyRequest = new PostModifyRequest("title", "content");
+        Claims claims = Jwts.claims()
+                .subject("yoon1234")
+                .add("authority", "ROLE_MEMBER")
+                .build();
+
+        given(tokenService.getClaims(anyString())).willReturn(claims);
+        willDoNothing().given(postService).postModify(anyLong(), any(PostModifyRequest.class));
+
+        mockMvc.perform(put("/api/posts/{postId}", 1)
+                        .header("Authorization", "Bearer access-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(postModifyRequest))
+                )
+                .andExpect(
+                        status().isOk()
+                )
+                .andDo(restdocs.document(
+                        pathParameters(
+                                parameterWithName("postId").description("게시글 번호")
+                        ),
+                        requestHeaders(
+                                headerWithName("Authorization").description("인증을 위한 Bearer 액세스 토큰")
+                        ),
+                        requestFields(
+                                fieldWithPath("title").type(JsonFieldType.STRING).description("게시글 제목"),
+                                fieldWithPath("content").type(JsonFieldType.STRING).description("게시글 내용")
+                        )
+                ));
+    }
+
+    @DisplayName("게시글 수정 시 입력값이 비어 있으면 예외 메시지와 400 상태 코드를 반환한다.")
+    @ParameterizedTest
+    @MethodSource("postModifyRequestBlankFields")
+    void postModifyBlankFields(PostModifyRequest postModifyRequest, String field, String message) throws Exception {
+        Claims claims = Jwts.claims()
+                .subject("yoon1234")
+                .add("authority", "ROLE_MEMBER")
+                .build();
+
+        given(tokenService.getClaims(anyString())).willReturn(claims);
+
+        mockMvc.perform(put("/api/posts/{postId}", 1)
+                        .header("Authorization", "Bearer access-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(postModifyRequest))
+                )
+                .andExpectAll(
+                        status().isBadRequest(),
+                        jsonPath("$.errorCode").value("1001"),
+                        jsonPath("$.message").value("입력값이 잘못되었습니다."),
+                        jsonPath("$.fields").isArray(),
+                        jsonPath("$.fields[0].field").value(field),
+                        jsonPath("$.fields[0].input").value(""),
+                        jsonPath("$.fields[0].message").value(message)
+                );
+    }
+
+    @DisplayName("게시글 수정 시 액세스 토큰이 만료되거나 형식이 잘못되면 예외 응답과 401 상태 코드를 반환한다.")
+    @ParameterizedTest
+    @MethodSource("expiredAndInvalidAccessToken")
+    void postModifyExpiredAndInvalidAccessToken(String errorCode, String message) throws Exception {
+        PostModifyRequest postModifyRequest = new PostModifyRequest("title", "content");
+
+        willThrow(new AuthenticationServiceException(errorCode)).given(tokenService).getClaims(anyString());
+
+        mockMvc.perform(put("/api/posts/{postId}", 1)
+                        .header("Authorization", "Bearer access-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(postModifyRequest))
+                )
+                .andExpectAll(
+                        status().isUnauthorized(),
+                        jsonPath("$.errorCode").value(errorCode),
+                        jsonPath("$.message").value(message)
+                );
+    }
+
+    // 게시글 작성 시 입력값 빈값 검증 반복 테스트 시 사용하는 메서드
     private static Stream<Arguments> postWriteRequestBlankFields() {
         return Stream.of(
                 Arguments.of(
@@ -138,6 +224,20 @@ class PostControllerTest extends RestDocs {
                 Arguments.of(
                         Named.of("내용 공백", new PostWriteRequest("title", "")),
                         "content", "내용을 입력해 주세요."
+                )
+        );
+    }
+
+    // 게시글 수정 시 입력값 빈값 검증 반복 테스트 시 사용하는 메서드
+    private static Stream<Arguments> postModifyRequestBlankFields() {
+        return Stream.of(
+                Arguments.of(
+                        Named.of("제목 공백", new PostModifyRequest("", "content")),
+                        "title", "제목을 입력해 주세요."
+                ),
+                Arguments.of(
+                        Named.of("제목 공백", new PostModifyRequest("", "content")),
+                        "title", "제목을 입력해 주세요."
                 )
         );
     }
