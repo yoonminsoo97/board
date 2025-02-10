@@ -23,6 +23,7 @@ public enum ErrorType {
     // HTTP 404 Not Found
     NOT_FOUND_TOKEN("4001", "토큰이 존재하지 않습니다.", HttpStatus.NOT_FOUND),
     NOT_FOUND_MEMBER("4002", "회원이 존재하지 않습니다.", HttpStatus.NOT_FOUND),
+    NOT_FOUND_POST("4003", "게시글이 존재하지 않습니다.", HttpStatus.NOT_FOUND),
 
     // HTTP 409 Conflict
     DUPLICATE_NICKNAME("2001", "사용 중인 닉네임입니다.", HttpStatus.CONFLICT),
