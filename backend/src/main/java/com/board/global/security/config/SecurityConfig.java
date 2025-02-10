@@ -58,6 +58,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST,
                                 "/api/members/signup").permitAll()
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/posts/write").hasRole("MEMBER")
                         .anyRequest().denyAll()
                 );
         return httpSecurity.build();
