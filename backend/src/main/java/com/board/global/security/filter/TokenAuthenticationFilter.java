@@ -78,9 +78,13 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
     @Getter
     private enum RequestPath {
 
+        // Member
         MEMBER_SIGNUP(HttpMethod.POST, "/api/members/signup", "ALL"),
         MEMBER_LOGIN(HttpMethod.POST, "/api/auth/login", "ALL"),
-        MEMBER_LOGOUT(HttpMethod.POST, "/api/auth/logout", "MEMBER");
+        MEMBER_LOGOUT(HttpMethod.POST, "/api/auth/logout", "MEMBER"),
+
+        // Post
+        POST_WRITE(HttpMethod.POST, "/api/posts/write", "MEMBER");
 
         private final HttpMethod httpMethod;
         private final String pattern;
