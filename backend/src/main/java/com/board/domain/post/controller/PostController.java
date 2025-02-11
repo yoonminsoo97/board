@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -35,6 +36,12 @@ public class PostController {
     public ResponseEntity<Void> postModify(@PathVariable("postId") Long postId,
                                            @RequestBody @Valid PostModifyRequest postModifyRequest) {
         postService.postModify(postId, postModifyRequest);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{postId}")
+    public ResponseEntity<Void> postDelete(@PathVariable("postId") Long postId) {
+        postService.postDelete(postId);
         return ResponseEntity.ok().build();
     }
 
