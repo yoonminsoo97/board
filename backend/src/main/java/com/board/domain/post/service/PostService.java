@@ -41,4 +41,11 @@ public class PostService {
         post.modify(postModifyRequest.getTitle(), postModifyRequest.getContent());
     }
 
+    @Transactional
+    public void postDelete(Long postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(NotFoundPostException::new);
+        postRepository.delete(post);
+    }
+
 }
