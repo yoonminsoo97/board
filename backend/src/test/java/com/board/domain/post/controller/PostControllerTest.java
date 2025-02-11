@@ -2,6 +2,7 @@ package com.board.domain.post.controller;
 
 import com.board.domain.post.dto.PostModifyRequest;
 import com.board.domain.post.dto.PostWriteRequest;
+import com.board.domain.post.exception.NotFoundPostException;
 import com.board.domain.post.service.PostService;
 import com.board.domain.token.service.TokenService;
 import com.board.global.security.service.MemberUserDetailsService;
@@ -38,6 +39,7 @@ import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWit
 import static org.springframework.restdocs.payload.PayloadDocumentation.requestFields;
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
 import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -206,6 +208,70 @@ class PostControllerTest extends RestDocs {
                         .header("Authorization", "Bearer access-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(postModifyRequest))
+                )
+                .andExpectAll(
+                        status().isUnauthorized(),
+                        jsonPath("$.errorCode").value(errorCode),
+                        jsonPath("$.message").value(message)
+                );
+    }
+
+    @DisplayName("게시글 삭제에 성공하면 200 상태 코드를 반환한다.")
+    @Test
+    void postDelete() throws Exception {
+        Claims claims = Jwts.claims()
+                .subject("yoon1234")
+                .add("authority", "ROLE_MEMBER")
+                .build();
+
+        given(tokenService.getClaims(anyString())).willReturn(claims);
+        willDoNothing().given(postService).postDelete(anyLong());
+
+        mockMvc.perform(delete("/api/posts/{postId}", 1)
+                        .header("Authorization", "Bearer access-token")
+                )
+                .andExpect(
+                        status().isOk()
+                )
+                .andDo(restdocs.document(
+                        pathParameters(
+                                parameterWithName("postId").description("게시글 번호")
+                        ),
+                        requestHeaders(
+                                headerWithName("Authorization").description("인증을 위한 Bearer 액세스 토큰")
+                        )
+                ));
+    }
+
+    @DisplayName("게시글 삭제 시 게시글이 존재하지 않으면 예외 응답과 404 상태 코드를 반환한다.")
+    @Test
+    void postDeleteNotFoundPost() throws Exception {
+        Claims claims = Jwts.claims()
+                .subject("yoon1234")
+                .add("authority", "ROLE_MEMBER")
+                .build();
+
+        given(tokenService.getClaims(anyString())).willReturn(claims);
+        willThrow(new NotFoundPostException()).given(postService).postDelete(anyLong());
+
+        mockMvc.perform(delete("/api/posts/{postId}", 1)
+                        .header("Authorization", "Bearer access-token")
+                )
+                .andExpectAll(
+                        status().isNotFound(),
+                        jsonPath("$.errorCode").value("4003"),
+                        jsonPath("$.message").value("게시글이 존재하지 않습니다.")
+                );
+    }
+
+    @DisplayName("게시글 삭제 시 액세스 토큰이 만료되거나 형식이 잘못되면 예외 응답과 401 상태 코드를 반환한다.")
+    @ParameterizedTest
+    @MethodSource("expiredAndInvalidAccessToken")
+    void postDeleteExpiredAndInvalidAccessToken(String errorCode, String message) throws Exception {
+        willThrow(new AuthenticationServiceException(errorCode)).given(tokenService).getClaims(anyString());
+
+        mockMvc.perform(delete("/api/posts/{postId}", 1)
+                        .header("Authorization", "Bearer access-token")
                 )
                 .andExpectAll(
                         status().isUnauthorized(),

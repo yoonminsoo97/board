@@ -141,4 +141,19 @@ class PostRepositoryTest {
         assertThat(findPost).isEmpty();
     }
 
+    @DisplayName("게시글 엔티티를 삭제한다.")
+    @Test
+    void postDelete() {
+        Post post = Post.builder()
+                .title("title")
+                .writer(saveMember.getNickname())
+                .content("content")
+                .member(saveMember)
+                .build();
+        Post savePost = postRepository.save(post);
+        Post findPost = postRepository.findById(savePost.getId()).get();
+
+        postRepository.delete(findPost);
+    }
+
 }
