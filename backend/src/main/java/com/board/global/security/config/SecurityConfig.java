@@ -56,6 +56,8 @@ public class SecurityConfig {
                 .addFilterBefore(tokenAuthenticationFilter(), LogoutFilter.class)
                 .addFilterAt(loginAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/posts/*").permitAll()
                         .requestMatchers(HttpMethod.POST,
                                 "/api/members/signup").permitAll()
                         .requestMatchers(HttpMethod.POST,

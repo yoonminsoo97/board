@@ -2,6 +2,7 @@ package com.board.domain.post.service;
 
 import com.board.domain.member.entity.Member;
 import com.board.domain.member.repository.MemberRepository;
+import com.board.domain.post.dto.PostDetailResponse;
 import com.board.domain.post.dto.PostModifyRequest;
 import com.board.domain.post.dto.PostWriteRequest;
 import com.board.domain.post.entity.Post;
@@ -20,6 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -85,6 +87,37 @@ class PostServiceTest {
 
         then(memberRepository).should().findByUsername(anyString());
         then(postRepository).should(never()).save(any(Post.class));
+    }
+
+    @DisplayName("게시글을 상세조회 한다.")
+    @Test
+    void postDetail() {
+        Post post = Post.builder()
+                .title("title")
+                .writer(member.getNickname())
+                .content("content")
+                .member(member)
+                .build();
+
+        given(postRepository.findById(anyLong())).willReturn(Optional.of(post));
+
+        PostDetailResponse postDetailResponse = postService.postDetail(1L);
+
+        assertThat(postDetailResponse.getTitle()).isEqualTo("title");
+        assertThat(postDetailResponse.getWriter()).isEqualTo("yoonkun");
+        assertThat(postDetailResponse.getContent()).isEqualTo("content");
+        then(postRepository).should().findById(anyLong());
+    }
+
+    @DisplayName("게시글 상세조회 시 게시글이 존재하지 않으면 예외가 발생한다.")
+    @Test
+    void postDetailNotFoundPost() {
+        willThrow(new NotFoundPostException()).given(postRepository).findById(anyLong());
+
+        assertThatThrownBy(() -> postService.postDetail(1L))
+                .isInstanceOf(NotFoundPostException.class);
+
+        then(postRepository).should().findById(anyLong());
     }
 
     @DisplayName("게시글을 수정한다.")

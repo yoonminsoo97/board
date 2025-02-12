@@ -1,5 +1,6 @@
 package com.board.domain.post.controller;
 
+import com.board.domain.post.dto.PostDetailResponse;
 import com.board.domain.post.dto.PostModifyRequest;
 import com.board.domain.post.dto.PostWriteRequest;
 import com.board.domain.post.exception.NotFoundPostException;
@@ -24,6 +25,7 @@ import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
+import java.time.LocalDateTime;
 import java.util.stream.Stream;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -37,9 +39,11 @@ import static org.springframework.restdocs.headers.HeaderDocumentation.headerWit
 import static org.springframework.restdocs.headers.HeaderDocumentation.requestHeaders;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.restdocs.payload.PayloadDocumentation.requestFields;
+import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
 import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -132,6 +136,49 @@ class PostControllerTest extends RestDocs {
                         status().isUnauthorized(),
                         jsonPath("$.errorCode").value(errorCode),
                         jsonPath("$.message").value(message)
+                );
+    }
+
+    @DisplayName("게시글 상세조회에 성공하면 게시글 정보와 200 상태 코드를 반환한다.")
+    @Test
+    void postDetail() throws Exception {
+        PostDetailResponse postDetailResponse = new PostDetailResponse(1L, "title", "writer", "content", LocalDateTime.now());
+
+        given(postService.postDetail(anyLong())).willReturn(postDetailResponse);
+
+        mockMvc.perform(get("/api/posts/{postId}", 1))
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$.postId").value(1),
+                        jsonPath("$.title").value("title"),
+                        jsonPath("$.writer").value("writer"),
+                        jsonPath("$.content").value("content"),
+                        jsonPath("$.createdAt").isNotEmpty()
+                )
+                .andDo(restdocs.document(
+                        pathParameters(
+                                parameterWithName("postId").description("게시글 번호")
+                        ),
+                        responseFields(
+                                fieldWithPath("postId").type(JsonFieldType.NUMBER).description("글번호"),
+                                fieldWithPath("title").type(JsonFieldType.STRING).description("제목"),
+                                fieldWithPath("writer").type(JsonFieldType.STRING).description("작성자"),
+                                fieldWithPath("content").type(JsonFieldType.STRING).description("내용"),
+                                fieldWithPath("createdAt").type(JsonFieldType.STRING).description("작성일")
+                        )
+                ));
+    }
+
+    @DisplayName("게시글 상세조회 시 게시글이 존재하지 않으면 예외 응답과 404 상태 코드를 반환한다.")
+    @Test
+    void postDetailNotFoundPost() throws Exception {
+        willThrow(new NotFoundPostException()).given(postService).postDetail(anyLong());
+
+        mockMvc.perform(get("/api/posts/{postId}", 1))
+                .andExpectAll(
+                        status().isNotFound(),
+                        jsonPath("$.errorCode").value("4003"),
+                        jsonPath("$.message").value("게시글이 존재하지 않습니다.")
                 );
     }
 
