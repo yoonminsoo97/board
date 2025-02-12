@@ -19,18 +19,6 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
 
-    /**
-     * 회원가입 로직을 수행한다.
-     * <p>
-     * 1. 닉네임 중복 검증 <br>
-     * 2. 아이디 중복 검증 <br>
-     * 3. 비밀번호 암호화 <br>
-     * 4. 회원 저장
-     *
-     * @param memberSignupRequest 회원가입 요청 데이터(닉네임, 아이디, 비밀번호)
-     * @throws DuplicateNicknameException 닉네임이 이미 존재하는 경우 발생
-     * @throws DuplicateUsernameException 아이디가 이미 존재하는 경우 발생
-     */
     @Transactional
     public void memberSignup(MemberSignupRequest memberSignupRequest) {
         if (memberRepository.existsByNickname(memberSignupRequest.getNickname())) {
