@@ -67,7 +67,7 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
     /**
      * 특정 요청 경로에 대해 필터링 여부를 결정한다.
      *
-     * @param request request 현재 HTTP 요청 객체
+     * @param request 현재 HTTP 요청 객체
      * @return true면 필터가 동작하지 않으며 false면 필터가 동작한다.
      */
     @Override
@@ -78,12 +78,13 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
     @Getter
     private enum RequestPath {
 
-        // Member
+        // 전부 허용
         MEMBER_SIGNUP(HttpMethod.POST, "/api/members/signup", "ALL"),
         MEMBER_LOGIN(HttpMethod.POST, "/api/auth/login", "ALL"),
-        MEMBER_LOGOUT(HttpMethod.POST, "/api/auth/logout", "MEMBER"),
+        POST_DETAIL(HttpMethod.GET, "/api/posts/*", "ALL"),
 
-        // Post
+        // 회원(MEMBER) 권한만 허용
+        MEMBER_LOGOUT(HttpMethod.POST, "/api/auth/logout", "MEMBER"),
         POST_WRITE(HttpMethod.POST, "/api/posts/write", "MEMBER"),
         POST_MODIFY(HttpMethod.PUT, "/api/posts/*", "MEMBER"),
         POST_DELETE(HttpMethod.DELETE, "/api/posts/*", "MEMBER");
