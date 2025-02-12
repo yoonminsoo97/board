@@ -82,6 +82,7 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
         MEMBER_SIGNUP(HttpMethod.POST, "/api/members/signup", "ALL"),
         MEMBER_LOGIN(HttpMethod.POST, "/api/auth/login", "ALL"),
         POST_DETAIL(HttpMethod.GET, "/api/posts/*", "ALL"),
+        POST_LIST(HttpMethod.GET, "/api/posts", "ALL"),
 
         // 회원(MEMBER) 권한만 허용
         MEMBER_LOGOUT(HttpMethod.POST, "/api/auth/logout", "MEMBER"),

@@ -1,6 +1,8 @@
 package com.board.domain.post.controller;
 
 import com.board.domain.post.dto.PostDetailResponse;
+import com.board.domain.post.dto.PostListResponse;
+import com.board.domain.post.dto.PostListResponse.PostItem;
 import com.board.domain.post.dto.PostModifyRequest;
 import com.board.domain.post.dto.PostWriteRequest;
 import com.board.domain.post.exception.NotFoundPostException;
@@ -26,9 +28,11 @@ import org.springframework.security.authentication.AuthenticationServiceExceptio
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.stream.Stream;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
@@ -42,6 +46,7 @@ import static org.springframework.restdocs.payload.PayloadDocumentation.requestF
 import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
 import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
+import static org.springframework.restdocs.request.RequestDocumentation.queryParameters;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -180,6 +185,55 @@ class PostControllerTest extends RestDocs {
                         jsonPath("$.errorCode").value("4003"),
                         jsonPath("$.message").value("게시글이 존재하지 않습니다.")
                 );
+    }
+
+    @DisplayName("게시글 목록조회에 성공하면 게시글 목록과 200 상태 코드를 반환한다.")
+    @Test
+    void postList() throws Exception {
+        List<PostItem> posts = List.of(
+                new PostItem(1L, "title", "writer", LocalDateTime.now())
+        );
+        PostListResponse postListResponse = new PostListResponse(posts, 1, 1, 1, true, true, false, false);
+
+        given(postService.postList(anyInt())).willReturn(postListResponse);
+
+        mockMvc.perform(get("/api/posts")
+                        .param("page", "1")
+                )
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$.posts").isArray(),
+                        jsonPath("$.posts[0].postId").value(1),
+                        jsonPath("$.posts[0].title").value("title"),
+                        jsonPath("$.posts[0].writer").value("writer"),
+                        jsonPath("$.posts[0].createdAt").isNotEmpty(),
+                        jsonPath("$.page").value(1),
+                        jsonPath("$.totalPages").value(1),
+                        jsonPath("$.totalPosts").value(1),
+                        jsonPath("$.first").value(true),
+                        jsonPath("$.last").value(true),
+                        jsonPath("$.prev").value(false),
+                        jsonPath("$.next").value(false)
+                )
+                .andDo(restdocs.document(
+                        queryParameters(
+                                parameterWithName("page").description("페이지 번호")
+                        ),
+                        responseFields(
+                                fieldWithPath("posts").type(JsonFieldType.ARRAY).description("게시글 목록"),
+                                fieldWithPath("posts[0].postId").type(JsonFieldType.NUMBER).description("글번호"),
+                                fieldWithPath("posts[0].title").type(JsonFieldType.STRING).description("제목"),
+                                fieldWithPath("posts[0].writer").type(JsonFieldType.STRING).description("작성자"),
+                                fieldWithPath("posts[0].createdAt").type(JsonFieldType.STRING).description("작성일"),
+                                fieldWithPath("page").type(JsonFieldType.NUMBER).description("현재 페이지 번호"),
+                                fieldWithPath("totalPosts").type(JsonFieldType.NUMBER).description("전체 게시글 개수"),
+                                fieldWithPath("totalPages").type(JsonFieldType.NUMBER).description("전체 페이지 개수"),
+                                fieldWithPath("first").type(JsonFieldType.BOOLEAN).description("첫째 페이지 여부"),
+                                fieldWithPath("last").type(JsonFieldType.BOOLEAN).description("마지막 페이지 여부"),
+                                fieldWithPath("prev").type(JsonFieldType.BOOLEAN).description("이전 페이지 존재 여부"),
+                                fieldWithPath("next").type(JsonFieldType.BOOLEAN).description("다음 페이지 존재 여부")
+                        )
+                ));
     }
 
     @DisplayName("게시글 수정에 성공하면 200 상태 코드를 반환한다.")
