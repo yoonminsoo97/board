@@ -3,6 +3,7 @@ package com.board.domain.post.service;
 import com.board.domain.member.entity.Member;
 import com.board.domain.member.exception.NotFoundMemberException;
 import com.board.domain.member.repository.MemberRepository;
+import com.board.domain.post.dto.PostDetailResponse;
 import com.board.domain.post.dto.PostModifyRequest;
 import com.board.domain.post.dto.PostWriteRequest;
 import com.board.domain.post.entity.Post;
@@ -32,6 +33,13 @@ public class PostService {
                 .content(postWriteRequest.getContent())
                 .build();
         postRepository.save(post);
+    }
+
+    @Transactional(readOnly = true)
+    public PostDetailResponse postDetail(Long postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(NotFoundPostException::new);
+        return new PostDetailResponse(post);
     }
 
     @Transactional
