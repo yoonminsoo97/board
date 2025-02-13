@@ -1,6 +1,8 @@
 package com.board.restdocs;
 
+import com.board.domain.token.service.TokenService;
 import com.board.global.security.config.SecurityConfig;
+import com.board.global.security.service.MemberUserDetailsService;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -12,6 +14,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.restdocs.RestDocumentationContextProvider;
 import org.springframework.restdocs.RestDocumentationExtension;
 import org.springframework.restdocs.mockmvc.RestDocumentationResultHandler;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -37,6 +40,12 @@ public abstract class RestDocs {
 
     @Autowired
     protected ObjectMapper objectMapper;
+
+    @MockitoBean
+    protected MemberUserDetailsService memberUserDetailsService;
+
+    @MockitoBean
+    protected TokenService tokenService;
 
     protected MockMvc mockMvc;
 

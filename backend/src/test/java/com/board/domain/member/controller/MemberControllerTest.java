@@ -6,10 +6,8 @@ import com.board.domain.member.exception.DuplicateNicknameException;
 import com.board.domain.member.exception.DuplicateUsernameException;
 import com.board.domain.member.service.MemberService;
 import com.board.domain.token.dto.TokenResponse;
-import com.board.domain.token.service.TokenService;
 import com.board.global.security.dto.AuthPrincipal;
 import com.board.global.security.dto.MemberLoginRequest;
-import com.board.global.security.service.MemberUserDetailsService;
 import com.board.restdocs.RestDocs;
 
 import io.jsonwebtoken.Claims;
@@ -49,12 +47,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(controllers = MemberController.class)
 class MemberControllerTest extends RestDocs {
-
-    @MockitoBean
-    private MemberUserDetailsService memberUserDetailsService;
-
-    @MockitoBean
-    private TokenService tokenService;
 
     @MockitoBean
     private MemberService memberService;
