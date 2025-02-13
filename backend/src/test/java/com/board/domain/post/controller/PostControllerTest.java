@@ -7,8 +7,6 @@ import com.board.domain.post.dto.PostModifyRequest;
 import com.board.domain.post.dto.PostWriteRequest;
 import com.board.domain.post.exception.NotFoundPostException;
 import com.board.domain.post.service.PostService;
-import com.board.domain.token.service.TokenService;
-import com.board.global.security.service.MemberUserDetailsService;
 import com.board.restdocs.RestDocs;
 
 import io.jsonwebtoken.Claims;
@@ -56,12 +54,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(controllers = PostController.class)
 class PostControllerTest extends RestDocs {
-
-    @MockitoBean
-    private MemberUserDetailsService memberUserDetailsService;
-
-    @MockitoBean
-    private TokenService tokenService;
 
     @MockitoBean
     private PostService postService;
