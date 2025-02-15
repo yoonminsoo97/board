@@ -151,4 +151,20 @@ class CommentRepositoryTest {
         assertThat(findComment).isEmpty();
     }
 
+    @DisplayName("댓글 엔티티를 삭제한다.")
+    @Test
+    void commentDelete() {
+        Comment comment = Comment.builder()
+                .writer(saveMember.getNickname())
+                .content("comment")
+                .member(saveMember)
+                .post(savePost)
+                .build();
+        Comment saveComment = commentRepository.save(comment);
+
+        Optional<Comment> findComment = commentRepository.findByPostIdAndId(savePost.getId(), saveComment.getId());
+
+        commentRepository.delete(findComment.get());
+    }
+
 }
