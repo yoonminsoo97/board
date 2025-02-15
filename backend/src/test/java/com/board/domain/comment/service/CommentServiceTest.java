@@ -1,7 +1,9 @@
 package com.board.domain.comment.service;
 
+import com.board.domain.comment.dto.CommentModifyRequest;
 import com.board.domain.comment.dto.CommentWriteRequest;
 import com.board.domain.comment.entity.Comment;
+import com.board.domain.comment.exception.NotFoundCommentException;
 import com.board.domain.comment.repository.CommentRepository;
 import com.board.domain.member.entity.Member;
 import com.board.domain.member.exception.NotFoundMemberException;
@@ -116,6 +118,37 @@ class CommentServiceTest {
         then(postRepository).should().findById(anyLong());
         then(memberRepository).should().findByUsername(anyString());
         then(commentRepository).should(never()).save(any(Comment.class));
+    }
+
+    @DisplayName("댓글을 수정한다.")
+    @Test
+    void commentModify() {
+        CommentModifyRequest commentModifyRequest = new CommentModifyRequest("comment");
+        Comment comment = Comment.builder()
+                .writer(member.getNickname())
+                .content("comment")
+                .member(member)
+                .post(post)
+                .build();
+
+        given(commentRepository.findByPostIdAndId(anyLong(), anyLong())).willReturn(Optional.of(comment));
+
+        commentService.commentModify(1L, 1L, commentModifyRequest);
+
+        then(commentRepository).should().findByPostIdAndId(anyLong(), anyLong());
+    }
+
+    @DisplayName("댓글 수정 시 댓글이 존재하지 않으면 예외가 발생한다.")
+    @Test
+    void commentModifyNotFoundComment() {
+        CommentModifyRequest commentModifyRequest = new CommentModifyRequest("comment");
+
+        willThrow(new NotFoundCommentException()).given(commentRepository).findByPostIdAndId(anyLong(), anyLong());
+
+        assertThatThrownBy(() -> commentService.commentModify(1L, 1L, commentModifyRequest))
+                .isInstanceOf(NotFoundCommentException.class);
+
+        then(commentRepository).should().findByPostIdAndId(anyLong(), anyLong());
     }
 
 }

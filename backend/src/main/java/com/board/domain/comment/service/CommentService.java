@@ -1,7 +1,9 @@
 package com.board.domain.comment.service;
 
+import com.board.domain.comment.dto.CommentModifyRequest;
 import com.board.domain.comment.dto.CommentWriteRequest;
 import com.board.domain.comment.entity.Comment;
+import com.board.domain.comment.exception.NotFoundCommentException;
 import com.board.domain.comment.repository.CommentRepository;
 
 import com.board.domain.member.entity.Member;
@@ -36,6 +38,13 @@ public class CommentService {
                 .post(post)
                 .build();
         commentRepository.save(comment);
+    }
+
+    @Transactional
+    public void commentModify(Long postId, Long commentId, CommentModifyRequest commentModifyRequest) {
+        Comment comment = commentRepository.findByPostIdAndId(postId, commentId)
+                .orElseThrow(NotFoundCommentException::new);
+        comment.modify(commentModifyRequest.getContent());
     }
 
 }
