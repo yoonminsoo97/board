@@ -16,6 +16,8 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
 
+import java.util.Optional;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -121,6 +123,32 @@ class CommentRepositoryTest {
 
         assertThatThrownBy(() -> commentRepository.save(comment))
                 .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @DisplayName("게시글 기본 키와 댓글 기본 키로 댓글 엔티티를 조회한다.")
+    @Test
+    void commentFindByPostIdAndId() {
+        Comment comment = Comment.builder()
+                .writer(saveMember.getNickname())
+                .content("comment")
+                .member(saveMember)
+                .post(savePost)
+                .build();
+        Comment saveComment = commentRepository.save(comment);
+
+        Optional<Comment> findComment = commentRepository.findByPostIdAndId(savePost.getId(), saveComment.getId());
+
+        assertThat(findComment).isNotEmpty();
+        assertThat(findComment.get().getWriter()).isEqualTo("yoonkun");
+        assertThat(findComment.get().getContent()).isEqualTo("comment");
+    }
+
+    @DisplayName("게시글 기본 키와 댓글 기본 키에 해당하는 댓글 엔티티가 존재하지 않으면 빈 Optional 객체를 반환한다.")
+    @Test
+    void commentFindByPostIdAndIdNotFoundComment() {
+        Optional<Comment> findComment = commentRepository.findByPostIdAndId(1L, 1L);
+
+        assertThat(findComment).isEmpty();
     }
 
 }
