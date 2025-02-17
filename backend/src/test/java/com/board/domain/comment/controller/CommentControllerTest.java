@@ -1,5 +1,7 @@
 package com.board.domain.comment.controller;
 
+import com.board.domain.comment.dto.CommentListResponse;
+import com.board.domain.comment.dto.CommentListResponse.CommentItem;
 import com.board.domain.comment.dto.CommentModifyRequest;
 import com.board.domain.comment.dto.CommentWriteRequest;
 import com.board.domain.comment.exception.NotFoundCommentException;
@@ -23,9 +25,12 @@ import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.stream.Stream;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
@@ -36,9 +41,12 @@ import static org.springframework.restdocs.headers.HeaderDocumentation.headerWit
 import static org.springframework.restdocs.headers.HeaderDocumentation.requestHeaders;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.restdocs.payload.PayloadDocumentation.requestFields;
+import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
 import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
+import static org.springframework.restdocs.request.RequestDocumentation.queryParameters;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -49,6 +57,58 @@ class CommentControllerTest extends RestDocs {
 
     @MockitoBean
     private CommentService commentService;
+
+    @DisplayName("댓글 목록조회에 성공하면 댓글 목록과 200 상태 코드를 반환한다.")
+    @Test
+    void commentList() throws Exception {
+        List<CommentItem> comments = List.of(
+                new CommentItem(1L, "writer", "comment", LocalDateTime.now())
+        );
+        CommentListResponse commentListResponse = new CommentListResponse(comments, 1, 1, 1, true, true, false, false);
+
+        given(commentService.commentList(anyLong(), anyInt())).willReturn(commentListResponse);
+
+        mockMvc.perform(get("/api/posts/{postId}/comments", 1)
+                        .param("page", "1")
+                )
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$.comments").isArray(),
+                        jsonPath("$.comments[0].commentId").value(1),
+                        jsonPath("$.comments[0].writer").value("writer"),
+                        jsonPath("$.comments[0].content").value("comment"),
+                        jsonPath("$.comments[0].createdAt").isNotEmpty(),
+                        jsonPath("$.page").value(1),
+                        jsonPath("$.totalPages").value(1),
+                        jsonPath("$.totalComments").value(1),
+                        jsonPath("$.first").value(true),
+                        jsonPath("$.last").value(true),
+                        jsonPath("$.prev").value(false),
+                        jsonPath("$.next").value(false)
+                )
+                .andDo(restdocs.document(
+                        pathParameters(
+                                parameterWithName("postId").description("게시글 번호")
+                        ),
+                        queryParameters(
+                                parameterWithName("page").description("페이지 번호")
+                        ),
+                        responseFields(
+                                fieldWithPath("comments").type(JsonFieldType.ARRAY).description("댓글 목록"),
+                                fieldWithPath("comments[0].commentId").type(JsonFieldType.NUMBER).description("댓글번호"),
+                                fieldWithPath("comments[0].writer").type(JsonFieldType.STRING).description("작성자"),
+                                fieldWithPath("comments[0].content").type(JsonFieldType.STRING).description("내용"),
+                                fieldWithPath("comments[0].createdAt").type(JsonFieldType.STRING).description("작성일"),
+                                fieldWithPath("page").type(JsonFieldType.NUMBER).description("현재 페이지 번호"),
+                                fieldWithPath("totalComments").type(JsonFieldType.NUMBER).description("전체 댓글 개수"),
+                                fieldWithPath("totalPages").type(JsonFieldType.NUMBER).description("전체 페이지 개수"),
+                                fieldWithPath("first").type(JsonFieldType.BOOLEAN).description("첫째 페이지 여부"),
+                                fieldWithPath("last").type(JsonFieldType.BOOLEAN).description("마지막 페이지 여부"),
+                                fieldWithPath("prev").type(JsonFieldType.BOOLEAN).description("이전 페이지 존재 여부"),
+                                fieldWithPath("next").type(JsonFieldType.BOOLEAN).description("다음 페이지 존재 여부")
+                        )
+                ));
+    }
 
     @DisplayName("댓글 작성에 성공하면 200 상태 코드를 반환한다.")
     @Test
