@@ -1,5 +1,6 @@
 package com.board.domain.comment.controller;
 
+import com.board.domain.comment.dto.CommentListResponse;
 import com.board.domain.comment.dto.CommentModifyRequest;
 import com.board.domain.comment.dto.CommentWriteRequest;
 import com.board.domain.comment.service.CommentService;
@@ -11,11 +12,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -24,6 +27,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class CommentController {
 
     private final CommentService commentService;
+
+    @GetMapping("/{postId}/comments")
+    public ResponseEntity<CommentListResponse> commentList(@PathVariable("postId") Long postId,
+                                                           @RequestParam("page") int page) {
+        CommentListResponse commentListResponse = commentService.commentList(postId, page);
+        return ResponseEntity.ok().body(commentListResponse);
+    }
 
     @PostMapping("/{postId}/comments/write")
     public ResponseEntity<Void> commentWrite(@PathVariable("postId") Long postId,
