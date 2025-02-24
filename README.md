@@ -21,3 +21,7 @@
 - Lombok
 - H2 Database
 - Gradle
+
+### ERD
+
+![board-erd](./docs/board-erd.png)
