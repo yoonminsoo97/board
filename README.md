@@ -9,3 +9,15 @@
 - **refactor:** 코드 리팩토링
 - **test:** 테스트 코드 추가 및 리팩토링
 - **chore:** 프로젝트 설정 관련
+
+### 사용 기술
+
+- Java 17
+- Spring Boot
+  - Spring Security
+  - Spring Data Jpa
+  - Spring Web MVC
+  - Spring Rest Docs
+- Lombok
+- H2 Database
+- Gradle
