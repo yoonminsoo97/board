@@ -1,11 +1,16 @@
 package com.backend.domain.auth.util;
 
 import com.backend.domain.member.entity.Member;
+import com.backend.global.error.exception.ErrorType;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -48,6 +53,26 @@ public class JwtUtil {
                 .expiration(exp)
                 .signWith(secretKey, Jwts.SIG.HS256)
                 .compact();
+    }
+
+    public Claims extractClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token).getPayload();
+    }
+
+    public void validateToken(String token) {
+        try {
+            Jwts.parser()
+                    .verifyWith(secretKey)
+                    .build()
+                    .parseSignedClaims(token);
+        } catch (ExpiredJwtException ex) {
+            throw new AuthenticationServiceException(ErrorType.EXPIRED_TOKEN.getErrorCode());
+        } catch (JwtException e) {
+            throw new AuthenticationServiceException(ErrorType.INVALID_TOKEN.getErrorCode());
+        }
     }
 
 }
