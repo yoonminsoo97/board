@@ -18,6 +18,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
 
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -72,6 +73,23 @@ class TokenRepositoryTest {
                 Arguments.of(Named.of("refreshToken 필드 null", new Token("access-token", null, saveMember))),
                 Arguments.of(Named.of("member 필드 null", new Token("access-token", "refresh-token", null)))
         );
+    }
+
+    @DisplayName("회원 아이디로 토큰을 조회한다.")
+    @Test
+    void tokenFindByMemberUsername() {
+        Token token = Token.builder()
+                .accessToken("access-token")
+                .refreshToken("refresh-token")
+                .member(saveMember)
+                .build();
+        tokenRepository.save(token);
+
+        Optional<Token> findToken = tokenRepository.findByMemberUsername("yoon1234");
+
+        assertThat(findToken).isNotEmpty();
+        assertThat(findToken.get().getAccessToken()).isEqualTo("access-token");
+        assertThat(findToken.get().getRefreshToken()).isEqualTo("refresh-token");
     }
 
 }

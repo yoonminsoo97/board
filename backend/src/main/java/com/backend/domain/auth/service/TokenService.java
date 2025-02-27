@@ -2,9 +2,12 @@ package com.backend.domain.auth.service;
 
 import com.backend.domain.auth.dto.TokenResponse;
 import com.backend.domain.auth.entity.Token;
+import com.backend.domain.auth.exception.NotFoundTokenException;
 import com.backend.domain.auth.repository.TokenRepository;
 import com.backend.domain.auth.util.JwtUtil;
 import com.backend.domain.member.entity.Member;
+
+import io.jsonwebtoken.Claims;
 
 import lombok.RequiredArgsConstructor;
 
@@ -29,6 +32,21 @@ public class TokenService {
                 .build();
         tokenRepository.save(token);
         return new TokenResponse(accesStoken, refreshToken);
+    }
+
+    @Transactional
+    public void tokenDelete(String username) {
+        Token token = tokenRepository.findByMemberUsername(username)
+                .orElseThrow(NotFoundTokenException::new);
+        tokenRepository.delete(token);
+    }
+
+    public void validateToken(String token) {
+        jwtUtil.validateToken(token);
+    }
+
+    public Claims extractClaim(String token) {
+        return jwtUtil.extractClaims(token);
     }
 
 }

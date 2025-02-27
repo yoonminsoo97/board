@@ -4,6 +4,7 @@ import com.backend.domain.auth.dto.MemberLoginRequest;
 import com.backend.domain.auth.dto.MemberLoginResponse;
 import com.backend.domain.auth.dto.TokenResponse;
 import com.backend.domain.auth.exception.BadCredentialsException;
+import com.backend.domain.auth.exception.NotFoundTokenException;
 import com.backend.domain.member.entity.Member;
 import com.backend.domain.member.repository.MemberRepository;
 
@@ -27,6 +28,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.never;
 
@@ -104,6 +106,27 @@ class AuthServiceTest {
         then(memberRepository).should().findByUsername(anyString());
         then(passwordEncoder).should().matches(anyString(), anyString());
         then(tokenService).should(never()).tokenSave(any(Member.class));
+    }
+
+    @DisplayName("로그아웃을 한다.")
+    @Test
+    void memberLogout() {
+        willDoNothing().given(tokenService).tokenDelete(anyString());
+
+        authService.memberLogout("yoon1234");
+
+        then(tokenService).should().tokenDelete(anyString());
+    }
+
+    @DisplayName("로그아웃 시 토큰이 존재하지 않으면 예외가 발생한다.")
+    @Test
+    void memberLogoutNotFoundToken() {
+        willThrow(new NotFoundTokenException()).given(tokenService).tokenDelete(anyString());
+
+        assertThatThrownBy(() -> authService.memberLogout(anyString()))
+                .isInstanceOf(NotFoundTokenException.class);
+
+        then(tokenService).should().tokenDelete(anyString());
     }
 
 }
