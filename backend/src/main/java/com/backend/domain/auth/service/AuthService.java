@@ -32,4 +32,9 @@ public class AuthService {
         return new MemberLoginResponse(tokenResponse.getAccessToken(), tokenResponse.getRefreshToken());
     }
 
+    @Transactional
+    public void memberLogout(String username) {
+        tokenService.tokenDelete(username);
+    }
+
 }
