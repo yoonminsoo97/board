@@ -1,0 +1,34 @@
+= 게시판 REST API
+윤민수 <yoonminsu97@naver.com>
+:icons: font
+:source-highlighter: highlight.js
+:doctype: book
+:toc-title: 목차
+:toc: left
+:toclevels: 2
+
+== 회원가입
+
+*요청*
+
+include::{snippets}/member-signup/http-request.adoc[]
+include::{snippets}/member-signup/request-fields.adoc[]
+
+== 로그인
+
+*요청*
+
+include::{snippets}/member-login/http-request.adoc[]
+include::{snippets}/member-login/request-fields.adoc[]
+
+*응답*
+
+include::{snippets}/member-login/http-response.adoc[]
+include::{snippets}/member-login/response-fields.adoc[]
+
+== 로그아웃
+
+*요청*
+
+include::{snippets}/member-logout/http-request.adoc[]
+include::{snippets}/member-logout/request-headers.adoc[]

@@ -6,7 +6,7 @@ plugins {
 }
 
 group = 'com'
-version = '0.0.1-SNAPSHOT'
+version = '0.0.1'
 
 java {
     toolchain {
@@ -18,14 +18,11 @@ configurations {
     compileOnly {
         extendsFrom annotationProcessor
     }
+    asciidoctorExt
 }
 
 repositories {
     mavenCentral()
-}
-
-ext {
-    set('snippetsDir', file("build/generated-snippets"))
 }
 
 dependencies {
@@ -33,6 +30,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    asciidoctorExt 'org.springframework.restdocs:spring-restdocs-asciidoctor'
 
     implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
@@ -49,12 +48,26 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+ext {
+    snippetsDir = file('build/generated-snippets')
+}
+
 tasks.named('test') {
-    outputs.dir snippetsDir
     useJUnitPlatform()
+    outputs.dir snippetsDir
 }
 
 tasks.named('asciidoctor') {
-    inputs.dir snippetsDir
     dependsOn test
+    inputs.dir snippetsDir
+    configurations 'asciidoctorExt'
+    finalizedBy copyDocument
+}
+
+task copyDocument(type: Copy) {
+    from file('build/docs/asciidoc')
+    into file('src/main/resources/static/docs')
+    doFirst {
+        delete file('src/main/resources/static/docs')
+    }
 }
