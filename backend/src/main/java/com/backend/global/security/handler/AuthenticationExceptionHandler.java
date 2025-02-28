@@ -1,5 +1,6 @@
 package com.backend.global.security.handler;
 
+import com.backend.global.error.dto.ErrorResponse;
 import com.backend.global.error.exception.ErrorType;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -8,7 +9,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.http.MediaType;
-import org.springframework.http.ProblemDetail;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 
@@ -26,9 +26,8 @@ public class AuthenticationExceptionHandler implements AuthenticationEntryPoint 
         ErrorType errorType = ErrorType.of(errorCode);
         response.setStatus(errorType.getStatus().value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        ProblemDetail problemDetail = ProblemDetail.forStatus(errorType.getStatus());
-        problemDetail.setProperty("error_code", errorType.getErrorCode());
-        objectMapper.writeValue(response.getOutputStream(), problemDetail);
+        ErrorResponse errorResponse = ErrorResponse.of(errorType);
+        objectMapper.writeValue(response.getOutputStream(), errorResponse);
     }
 
 }
