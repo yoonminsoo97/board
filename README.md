@@ -1,5 +1,9 @@
 # 게시판
 
+<a href="https://htmlpreview.github.io/?https://github.com/yoonminsoo97/board/blob/main/backend/src/main/resources/static/docs/index.html" target="_blank">
+  게시판 API 문서 바로가기
+</a>
+
 ### 커밋 메시지 규칙
 
 - **feat:** 새로운 기능 추가
