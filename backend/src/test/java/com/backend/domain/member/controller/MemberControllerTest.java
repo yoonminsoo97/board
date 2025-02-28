@@ -1,14 +1,11 @@
 package com.backend.domain.member.controller;
 
-import com.backend.domain.auth.service.TokenService;
 import com.backend.domain.member.dto.MemberSignupRequest;
 import com.backend.domain.member.exception.DuplicateNicknameException;
 import com.backend.domain.member.exception.DuplicateUsernameException;
 import com.backend.domain.member.service.MemberService;
 
-import com.backend.global.security.config.SecurityConfig;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.backend.domain.support.ControllerTest;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Named;
@@ -17,12 +14,10 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.stream.Stream;
 
@@ -30,23 +25,14 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
 
+import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
+import static org.springframework.restdocs.payload.PayloadDocumentation.requestFields;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(controllers = MemberController.class)
-@Import(SecurityConfig.class)
-class MemberControllerTest {
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @Autowired
-    private MockMvc mockMvc;
-
-    @MockitoBean
-    private TokenService tokenService;
+class MemberControllerTest extends ControllerTest {
 
     @MockitoBean
     private MemberService memberService;
@@ -63,7 +49,14 @@ class MemberControllerTest {
                         .content(objectMapper.writeValueAsString(memberSignupRequest))
                 )
                 .andExpect(status().isOk())
-                .andDo(print());
+                .andDo(restdocs)
+                .andDo(restdocs.document(
+                        requestFields(
+                                fieldWithPath("nickname").type(JsonFieldType.STRING).description("닉네임"),
+                                fieldWithPath("username").type(JsonFieldType.STRING).description("아이디"),
+                                fieldWithPath("password").type(JsonFieldType.STRING).description("비밀번호")
+                        )
+                ));
     }
 
     @DisplayName("회원가입 시 입력값이 유효하지 않으면 400을 응답한다.")
@@ -82,8 +75,7 @@ class MemberControllerTest {
                         jsonPath("$.errors").isArray(),
                         jsonPath("$.errors[0].field").isNotEmpty(),
                         jsonPath("$.errors[0].message").isNotEmpty()
-                )
-                .andDo(print());
+                );
     }
 
     private static Stream<Object> invalidInputMemberSignupRequest() {
@@ -110,8 +102,7 @@ class MemberControllerTest {
                         jsonPath("$.status").value(409),
                         jsonPath("$.errorCode").value("E409001"),
                         jsonPath("$.message").value("사용 중인 닉네임입니다.")
-                )
-                .andDo(print());
+                );
     }
 
     @DisplayName("회원가입 시 아이디가 중복되면 409를 응답한다.")
@@ -130,8 +121,7 @@ class MemberControllerTest {
                         jsonPath("$.status").value(409),
                         jsonPath("$.errorCode").value("E409002"),
                         jsonPath("$.message").value("사용 중인 아이디입니다.")
-                )
-                .andDo(print());
+                );
     }
 
 }
