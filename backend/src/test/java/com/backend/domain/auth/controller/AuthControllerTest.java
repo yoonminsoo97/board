@@ -5,6 +5,7 @@ import com.backend.domain.auth.dto.MemberLoginResponse;
 import com.backend.domain.auth.exception.BadCredentialsException;
 import com.backend.domain.auth.service.AuthService;
 import com.backend.domain.auth.service.TokenService;
+import com.backend.global.error.exception.ErrorType;
 import com.backend.global.security.config.SecurityConfig;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -83,10 +84,9 @@ class AuthControllerTest {
                 )
                 .andExpectAll(
                         status().isUnauthorized(),
-                        jsonPath("$.title").value("아이디 또는 비밀번호가 잘못 되었습니다."),
                         jsonPath("$.status").value(401),
-                        jsonPath("$.instance").value("/api/auth/login"),
-                        jsonPath("$.error_code").value("E401001")
+                        jsonPath("$.errorCode").value("E401001"),
+                        jsonPath("$.message").value("아이디 또는 비밀번호가 잘못 되었습니다.")
                 )
                 .andDo(print());
     }
@@ -106,22 +106,25 @@ class AuthControllerTest {
         mockMvc.perform(post("/api/auth/logout")
                         .header("Authorization", "Bearer access-token")
                 )
-                .andExpect(
-                        status().isOk()
-                )
+                .andExpect(status().isOk())
                 .andDo(print());
     }
 
     @DisplayName("로그아웃 시 액세스 토큰이 만료되면 401을 응답한다.")
     @Test
     void memberLogoutExpiredAccessToken() throws Exception {
-        willThrow(new AuthenticationServiceException("E401002")).given(tokenService).validateToken(anyString());
+        ErrorType errorType = ErrorType.EXPIRED_TOKEN;
+
+        willThrow(new AuthenticationServiceException(errorType.getErrorCode())).given(tokenService).validateToken(anyString());
 
         mockMvc.perform(post("/api/auth/logout")
                         .header("Authorization", "Bearer access-token")
                 )
                 .andExpectAll(
-                        status().isUnauthorized()
+                        status().isUnauthorized(),
+                        jsonPath("$.status").value(401),
+                        jsonPath("$.errorCode").value("E401002"),
+                        jsonPath("$.message").value("토큰이 만료 되었습니다.")
                 )
                 .andDo(print());
     }
@@ -129,13 +132,18 @@ class AuthControllerTest {
     @DisplayName("로그아웃 시 액세스 토큰 형식이 잘못되면 401을 응답한다.")
     @Test
     void memberLogoutInvalidAccessToken() throws Exception {
-        willThrow(new AuthenticationServiceException("E401003")).given(tokenService).validateToken(anyString());
+        ErrorType errorType = ErrorType.INVALID_TOKEN;
+
+        willThrow(new AuthenticationServiceException(errorType.getErrorCode())).given(tokenService).validateToken(anyString());
 
         mockMvc.perform(post("/api/auth/logout")
                         .header("Authorization", "Bearer access-token")
                 )
                 .andExpectAll(
-                        status().isUnauthorized()
+                        status().isUnauthorized(),
+                        jsonPath("$.status").value(401),
+                        jsonPath("$.errorCode").value("E401003"),
+                        jsonPath("$.message").value("토큰 형식이 잘못 되었습니다.")
                 )
                 .andDo(print());
     }
