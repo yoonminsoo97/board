@@ -1,5 +1,6 @@
 package com.backend.domain.member.controller;
 
+import com.backend.domain.auth.service.TokenService;
 import com.backend.domain.member.dto.MemberSignupRequest;
 import com.backend.domain.member.exception.DuplicateNicknameException;
 import com.backend.domain.member.exception.DuplicateUsernameException;
@@ -12,10 +13,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Named;
 import org.junit.jupiter.api.Test;
-
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -27,8 +28,8 @@ import java.util.stream.Stream;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.willDoNothing;
-
 import static org.mockito.BDDMockito.willThrow;
+
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -43,6 +44,9 @@ class MemberControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @MockitoBean
+    private TokenService tokenService;
 
     @MockitoBean
     private MemberService memberService;
@@ -72,10 +76,9 @@ class MemberControllerTest {
                 )
                 .andExpectAll(
                         status().isBadRequest(),
-                        jsonPath("$.title").value("입력값이 잘못되었습니다."),
                         jsonPath("$.status").value(400),
-                        jsonPath("$.instance").value("/api/members/signup"),
-                        jsonPath("$.error_code").value("E400001"),
+                        jsonPath("$.errorCode").value("E400001"),
+                        jsonPath("$.message").value("입력값이 잘못 되었습니다."),
                         jsonPath("$.errors").isArray(),
                         jsonPath("$.errors[0].field").isNotEmpty(),
                         jsonPath("$.errors[0].message").isNotEmpty()
@@ -104,10 +107,9 @@ class MemberControllerTest {
                 )
                 .andExpectAll(
                         status().isConflict(),
-                        jsonPath("$.title").value("사용 중인 닉네임입니다."),
                         jsonPath("$.status").value(409),
-                        jsonPath("$.instance").value("/api/members/signup"),
-                        jsonPath("$.error_code").value("E409001")
+                        jsonPath("$.errorCode").value("E409001"),
+                        jsonPath("$.message").value("사용 중인 닉네임입니다.")
                 )
                 .andDo(print());
     }
@@ -125,10 +127,9 @@ class MemberControllerTest {
                 )
                 .andExpectAll(
                         status().isConflict(),
-                        jsonPath("$.title").value("사용 중인 아이디입니다."),
                         jsonPath("$.status").value(409),
-                        jsonPath("$.instance").value("/api/members/signup"),
-                        jsonPath("$.error_code").value("E409002")
+                        jsonPath("$.errorCode").value("E409002"),
+                        jsonPath("$.message").value("사용 중인 아이디입니다.")
                 )
                 .andDo(print());
     }
