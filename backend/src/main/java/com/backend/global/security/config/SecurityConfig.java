@@ -44,7 +44,8 @@ public class SecurityConfig {
                                 "/api/members/signup",
                                 "/api/auth/login").permitAll()
                         .requestMatchers(
-                                "/api/auth/logout").hasRole("MEMBER")
+                                "/api/auth/logout",
+                                "/api/posts/write").hasRole("MEMBER")
                         .anyRequest().denyAll()
                 );
         return httpSecurity.build();

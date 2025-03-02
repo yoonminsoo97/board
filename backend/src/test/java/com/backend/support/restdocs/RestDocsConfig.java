@@ -1,4 +1,4 @@
-package com.backend.domain.support.restdocs;
+package com.backend.support.restdocs;
 
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;

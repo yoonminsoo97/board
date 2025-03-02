@@ -4,7 +4,7 @@ import com.backend.domain.auth.dto.MemberLoginRequest;
 import com.backend.domain.auth.dto.MemberLoginResponse;
 import com.backend.domain.auth.exception.BadCredentialsException;
 import com.backend.domain.auth.service.AuthService;
-import com.backend.domain.support.ControllerTest;
+import com.backend.support.ControllerTest;
 import com.backend.global.error.exception.ErrorType;
 
 import io.jsonwebtoken.Claims;
