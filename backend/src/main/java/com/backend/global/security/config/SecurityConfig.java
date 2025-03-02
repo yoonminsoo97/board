@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -40,13 +41,16 @@ public class SecurityConfig {
                 )
                 .addFilterAfter(authenticationFilter(), ExceptionTranslationFilter.class)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/api/members/signup",
-                                "/api/auth/login",
+                        .requestMatchers(HttpMethod.GET,
                                 "/api/posts/*").permitAll()
-                        .requestMatchers(
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/members/signup",
+                                "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST,
                                 "/api/auth/logout",
                                 "/api/posts/write").hasRole("MEMBER")
+                        .requestMatchers(HttpMethod.PUT,
+                                "/api/posts/*").hasRole("MEMBER")
                         .anyRequest().denyAll()
                 );
         return httpSecurity.build();
