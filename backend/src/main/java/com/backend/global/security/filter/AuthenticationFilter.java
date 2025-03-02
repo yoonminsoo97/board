@@ -64,7 +64,8 @@ public class AuthenticationFilter extends OncePerRequestFilter {
 
         MEMBER_SIGNUP(HttpMethod.POST, "/api/members/signup", Authority.PERMIT_ALL),
         MEMBER_LOGIN(HttpMethod.POST, "/api/auth/login", Authority.PERMIT_ALL),
-        MEMBER_LOGOUT(HttpMethod.POST, "/api/auth/logout", Authority.ROLE_MEMBER);
+        MEMBER_LOGOUT(HttpMethod.POST, "/api/auth/logout", Authority.ROLE_MEMBER),
+        POST_WRITE(HttpMethod.POST, "/api/posts/write", Authority.ROLE_MEMBER);
 
         enum Authority {
             PERMIT_ALL, ROLE_MEMBER
