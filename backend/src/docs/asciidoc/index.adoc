@@ -52,3 +52,12 @@ include::{snippets}/post-detail/path-parameters.adoc[]
 
 include::{snippets}/post-detail/http-response.adoc[]
 include::{snippets}/post-detail/response-fields.adoc[]
+
+== 게시글 수정
+
+*요청*
+
+include::{snippets}/post-modify/http-request.adoc[]
+include::{snippets}/post-modify/path-parameters.adoc[]
+include::{snippets}/post-modify/request-headers.adoc[]
+include::{snippets}/post-modify/request-fields.adoc[]
