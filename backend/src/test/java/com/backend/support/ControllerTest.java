@@ -1,7 +1,7 @@
-package com.backend.domain.support;
+package com.backend.support;
 
 import com.backend.domain.auth.service.TokenService;
-import com.backend.domain.support.restdocs.RestDocsConfig;
+import com.backend.support.restdocs.RestDocsConfig;
 import com.backend.global.security.config.SecurityConfig;
 
 import com.fasterxml.jackson.databind.ObjectMapper;

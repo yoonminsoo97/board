@@ -5,7 +5,7 @@ import com.backend.domain.member.exception.DuplicateNicknameException;
 import com.backend.domain.member.exception.DuplicateUsernameException;
 import com.backend.domain.member.service.MemberService;
 
-import com.backend.domain.support.ControllerTest;
+import com.backend.support.ControllerTest;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Named;
