@@ -32,3 +32,11 @@ include::{snippets}/member-login/response-fields.adoc[]
 
 include::{snippets}/member-logout/http-request.adoc[]
 include::{snippets}/member-logout/request-headers.adoc[]
+
+== 게시글 작성
+
+*요청*
+
+include::{snippets}/post-write/http-request.adoc[]
+include::{snippets}/post-write/request-headers.adoc[]
+include::{snippets}/post-write/request-fields.adoc[]
