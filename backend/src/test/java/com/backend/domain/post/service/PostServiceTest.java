@@ -4,6 +4,7 @@ import com.backend.domain.member.entity.Member;
 import com.backend.domain.member.exception.NotFoundMemberException;
 import com.backend.domain.member.repository.MemberRepository;
 import com.backend.domain.post.dto.PostDetailResponse;
+import com.backend.domain.post.dto.PostModifyRequest;
 import com.backend.domain.post.dto.PostWriteRequest;
 import com.backend.domain.post.entity.Post;
 import com.backend.domain.post.exception.NotFoundPostException;
@@ -113,6 +114,37 @@ class PostServiceTest {
         willThrow(new NotFoundPostException()).given(postRepository).findById(anyLong());
 
         assertThatThrownBy(() -> postService.postDetail(1L))
+                .isInstanceOf(NotFoundPostException.class);
+
+        then(postRepository).should().findById(anyLong());
+    }
+
+    @DisplayName("게시글을 수정한다.")
+    @Test
+    void postModify() {
+        PostModifyRequest postModifyRequest = new PostModifyRequest("title", "content");
+        Post post = Post.builder()
+                .title("title")
+                .writer(member.getNickname())
+                .content("content")
+                .member(member)
+                .build();
+
+        given(postRepository.findById(anyLong())).willReturn(Optional.of(post));
+
+        postService.postModify(1L, postModifyRequest);
+
+        then(postRepository).should().findById(anyLong());
+    }
+
+    @DisplayName("게시글 수정 시 게시글이 존재하지 않으면 예외가 발생한다.")
+    @Test
+    void postModifyNotFoundPost() {
+        PostModifyRequest postModifyRequest = new PostModifyRequest("title", "content");
+
+        willThrow(new NotFoundPostException()).given(postRepository).findById(anyLong());
+
+        assertThatThrownBy(() -> postService.postModify(1L, postModifyRequest))
                 .isInstanceOf(NotFoundPostException.class);
 
         then(postRepository).should().findById(anyLong());

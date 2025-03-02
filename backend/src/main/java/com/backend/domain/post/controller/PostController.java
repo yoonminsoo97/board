@@ -1,6 +1,7 @@
 package com.backend.domain.post.controller;
 
 import com.backend.domain.post.dto.PostDetailResponse;
+import com.backend.domain.post.dto.PostModifyRequest;
 import com.backend.domain.post.dto.PostWriteRequest;
 import com.backend.domain.post.service.PostService;
 
@@ -14,6 +15,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -38,6 +40,14 @@ public class PostController {
     public ResponseEntity<PostDetailResponse> postDetail(@PathVariable("postId") Long postId) {
         PostDetailResponse postDetailResponse = postService.postDetail(postId);
         return ResponseEntity.ok().body(postDetailResponse);
+    }
+
+    @PreAuthorize("hasRole('MEMBER')")
+    @PutMapping("/{postId}")
+    public ResponseEntity<Void> postModify(@PathVariable("postId") Long postId,
+                                           @RequestBody @Valid PostModifyRequest postModifyRequest) {
+        postService.postModify(postId, postModifyRequest);
+        return ResponseEntity.ok().build();
     }
 
 }
