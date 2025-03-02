@@ -1,12 +1,15 @@
 package com.backend.domain.post.controller;
 
+import com.backend.domain.post.dto.PostDetailResponse;
 import com.backend.domain.post.dto.PostWriteRequest;
+import com.backend.domain.post.exception.NotFoundPostException;
 import com.backend.domain.post.service.PostService;
 import com.backend.support.ControllerTest;
-
 import com.backend.global.error.exception.ErrorType;
+
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Named;
 import org.junit.jupiter.api.Test;
@@ -20,18 +23,24 @@ import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
+import java.time.LocalDateTime;
 import java.util.stream.Stream;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
-
 import static org.mockito.BDDMockito.willThrow;
+
 import static org.springframework.restdocs.headers.HeaderDocumentation.headerWithName;
 import static org.springframework.restdocs.headers.HeaderDocumentation.requestHeaders;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.restdocs.payload.PayloadDocumentation.requestFields;
+import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
+import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
+import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -147,6 +156,51 @@ class PostControllerTest extends ControllerTest {
                         jsonPath("$.status").value(401),
                         jsonPath("$.errorCode").value("E401003"),
                         jsonPath("$.message").value("토큰 형식이 잘못 되었습니다.")
+                );
+    }
+
+    @DisplayName("게시글 상세조회에 성공하면 200을 응답한다.")
+    @Test
+    void postDetail() throws Exception {
+        PostDetailResponse postDetailResponse = new PostDetailResponse(1L, "title", "writer", "content", LocalDateTime.now());
+
+        given(postService.postDetail(anyLong())).willReturn(postDetailResponse);
+
+        mockMvc.perform(get("/api/posts/{postId}", 1))
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$.postId").value(1),
+                        jsonPath("$.title").value("title"),
+                        jsonPath("$.writer").value("writer"),
+                        jsonPath("$.content").value("content"),
+                        jsonPath("$.createdAt").isNotEmpty()
+                )
+                .andDo(restdocs)
+                .andDo(restdocs.document(
+                        pathParameters(
+                                parameterWithName("postId").description("게시글 번호")
+                        ),
+                        responseFields(
+                                fieldWithPath("postId").type(JsonFieldType.NUMBER).description("게시글 번호"),
+                                fieldWithPath("title").type(JsonFieldType.STRING).description("제목"),
+                                fieldWithPath("writer").type(JsonFieldType.STRING).description("작성자"),
+                                fieldWithPath("content").type(JsonFieldType.STRING).description("내용"),
+                                fieldWithPath("createdAt").type(JsonFieldType.STRING).description("작성일")
+                        )
+                ));
+    }
+
+    @DisplayName("게시글 상세조회 시 게시글이 존재하지 않으면 404를 응답한다.")
+    @Test
+    void postDetailNotFoundPost() throws Exception {
+        willThrow(new NotFoundPostException()).given(postService).postDetail(anyLong());
+
+        mockMvc.perform(get("/api/posts/{postId}", 1))
+                .andExpectAll(
+                        status().isNotFound(),
+                        jsonPath("$.status").value(404),
+                        jsonPath("$.errorCode").value("E404003"),
+                        jsonPath("$.message").value("게시글이 존재하지 않습니다.")
                 );
     }
 

@@ -18,6 +18,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
 
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -74,6 +75,25 @@ class PostRepositoryTest {
                 Arguments.of(Named.of("content 필드 null", new Post("title", "writer", null, member))),
                 Arguments.of(Named.of("member 필드 null", new Post("title", "writer", "content", null)))
         );
+    }
+
+    @DisplayName("기본키로 게시글을 조회한다.")
+    @Test
+    void postFindById() {
+        Post post = Post.builder()
+                .title("title")
+                .writer(member.getNickname())
+                .content("content")
+                .member(member)
+                .build();
+        Post savePost = postRepository.save(post);
+
+        Optional<Post> findPost = postRepository.findById(savePost.getId());
+
+        assertThat(findPost).isNotEmpty();
+        assertThat(findPost.get().getTitle()).isEqualTo("title");
+        assertThat(findPost.get().getWriter()).isEqualTo("yoonkun");
+        assertThat(findPost.get().getContent()).isEqualTo("content");
     }
 
 
