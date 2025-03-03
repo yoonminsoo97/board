@@ -17,6 +17,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -110,6 +114,30 @@ class PostRepositoryTest {
         Post findPost = postRepository.findById(savePost.getId()).get();
 
         postRepository.delete(findPost);
+    }
+
+    @DisplayName("게시글 목록을 조회한다.")
+    @Test
+    void postFindAll() {
+        Post post = Post.builder()
+                .title("title")
+                .writer(member.getNickname())
+                .content("content")
+                .member(member)
+                .build();
+        postRepository.save(post);
+
+        Pageable pageable = PageRequest.of(0, 10, Sort.Direction.DESC, "id");
+        Page<Post> postPage = postRepository.findAll(pageable);
+
+        assertThat(postPage.getContent()).isNotNull();
+        assertThat(postPage.getNumber()).isEqualTo(0);
+        assertThat(postPage.getTotalElements()).isEqualTo(1);
+        assertThat(postPage.getTotalPages()).isEqualTo(1);
+        assertThat(postPage.isFirst()).isTrue();
+        assertThat(postPage.isLast()).isTrue();
+        assertThat(postPage.hasPrevious()).isFalse();
+        assertThat(postPage.hasNext()).isFalse();
     }
 
 }

@@ -4,6 +4,7 @@ import com.backend.domain.member.entity.Member;
 import com.backend.domain.member.exception.NotFoundMemberException;
 import com.backend.domain.member.repository.MemberRepository;
 import com.backend.domain.post.dto.PostDetailResponse;
+import com.backend.domain.post.dto.PostListResponse;
 import com.backend.domain.post.dto.PostModifyRequest;
 import com.backend.domain.post.dto.PostWriteRequest;
 import com.backend.domain.post.entity.Post;
@@ -18,7 +19,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -118,6 +122,29 @@ class PostServiceTest {
                 .isInstanceOf(NotFoundPostException.class);
 
         then(postRepository).should().findById(anyLong());
+    }
+
+    @DisplayName("게시글 목록을 조회한다.")
+    @Test
+    void postList() {
+        List<Post> content = List.of(
+                new Post("title", "writer", "content", member)
+        );
+        PageImpl<Post> postPage = new PageImpl<>(content);
+
+        given(postRepository.findAll(any(Pageable.class))).willReturn(postPage);
+
+        PostListResponse postListResponse = postService.postListResponse(1);
+
+        assertThat(postListResponse.getPosts()).isNotNull();
+        assertThat(postListResponse.getPage()).isEqualTo(1);
+        assertThat(postListResponse.getTotalPosts()).isEqualTo(1);
+        assertThat(postListResponse.getTotalPages()).isEqualTo(1);
+        assertThat(postListResponse.isFirst()).isTrue();
+        assertThat(postListResponse.isLast()).isTrue();
+        assertThat(postListResponse.isPrev()).isFalse();
+        assertThat(postListResponse.isNext()).isFalse();
+        then(postRepository).should().findAll(any(Pageable.class));
     }
 
     @DisplayName("게시글을 수정한다.")
