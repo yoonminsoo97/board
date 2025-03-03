@@ -42,6 +42,7 @@ public class SecurityConfig {
                 .addFilterAfter(authenticationFilter(), ExceptionTranslationFilter.class)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET,
+                                "/api/posts",
                                 "/api/posts/*").permitAll()
                         .requestMatchers(HttpMethod.POST,
                                 "/api/members/signup",

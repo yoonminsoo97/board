@@ -1,6 +1,7 @@
 package com.backend.domain.post.controller;
 
 import com.backend.domain.post.dto.PostDetailResponse;
+import com.backend.domain.post.dto.PostListResponse;
 import com.backend.domain.post.dto.PostModifyRequest;
 import com.backend.domain.post.dto.PostWriteRequest;
 import com.backend.domain.post.service.PostService;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -41,6 +43,13 @@ public class PostController {
     public ResponseEntity<PostDetailResponse> postDetail(@PathVariable("postId") Long postId) {
         PostDetailResponse postDetailResponse = postService.postDetail(postId);
         return ResponseEntity.ok().body(postDetailResponse);
+    }
+
+    @PreAuthorize("permitAll()")
+    @GetMapping
+    public ResponseEntity<PostListResponse> postList(@RequestParam("page") int page) {
+        PostListResponse postListResponse = postService.postListResponse(page);
+        return ResponseEntity.ok().body(postListResponse);
     }
 
     @PreAuthorize("hasRole('MEMBER')")
