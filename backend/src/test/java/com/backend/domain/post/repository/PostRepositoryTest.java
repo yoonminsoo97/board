@@ -96,5 +96,20 @@ class PostRepositoryTest {
         assertThat(findPost.get().getContent()).isEqualTo("content");
     }
 
+    @DisplayName("게시글을 삭제한다.")
+    @Test
+    void postDelete() {
+        Post post = Post.builder()
+                .title("title")
+                .writer(member.getNickname())
+                .content("content")
+                .member(member)
+                .build();
+        Post savePost = postRepository.save(post);
+
+        Post findPost = postRepository.findById(savePost.getId()).get();
+
+        postRepository.delete(findPost);
+    }
 
 }

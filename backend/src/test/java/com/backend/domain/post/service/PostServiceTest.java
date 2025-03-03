@@ -28,6 +28,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.never;
 
@@ -148,6 +149,37 @@ class PostServiceTest {
                 .isInstanceOf(NotFoundPostException.class);
 
         then(postRepository).should().findById(anyLong());
+    }
+
+    @DisplayName("게시글을 삭제한다.")
+    @Test
+    void postDelete() {
+        Post post = Post.builder()
+                .title("title")
+                .writer(member.getNickname())
+                .content("content")
+                .member(member)
+                .build();
+
+        given(postRepository.findById(anyLong())).willReturn(Optional.of(post));
+        willDoNothing().given(postRepository).delete(any(Post.class));
+
+        postService.postDelete(1L);
+
+        then(postRepository).should().findById(anyLong());
+        then(postRepository).should().delete(any(Post.class));
+    }
+
+    @DisplayName("게시글 삭제 시 게시글이 존재하지 않으면 예외가 발생한다.")
+    @Test
+    void postDeleteNotFoundPost() {
+        willThrow(new NotFoundPostException()).given(postRepository).findById(anyLong());
+
+        assertThatThrownBy(() -> postService.postDelete(1L))
+                .isInstanceOf(NotFoundPostException.class);
+
+        then(postRepository).should().findById(anyLong());
+        then(postRepository).should(never()).delete(any(Post.class));
     }
 
 }
