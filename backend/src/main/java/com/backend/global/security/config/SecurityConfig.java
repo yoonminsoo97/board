@@ -49,7 +49,8 @@ public class SecurityConfig {
                                 "/api/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST,
                                 "/api/auth/logout",
-                                "/api/posts/write").hasRole("MEMBER")
+                                "/api/posts/write",
+                                "/api/posts/*/comments/write").hasRole("MEMBER")
                         .requestMatchers(HttpMethod.PUT,
                                 "/api/posts/*").hasRole("MEMBER")
                         .requestMatchers(HttpMethod.DELETE,
