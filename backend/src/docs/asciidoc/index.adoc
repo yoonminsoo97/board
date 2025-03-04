@@ -81,3 +81,12 @@ include::{snippets}/post-modify/request-fields.adoc[]
 include::{snippets}/post-delete/http-request.adoc[]
 include::{snippets}/post-delete/path-parameters.adoc[]
 include::{snippets}/post-delete/request-headers.adoc[]
+
+== 댓글 작성
+
+*요청*
+
+include::{snippets}/comment-write/http-request.adoc[]
+include::{snippets}/comment-write/path-parameters.adoc[]
+include::{snippets}/comment-write/request-headers.adoc[]
+include::{snippets}/comment-write/request-fields.adoc[]
