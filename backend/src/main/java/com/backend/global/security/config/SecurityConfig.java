@@ -52,7 +52,8 @@ public class SecurityConfig {
                                 "/api/posts/write",
                                 "/api/posts/*/comments/write").hasRole("MEMBER")
                         .requestMatchers(HttpMethod.PUT,
-                                "/api/posts/*").hasRole("MEMBER")
+                                "/api/posts/*",
+                                "/api/posts/*/comments/*").hasRole("MEMBER")
                         .requestMatchers(HttpMethod.DELETE,
                                 "/api/posts/*").hasRole("MEMBER")
                         .anyRequest().denyAll()
