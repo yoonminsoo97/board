@@ -99,3 +99,11 @@ include::{snippets}/comment-modify/http-request.adoc[]
 include::{snippets}/comment-modify/path-parameters.adoc[]
 include::{snippets}/comment-modify/request-headers.adoc[]
 include::{snippets}/comment-modify/request-fields.adoc[]
+
+== 댓글 삭제
+
+*요청*
+
+include::{snippets}/comment-delete/http-request.adoc[]
+include::{snippets}/comment-delete/path-parameters.adoc[]
+include::{snippets}/comment-delete/request-headers.adoc[]

@@ -74,7 +74,8 @@ public class AuthenticationFilter extends OncePerRequestFilter {
         POST_MODIFY(HttpMethod.PUT, "/api/posts/*", Authority.ROLE_MEMBER),
         POST_DELETE(HttpMethod.DELETE, "/api/posts/*", Authority.ROLE_MEMBER),
         COMMENT_WRITE(HttpMethod.POST, "/api/posts/*/comments/write", Authority.ROLE_MEMBER),
-        COMMENT_MODIFY(HttpMethod.PUT, "/api/posts/*/comments/*", Authority.ROLE_MEMBER);
+        COMMENT_MODIFY(HttpMethod.PUT, "/api/posts/*/comments/*", Authority.ROLE_MEMBER),
+        COMMENT_DELETE(HttpMethod.DELETE, "/api/posts/*/comments/*", Authority.ROLE_MEMBER);
 
         enum Authority {
             PERMIT_ALL, ROLE_MEMBER

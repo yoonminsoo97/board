@@ -29,6 +29,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.never;
 
@@ -147,6 +148,37 @@ class CommentServiceTest {
                 .isInstanceOf(NotFoundCommentException.class);
 
         then(commentRepository).should().findByPostIdAndCommentId(anyLong(), anyLong());
+    }
+
+    @DisplayName("댓글을 삭제한다.")
+    @Test
+    void commentDelete() {
+        Comment comment = Comment.builder()
+                .writer(member.getNickname())
+                .content("comment")
+                .member(member)
+                .post(post)
+                .build();
+
+        given(commentRepository.findByPostIdAndCommentId(anyLong(), anyLong())).willReturn(Optional.of(comment));
+        willDoNothing().given(commentRepository).delete(any(Comment.class));
+
+        commentService.commentDelete(1L, 1L);
+
+        then(commentRepository).should().findByPostIdAndCommentId(anyLong(), anyLong());
+        then(commentRepository).should().delete(any(Comment.class));
+    }
+
+    @DisplayName("댓글 삭제 시 댓글이 존재하지 않으면 예외가 발생한다.")
+    @Test
+    void commentDeleteNotFoundComment() {
+        willThrow(new NotFoundCommentException()).given(commentRepository).findByPostIdAndCommentId(anyLong(), anyLong());
+
+        assertThatThrownBy(() -> commentService.commentDelete(1L, 1L))
+                .isInstanceOf(NotFoundCommentException.class);
+
+        then(commentRepository).should().findByPostIdAndCommentId(anyLong(), anyLong());
+        then(commentRepository).should(never()).delete(any(Comment.class));
     }
 
 }
