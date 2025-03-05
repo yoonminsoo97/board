@@ -1,6 +1,8 @@
 package com.backend.domain.comment.controller;
 
+import com.backend.domain.comment.dto.CommentModifyRequest;
 import com.backend.domain.comment.dto.CommentWriteRequest;
+import com.backend.domain.comment.exception.NotFoundCommentException;
 import com.backend.domain.comment.service.CommentService;
 import com.backend.domain.post.exception.NotFoundPostException;
 import com.backend.global.error.exception.ErrorType;
@@ -28,6 +30,7 @@ import static org.mockito.BDDMockito.willThrow;
 import static org.springframework.restdocs.headers.HeaderDocumentation.headerWithName;
 import static org.springframework.restdocs.headers.HeaderDocumentation.requestHeaders;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.put;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.restdocs.payload.PayloadDocumentation.requestFields;
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
@@ -161,6 +164,136 @@ class CommentControllerTest extends ControllerTest {
                         .header("Authorization", "Bearer access-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(commentWriteRequest))
+                )
+                .andExpectAll(
+                        status().isUnauthorized(),
+                        jsonPath("$.status").value(401),
+                        jsonPath("$.errorCode").value("E401003"),
+                        jsonPath("$.message").value("토큰 형식이 잘못 되었습니다.")
+                );
+    }
+
+    @DisplayName("댓글 수정에 성공하면 200을 응답한다.")
+    @Test
+    void commentModify() throws Exception {
+        CommentModifyRequest commentModifyRequest = new CommentModifyRequest("comment");
+        Claims claims = Jwts.claims()
+                .add("username", "yoon1234")
+                .add("authority", "ROLE_MEMBER")
+                .build();
+
+        willDoNothing().given(tokenService).validateToken(anyString());
+        given(tokenService.extractClaim(anyString())).willReturn(claims);
+        willDoNothing().given(commentService).commentModify(anyLong(), anyLong(), any(CommentModifyRequest.class));
+
+        mockMvc.perform(put("/api/posts/{postId}/comments/{commentId}", 1, 1)
+                        .header("Authorization", "Bearer access-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(commentModifyRequest))
+                )
+                .andExpect(status().isOk())
+                .andDo(restdocs)
+                .andDo(restdocs.document(
+                        pathParameters(
+                                parameterWithName("postId").description("게시글 번호"),
+                                parameterWithName("commentId").description("댓글 번호")
+                        ),
+                        requestHeaders(
+                                headerWithName("Authorization").description("Bearer 액세스 토큰")
+                        ),
+                        requestFields(
+                                fieldWithPath("content").type(JsonFieldType.STRING).description("댓글")
+                        )
+                ));
+    }
+
+    @DisplayName("댓글 수정 시 내용이 공백이면 400을 응답한다.")
+    @Test
+    void commentModifyBlankContent() throws Exception {
+        CommentModifyRequest commentModifyRequest = new CommentModifyRequest("");
+        Claims claims = Jwts.claims()
+                .add("username", "yoon1234")
+                .add("authority", "ROLE_MEMBER")
+                .build();
+
+        willDoNothing().given(tokenService).validateToken(anyString());
+        given(tokenService.extractClaim(anyString())).willReturn(claims);
+
+        mockMvc.perform(put("/api/posts/{postId}/comments/{commentId}", 1, 1)
+                        .header("Authorization", "Bearer access-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(commentModifyRequest))
+                )
+                .andExpectAll(
+                        status().isBadRequest(),
+                        jsonPath("$.status").value(400),
+                        jsonPath("$.errorCode").value("E400001"),
+                        jsonPath("$.message").value("입력값이 잘못 되었습니다."),
+                        jsonPath("$.errors").isArray(),
+                        jsonPath("$.errors[0].field").isNotEmpty(),
+                        jsonPath("$.errors[0].message").isNotEmpty()
+                );
+    }
+
+    @DisplayName("댓글 수정 시 댓글이 존재하지 않으면 404를 응답한다.")
+    @Test
+    void commentModifyNotFoundComment() throws Exception {
+        CommentModifyRequest commentModifyRequest = new CommentModifyRequest("comment");
+        Claims claims = Jwts.claims()
+                .add("username", "yoon1234")
+                .add("authority", "ROLE_MEMBER")
+                .build();
+
+        willDoNothing().given(tokenService).validateToken(anyString());
+        given(tokenService.extractClaim(anyString())).willReturn(claims);
+        willThrow(new NotFoundCommentException()).given(commentService).commentModify(anyLong(), anyLong(), any(CommentModifyRequest.class));
+
+        mockMvc.perform(put("/api/posts/{postId}/comments/{commentId}", 1, 1)
+                        .header("Authorization", "Bearer access-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(commentModifyRequest))
+                )
+                .andExpectAll(
+                        status().isNotFound(),
+                        jsonPath("$.status").value(404),
+                        jsonPath("$.errorCode").value("E404004"),
+                        jsonPath("$.message").value("댓글이 존재하지 않습니다.")
+                );
+    }
+
+    @DisplayName("댓글 수정 시 access token이 만료되면 401을 응답한다.")
+    @Test
+    void commentModifyExpiredAccessToken() throws Exception {
+        CommentModifyRequest commentModifyRequest = new CommentModifyRequest("comment");
+        ErrorType errorType = ErrorType.EXPIRED_TOKEN;
+
+        willThrow(new AuthenticationServiceException(errorType.getErrorCode())).given(tokenService).validateToken(anyString());
+
+        mockMvc.perform(put("/api/posts/{postId}/comments/{commentId}", 1, 1)
+                        .header("Authorization", "Bearer access-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(commentModifyRequest))
+                )
+                .andExpectAll(
+                        status().isUnauthorized(),
+                        jsonPath("$.status").value(401),
+                        jsonPath("$.errorCode").value("E401002"),
+                        jsonPath("$.message").value("토큰이 만료 되었습니다.")
+                );
+    }
+
+    @DisplayName("댓글 수정 시 access token 형식이 잘못되면 401을 응답한다.")
+    @Test
+    void commentModifyInvalidAccessToken() throws Exception {
+        CommentModifyRequest commentModifyRequest = new CommentModifyRequest("comment");
+        ErrorType errorType = ErrorType.INVALID_TOKEN;
+
+        willThrow(new AuthenticationServiceException(errorType.getErrorCode())).given(tokenService).validateToken(anyString());
+
+        mockMvc.perform(put("/api/posts/{postId}/comments/{commentId}", 1, 1)
+                        .header("Authorization", "Bearer access-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(commentModifyRequest))
                 )
                 .andExpectAll(
                         status().isUnauthorized(),
