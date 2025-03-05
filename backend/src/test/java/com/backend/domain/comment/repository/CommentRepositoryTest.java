@@ -20,6 +20,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
 
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -86,6 +87,24 @@ class CommentRepositoryTest {
                 Arguments.of(Named.of("member 필드 null", new Comment("yoonkun", "comment", null, savePost))),
                 Arguments.of(Named.of("post 필드 null", new Comment("yoonkun", "comment", saveMember, null)))
         );
+    }
+
+    @DisplayName("게시글 기본키와 댓글 기본키로 댓글을 조회한다.")
+    @Test
+    void commentFindByPostIdAndCommentId() {
+        Comment comment = Comment.builder()
+                .writer("yoonkun")
+                .content("comment")
+                .member(saveMember)
+                .post(savePost)
+                .build();
+        Comment saveComment = commentRepository.save(comment);
+
+        Optional<Comment> findComment = commentRepository.findByPostIdAndCommentId(savePost.getId(), saveComment.getId());
+
+        assertThat(findComment).isPresent();
+        assertThat(findComment.get().getWriter()).isEqualTo("yoonkun");
+        assertThat(findComment.get().getContent()).isEqualTo("comment");
     }
 
 }
