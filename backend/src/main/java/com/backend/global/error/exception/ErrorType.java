@@ -24,6 +24,7 @@ public enum ErrorType {
     NOT_FOUND_TOKEN(HttpStatus.NOT_FOUND, " E404001", "토큰이 존재하지 않습니다."),
     NOT_FOUND_MEMBER(HttpStatus.NOT_FOUND, "E404002", "회원이 존재하지 않습니다."),
     NOT_FOUND_POST(HttpStatus.NOT_FOUND, "E404003", "게시글이 존재하지 않습니다."),
+    NOT_FOUND_COMMENT(HttpStatus.NOT_FOUND, "E404004", "댓글이 존재하지 않습니다."),
 
     // 409
     DUPLICATE_NICKNAME(HttpStatus.CONFLICT, "E409001", "사용 중인 닉네임입니다."),
