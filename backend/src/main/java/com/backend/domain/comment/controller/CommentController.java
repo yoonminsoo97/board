@@ -1,5 +1,6 @@
 package com.backend.domain.comment.controller;
 
+import com.backend.domain.comment.dto.CommentModifyRequest;
 import com.backend.domain.comment.dto.CommentWriteRequest;
 import com.backend.domain.comment.service.CommentService;
 
@@ -12,6 +13,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -29,6 +31,15 @@ public class CommentController {
                                              @AuthenticationPrincipal String username,
                                              @RequestBody @Valid CommentWriteRequest commentWriteRequest) {
         commentService.commentWrite(postId, username, commentWriteRequest);
+        return ResponseEntity.ok().build();
+    }
+
+    @PreAuthorize("hasRole('MEMBER')")
+    @PutMapping("/{postId}/comments/{commentId}")
+    public ResponseEntity<Void> commentModify(@PathVariable("postId") Long postId,
+                                              @PathVariable("commentId") Long commentId,
+                                              @RequestBody @Valid CommentModifyRequest commentModifyRequest) {
+        commentService.commentModify(postId, commentId, commentModifyRequest);
         return ResponseEntity.ok().build();
     }
 
