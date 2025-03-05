@@ -460,6 +460,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_게시글_삭제">게시글 삭제</a></li>
 <li><a href="#_댓글_작성">댓글 작성</a></li>
 <li><a href="#_댓글_수정">댓글 수정</a></li>
+<li><a href="#_댓글_삭제">댓글 삭제</a></li>
 </ul>
 </div>
 </div>
@@ -740,7 +741,7 @@ Content-Type: application/json
   "title" : "title",
   "writer" : "writer",
   "content" : "content",
-  "createdAt" : "2025-03-05T15:56:05.443982"
+  "createdAt" : "2025-03-05T16:27:52.023399"
 }</code></pre>
 </div>
 </div>
@@ -829,7 +830,7 @@ Content-Type: application/json
     "postId" : 1,
     "title" : "title",
     "writer" : "writer",
-    "createdAt" : "2025-03-05T15:56:05.414486"
+    "createdAt" : "2025-03-05T16:27:51.994051"
   } ],
   "page" : 1,
   "totalPages" : 1,
@@ -1211,11 +1212,66 @@ Authorization: Bearer access-token
 </table>
 </div>
 </div>
+<div class="sect1">
+<h2 id="_댓글_삭제">댓글 삭제</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><strong>요청</strong></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight nowrap"><code class="language-http hljs" data-lang="http">DELETE /api/posts/1/comments/1 HTTP/1.1
+Authorization: Bearer access-token</code></pre>
+</div>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 6. /api/posts/{postId}/comments/{commentId}</caption>
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>postId</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">게시글 번호</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>commentId</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">댓글 번호</p></td>
+</tr>
+</tbody>
+</table>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Name</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Authorization</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Bearer 액세스 토큰</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 </div>
 <div id="footer">
 <div id="footer-text">
 Version 0.0.1<br>
-Last updated 2025-03-05 15:55:53 +0900
+Last updated 2025-03-05 16:27:43 +0900
 </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.3/highlight.min.js"></script>
