@@ -107,4 +107,20 @@ class CommentRepositoryTest {
         assertThat(findComment.get().getContent()).isEqualTo("comment");
     }
 
+    @DisplayName("댓글을 삭제한다.")
+    @Test
+    void commentDelete() {
+        Comment comment = Comment.builder()
+                .writer("yoonkun")
+                .content("comment")
+                .member(saveMember)
+                .post(savePost)
+                .build();
+        Comment saveComment = commentRepository.save(comment);
+
+        Optional<Comment> findComment = commentRepository.findByPostIdAndCommentId(savePost.getId(), saveComment.getId());
+
+        commentRepository.delete(findComment.get());
+    }
+
 }

@@ -29,6 +29,7 @@ import static org.mockito.BDDMockito.willThrow;
 
 import static org.springframework.restdocs.headers.HeaderDocumentation.headerWithName;
 import static org.springframework.restdocs.headers.HeaderDocumentation.requestHeaders;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.delete;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.put;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
@@ -294,6 +295,93 @@ class CommentControllerTest extends ControllerTest {
                         .header("Authorization", "Bearer access-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(commentModifyRequest))
+                )
+                .andExpectAll(
+                        status().isUnauthorized(),
+                        jsonPath("$.status").value(401),
+                        jsonPath("$.errorCode").value("E401003"),
+                        jsonPath("$.message").value("토큰 형식이 잘못 되었습니다.")
+                );
+    }
+
+    @DisplayName("댓글 삭제에 성공하면 200을 응답한다.")
+    @Test
+    void commentDelete() throws Exception {
+        Claims claims = Jwts.claims()
+                .add("username", "yoon1234")
+                .add("authority", "ROLE_MEMBER")
+                .build();
+
+        willDoNothing().given(tokenService).validateToken(anyString());
+        given(tokenService.extractClaim(anyString())).willReturn(claims);
+        willDoNothing().given(commentService).commentDelete(anyLong(), anyLong());
+
+        mockMvc.perform(delete("/api/posts/{postId}/comments/{commentId}", 1, 1)
+                        .header("Authorization", "Bearer access-token")
+                )
+                .andExpect(status().isOk())
+                .andDo(restdocs)
+                .andDo(restdocs.document(
+                        pathParameters(
+                                parameterWithName("postId").description("게시글 번호"),
+                                parameterWithName("commentId").description("댓글 번호")
+                        ),
+                        requestHeaders(
+                                headerWithName("Authorization").description("Bearer 액세스 토큰")
+                        )
+                ));
+    }
+
+    @DisplayName("댓글 삭제 시 댓글이 존재하지 않으면 404를 응답한다.")
+    @Test
+    void commentDeleteNotFoundComment() throws Exception {
+        Claims claims = Jwts.claims()
+                .add("username", "yoon1234")
+                .add("authority", "ROLE_MEMBER")
+                .build();
+
+        willDoNothing().given(tokenService).validateToken(anyString());
+        given(tokenService.extractClaim(anyString())).willReturn(claims);
+        willThrow(new NotFoundCommentException()).given(commentService).commentDelete(anyLong(), anyLong());
+
+        mockMvc.perform(delete("/api/posts/{postId}/comments/{commentId}", 1, 1)
+                        .header("Authorization", "Bearer access-token")
+                )
+                .andExpectAll(
+                        status().isNotFound(),
+                        jsonPath("$.status").value(404),
+                        jsonPath("$.errorCode").value("E404004"),
+                        jsonPath("$.message").value("댓글이 존재하지 않습니다.")
+                );
+    }
+
+    @DisplayName("댓글 삭제 시 access token이 만료되면 401을 응답한다.")
+    @Test
+    void commentDeleteExpiredAccessToken() throws Exception {
+        ErrorType errorType = ErrorType.EXPIRED_TOKEN;
+
+        willThrow(new AuthenticationServiceException(errorType.getErrorCode())).given(tokenService).validateToken(anyString());
+
+        mockMvc.perform(delete("/api/posts/{postId}/comments/{commentId}", 1, 1)
+                        .header("Authorization", "Bearer access-token")
+                )
+                .andExpectAll(
+                        status().isUnauthorized(),
+                        jsonPath("$.status").value(401),
+                        jsonPath("$.errorCode").value("E401002"),
+                        jsonPath("$.message").value("토큰이 만료 되었습니다.")
+                );
+    }
+
+    @DisplayName("댓글 삭제 시 access token 형식이 잘못되면 401을 응답한다.")
+    @Test
+    void commentDeleteInvalidAccessToken() throws Exception {
+        ErrorType errorType = ErrorType.INVALID_TOKEN;
+
+        willThrow(new AuthenticationServiceException(errorType.getErrorCode())).given(tokenService).validateToken(anyString());
+
+        mockMvc.perform(delete("/api/posts/{postId}/comments/{commentId}", 1, 1)
+                        .header("Authorization", "Bearer access-token")
                 )
                 .andExpectAll(
                         status().isUnauthorized(),
