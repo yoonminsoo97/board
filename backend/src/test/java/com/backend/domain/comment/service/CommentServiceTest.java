@@ -1,5 +1,6 @@
 package com.backend.domain.comment.service;
 
+import com.backend.domain.comment.dto.CommentListResponse;
 import com.backend.domain.comment.dto.CommentModifyRequest;
 import com.backend.domain.comment.dto.CommentWriteRequest;
 import com.backend.domain.comment.entity.Comment;
@@ -20,9 +21,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
+import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -64,6 +69,29 @@ class CommentServiceTest {
                 .content("content")
                 .member(member)
                 .build();
+    }
+
+    @DisplayName("댓글 목록을 조회한다.")
+    @Test
+    void commentList() {
+        List<Comment> content = List.of(
+                new Comment("writer", "comment", member, post)
+        );
+        PageImpl<Comment> commentPage = new PageImpl<>(content);
+
+        given(commentRepository.findAllByPostId(anyLong(), any(Pageable.class))).willReturn(commentPage);
+
+        CommentListResponse commentListResponse = commentService.commentList(1L, 1);
+
+        assertThat(commentListResponse.getComments()).isNotEmpty();
+        assertThat(commentListResponse.getPage()).isEqualTo(1);
+        assertThat(commentListResponse.getTotalComments()).isEqualTo(1);
+        assertThat(commentListResponse.getTotalPages()).isEqualTo(1);
+        assertThat(commentListResponse.isFirst()).isTrue();
+        assertThat(commentListResponse.isLast()).isTrue();
+        assertThat(commentListResponse.isPrev()).isFalse();
+        assertThat(commentListResponse.isNext()).isFalse();
+        then(commentRepository).should().findAllByPostId(anyLong(), any(Pageable.class));
     }
 
     @DisplayName("댓글을 작성한다.")

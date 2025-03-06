@@ -19,6 +19,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -121,6 +124,29 @@ class CommentRepositoryTest {
         Optional<Comment> findComment = commentRepository.findByPostIdAndCommentId(savePost.getId(), saveComment.getId());
 
         commentRepository.delete(findComment.get());
+    }
+
+    @DisplayName("게시글 기본키를 외래키로 가지고 있는 댓글 목록을 조회한다.")
+    @Test
+    void commentFindAllByPostId() {
+        Comment comment = Comment.builder()
+                .writer("yoonkun")
+                .content("comment")
+                .member(saveMember)
+                .post(savePost)
+                .build();
+        commentRepository.save(comment);
+
+        Page<Comment> commentPage = commentRepository.findAllByPostId(savePost.getId(), PageRequest.of(0, 10, Sort.Direction.ASC, "id"));
+
+        assertThat(commentPage.getContent()).isNotEmpty();
+        assertThat(commentPage.getNumber()).isEqualTo(0);
+        assertThat(commentPage.getTotalPages()).isEqualTo(1);
+        assertThat(commentPage.getTotalElements()).isEqualTo(1);
+        assertThat(commentPage.isFirst()).isTrue();
+        assertThat(commentPage.isLast()).isTrue();
+        assertThat(commentPage.hasPrevious()).isFalse();
+        assertThat(commentPage.hasNext()).isFalse();
     }
 
 }
