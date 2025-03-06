@@ -82,6 +82,19 @@ include::{snippets}/post-delete/http-request.adoc[]
 include::{snippets}/post-delete/path-parameters.adoc[]
 include::{snippets}/post-delete/request-headers.adoc[]
 
+== 댓글 목록
+
+*요청*
+
+include::{snippets}/comment-list/http-request.adoc[]
+include::{snippets}/comment-list/path-parameters.adoc[]
+include::{snippets}/comment-list/query-parameters.adoc[]
+
+*응답*
+
+include::{snippets}/comment-list/http-response.adoc[]
+include::{snippets}/comment-list/response-fields.adoc[]
+
 == 댓글 작성
 
 *요청*
