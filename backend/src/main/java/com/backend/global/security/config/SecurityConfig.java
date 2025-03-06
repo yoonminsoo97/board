@@ -43,7 +43,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET,
                                 "/api/posts",
-                                "/api/posts/*").permitAll()
+                                "/api/posts/*",
+                                "/api/posts/*/comments").permitAll()
                         .requestMatchers(HttpMethod.POST,
                                 "/api/members/signup",
                                 "/api/auth/login").permitAll()
