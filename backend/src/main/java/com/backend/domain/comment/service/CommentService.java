@@ -1,5 +1,6 @@
 package com.backend.domain.comment.service;
 
+import com.backend.domain.comment.dto.CommentListResponse;
 import com.backend.domain.comment.dto.CommentModifyRequest;
 import com.backend.domain.comment.dto.CommentWriteRequest;
 import com.backend.domain.comment.entity.Comment;
@@ -14,6 +15,10 @@ import com.backend.domain.post.repository.PostRepository;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +29,14 @@ public class CommentService {
     private final MemberRepository memberRepository;
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
+
+    @Transactional(readOnly = true)
+    public CommentListResponse commentList(Long postId, int page) {
+        page = page <= 0 ? 0 : page - 1;
+        Pageable pageable = PageRequest.of(page, 10, Sort.Direction.ASC, "id");
+        Page<Comment> commentPage = commentRepository.findAllByPostId(postId, pageable);
+        return new CommentListResponse(commentPage);
+    }
 
     @Transactional
     public void commentWrite(Long postId, String username, CommentWriteRequest commentWriteRequest) {
