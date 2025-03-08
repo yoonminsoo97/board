@@ -2,6 +2,7 @@ package com.backend.domain.post.repository;
 
 import com.backend.domain.member.entity.Member;
 import com.backend.domain.member.repository.MemberRepository;
+import com.backend.domain.post.dto.PostItem;
 import com.backend.domain.post.entity.Post;
 import com.backend.global.common.config.JpaAuditingConfig;
 
@@ -19,8 +20,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -116,9 +115,9 @@ class PostRepositoryTest {
         postRepository.delete(findPost);
     }
 
-    @DisplayName("게시글 목록을 조회한다.")
+    @DisplayName("댓글 개수가 포함된 게시글 목록을 PostItem DTO 형식으로 조회한다.")
     @Test
-    void postFindAll() {
+    void postFindAllPostWithCommentCount() {
         Post post = Post.builder()
                 .title("title")
                 .writer(member.getNickname())
@@ -127,8 +126,7 @@ class PostRepositoryTest {
                 .build();
         postRepository.save(post);
 
-        Pageable pageable = PageRequest.of(0, 10, Sort.Direction.DESC, "id");
-        Page<Post> postPage = postRepository.findAll(pageable);
+        Page<PostItem> postPage = postRepository.findAllPosts(PageRequest.of(0, 10));
 
         assertThat(postPage.getContent()).isNotNull();
         assertThat(postPage.getNumber()).isEqualTo(0);
