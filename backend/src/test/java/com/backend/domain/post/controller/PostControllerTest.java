@@ -216,7 +216,7 @@ class PostControllerTest extends ControllerTest {
     @Test
     void postList() throws Exception {
         List<PostItem> posts = List.of(
-                new PostItem(1L, "title", "writer", LocalDateTime.now())
+                new PostItem(1L, "title", "writer", LocalDateTime.now(), 5)
         );
         PostListResponse postListResponse = new PostListResponse(posts, 1, 1, 1, true, true, false, false);
 
@@ -232,6 +232,7 @@ class PostControllerTest extends ControllerTest {
                         jsonPath("$.posts[0].title").value("title"),
                         jsonPath("$.posts[0].writer").value("writer"),
                         jsonPath("$.posts[0].createdAt").isNotEmpty(),
+                        jsonPath("$.posts[0].commentCount").value(5),
                         jsonPath("$.page").value(1),
                         jsonPath("$.totalPages").value(1),
                         jsonPath("$.totalPosts").value(1),
@@ -251,6 +252,7 @@ class PostControllerTest extends ControllerTest {
                                 fieldWithPath("posts[0].title").type(JsonFieldType.STRING).description("제목"),
                                 fieldWithPath("posts[0].writer").type(JsonFieldType.STRING).description("작성자"),
                                 fieldWithPath("posts[0].createdAt").type(JsonFieldType.STRING).description("작성일"),
+                                fieldWithPath("posts[0].commentCount").type(JsonFieldType.NUMBER).description("댓글 개수"),
                                 fieldWithPath("page").type(JsonFieldType.NUMBER).description("현재 페이지 번호"),
                                 fieldWithPath("totalPages").type(JsonFieldType.NUMBER).description("전체 페이지 개수"),
                                 fieldWithPath("totalPosts").type(JsonFieldType.NUMBER).description("전체 게시글 개수"),

@@ -4,6 +4,7 @@ import com.backend.domain.member.entity.Member;
 import com.backend.domain.member.exception.NotFoundMemberException;
 import com.backend.domain.member.repository.MemberRepository;
 import com.backend.domain.post.dto.PostDetailResponse;
+import com.backend.domain.post.dto.PostItem;
 import com.backend.domain.post.dto.PostListResponse;
 import com.backend.domain.post.dto.PostModifyRequest;
 import com.backend.domain.post.dto.PostWriteRequest;
@@ -22,6 +23,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -127,12 +129,12 @@ class PostServiceTest {
     @DisplayName("게시글 목록을 조회한다.")
     @Test
     void postList() {
-        List<Post> content = List.of(
-                new Post("title", "writer", "content", member)
+        List<PostItem> content = List.of(
+                new PostItem(1L, "title", "writer", LocalDateTime.now(), 5)
         );
-        PageImpl<Post> postPage = new PageImpl<>(content);
+        PageImpl<PostItem> postPage = new PageImpl<>(content);
 
-        given(postRepository.findAll(any(Pageable.class))).willReturn(postPage);
+        given(postRepository.findAllPosts(any(Pageable.class))).willReturn(postPage);
 
         PostListResponse postListResponse = postService.postListResponse(1);
 
@@ -144,7 +146,7 @@ class PostServiceTest {
         assertThat(postListResponse.isLast()).isTrue();
         assertThat(postListResponse.isPrev()).isFalse();
         assertThat(postListResponse.isNext()).isFalse();
-        then(postRepository).should().findAll(any(Pageable.class));
+        then(postRepository).should().findAllPosts(any(Pageable.class));
     }
 
     @DisplayName("게시글을 수정한다.")
