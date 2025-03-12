@@ -67,6 +67,7 @@ public class AuthenticationFilter extends OncePerRequestFilter {
         MEMBER_LOGIN(HttpMethod.POST, "/api/auth/login", Authority.PERMIT_ALL),
         POST_DETAIL(HttpMethod.GET, "/api/posts/*", Authority.PERMIT_ALL),
         POST_LIST(HttpMethod.GET, "/api/posts", Authority.PERMIT_ALL),
+        POST_LIST_SEARCH(HttpMethod.GET, "/api/posts/search", Authority.PERMIT_ALL),
         COMMENT_LIST(HttpMethod.GET, "/api/posts/*/comments", Authority.PERMIT_ALL),
 
         // ROLE_MEMBER

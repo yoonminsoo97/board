@@ -65,6 +65,17 @@ include::{snippets}/post-list/query-parameters.adoc[]
 include::{snippets}/post-list/http-response.adoc[]
 include::{snippets}/post-list/response-fields.adoc[]
 
+== 게시글 검색
+
+*요청*
+
+include::{snippets}/post-list-search/http-request.adoc[]
+include::{snippets}/post-list-search/query-parameters.adoc[]
+
+*응답*
+
+include::{snippets}/post-list-search/http-response.adoc[]
+
 == 게시글 수정
 
 *요청*
