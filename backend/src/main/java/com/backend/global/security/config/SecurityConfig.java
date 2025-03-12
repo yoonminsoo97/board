@@ -43,6 +43,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET,
                                 "/api/posts",
+                                "/api/posts/search",
                                 "/api/posts/*",
                                 "/api/posts/*/comments").permitAll()
                         .requestMatchers(HttpMethod.POST,
