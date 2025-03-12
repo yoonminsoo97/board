@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,9 +48,22 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
-    public PostListResponse postListResponse(int page) {
+    public PostListResponse postList(int page) {
         page = page <= 0 ? 0 : page - 1;
-        Page<PostItem> postPage = postRepository.findAllPosts(PageRequest.of(page, 10));
+        Page<PostItem> postPage = postRepository.findAllPost(PageRequest.of(page, 10));
+        return new PostListResponse(postPage);
+    }
+
+    @Transactional(readOnly = true)
+    public PostListResponse postListSearch(String type, String keyword, int page) {
+        page = page <= 0 ? 0 : page - 1;
+        Pageable pageable = PageRequest.of(page, 10);
+        Page<PostItem> postPage = Page.empty();
+        if (type.equals("title")) {
+            postPage = postRepository.findAllPostByTitle(keyword, pageable);
+        } else if (type.equals("writer")) {
+            postPage = postRepository.findAllPostByWriter(keyword, pageable);
+        }
         return new PostListResponse(postPage);
     }
 

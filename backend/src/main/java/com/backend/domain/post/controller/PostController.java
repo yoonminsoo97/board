@@ -48,7 +48,16 @@ public class PostController {
     @PreAuthorize("permitAll()")
     @GetMapping
     public ResponseEntity<PostListResponse> postList(@RequestParam("page") int page) {
-        PostListResponse postListResponse = postService.postListResponse(page);
+        PostListResponse postListResponse = postService.postList(page);
+        return ResponseEntity.ok().body(postListResponse);
+    }
+
+    @PreAuthorize("permitAll()")
+    @GetMapping("/search")
+    public ResponseEntity<PostListResponse> postListSearch(@RequestParam("type") String type,
+                                                           @RequestParam("keyword") String keyword,
+                                                           @RequestParam("page") int page) {
+        PostListResponse postListResponse = postService.postListSearch(type, keyword, page);
         return ResponseEntity.ok().body(postListResponse);
     }
 
