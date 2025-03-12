@@ -126,7 +126,53 @@ class PostRepositoryTest {
                 .build();
         postRepository.save(post);
 
-        Page<PostItem> postPage = postRepository.findAllPosts(PageRequest.of(0, 10));
+        Page<PostItem> postPage = postRepository.findAllPost(PageRequest.of(0, 10));
+
+        assertThat(postPage.getContent()).isNotNull();
+        assertThat(postPage.getNumber()).isEqualTo(0);
+        assertThat(postPage.getTotalElements()).isEqualTo(1);
+        assertThat(postPage.getTotalPages()).isEqualTo(1);
+        assertThat(postPage.isFirst()).isTrue();
+        assertThat(postPage.isLast()).isTrue();
+        assertThat(postPage.hasPrevious()).isFalse();
+        assertThat(postPage.hasNext()).isFalse();
+    }
+
+    @DisplayName("제목으로 게시글 목록을 검색한다.")
+    @Test
+    void postFindAllPostByTitle() {
+        Post post = Post.builder()
+                .title("title")
+                .writer(member.getNickname())
+                .content("content")
+                .member(member)
+                .build();
+        postRepository.save(post);
+
+        Page<PostItem> postPage = postRepository.findAllPostByTitle("ti", PageRequest.of(0, 10));
+
+        assertThat(postPage.getContent()).isNotNull();
+        assertThat(postPage.getNumber()).isEqualTo(0);
+        assertThat(postPage.getTotalElements()).isEqualTo(1);
+        assertThat(postPage.getTotalPages()).isEqualTo(1);
+        assertThat(postPage.isFirst()).isTrue();
+        assertThat(postPage.isLast()).isTrue();
+        assertThat(postPage.hasPrevious()).isFalse();
+        assertThat(postPage.hasNext()).isFalse();
+    }
+
+    @DisplayName("작성자로 게시글 목록을 검색한다.")
+    @Test
+    void postFindAllPostByWriter() {
+        Post post = Post.builder()
+                .title("title")
+                .writer(member.getNickname())
+                .content("content")
+                .member(member)
+                .build();
+        postRepository.save(post);
+
+        Page<PostItem> postPage = postRepository.findAllPostByWriter("yo", PageRequest.of(0, 10));
 
         assertThat(postPage.getContent()).isNotNull();
         assertThat(postPage.getNumber()).isEqualTo(0);

@@ -134,9 +134,9 @@ class PostServiceTest {
         );
         PageImpl<PostItem> postPage = new PageImpl<>(content);
 
-        given(postRepository.findAllPosts(any(Pageable.class))).willReturn(postPage);
+        given(postRepository.findAllPost(any(Pageable.class))).willReturn(postPage);
 
-        PostListResponse postListResponse = postService.postListResponse(1);
+        PostListResponse postListResponse = postService.postList(1);
 
         assertThat(postListResponse.getPosts()).isNotNull();
         assertThat(postListResponse.getPage()).isEqualTo(1);
@@ -146,7 +146,30 @@ class PostServiceTest {
         assertThat(postListResponse.isLast()).isTrue();
         assertThat(postListResponse.isPrev()).isFalse();
         assertThat(postListResponse.isNext()).isFalse();
-        then(postRepository).should().findAllPosts(any(Pageable.class));
+        then(postRepository).should().findAllPost(any(Pageable.class));
+    }
+
+    @DisplayName("게시글을 검색한다.")
+    @Test
+    void postListSearch() {
+        List<PostItem> content = List.of(
+                new PostItem(1L, "title", "writer", LocalDateTime.now(), 5)
+        );
+        PageImpl<PostItem> postPage = new PageImpl<>(content);
+
+        given(postRepository.findAllPostByTitle(anyString(), any(Pageable.class))).willReturn(postPage);
+
+        PostListResponse postListResponse = postService.postListSearch("title", "ti", 1);
+
+        assertThat(postListResponse.getPosts()).isNotNull();
+        assertThat(postListResponse.getPage()).isEqualTo(1);
+        assertThat(postListResponse.getTotalPosts()).isEqualTo(1);
+        assertThat(postListResponse.getTotalPages()).isEqualTo(1);
+        assertThat(postListResponse.isFirst()).isTrue();
+        assertThat(postListResponse.isLast()).isTrue();
+        assertThat(postListResponse.isPrev()).isFalse();
+        assertThat(postListResponse.isNext()).isFalse();
+        then(postRepository).should().findAllPostByTitle(anyString(), any(Pageable.class));
     }
 
     @DisplayName("게시글을 수정한다.")
