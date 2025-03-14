@@ -1,5 +1,6 @@
 package com.backend.domain.post.service;
 
+import com.backend.domain.comment.repository.CommentRepository;
 import com.backend.domain.member.entity.Member;
 import com.backend.domain.member.exception.NotFoundMemberException;
 import com.backend.domain.member.repository.MemberRepository;
@@ -46,6 +47,9 @@ class PostServiceTest {
 
     @Mock
     private PostRepository postRepository;
+
+    @Mock
+    private CommentRepository commentRepository;
 
     @InjectMocks
     private PostService postService;
@@ -214,11 +218,13 @@ class PostServiceTest {
                 .build();
 
         given(postRepository.findById(anyLong())).willReturn(Optional.of(post));
+        willDoNothing().given(commentRepository).deleteByPostId(anyLong());
         willDoNothing().given(postRepository).delete(any(Post.class));
 
         postService.postDelete(1L);
 
         then(postRepository).should().findById(anyLong());
+        then(commentRepository).should().deleteByPostId(anyLong());
         then(postRepository).should().delete(any(Post.class));
     }
 

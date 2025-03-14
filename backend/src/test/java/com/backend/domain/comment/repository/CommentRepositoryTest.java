@@ -7,6 +7,8 @@ import com.backend.domain.post.entity.Post;
 import com.backend.domain.post.repository.PostRepository;
 import com.backend.global.common.config.JpaAuditingConfig;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Named;
@@ -32,6 +34,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @DataJpaTest
 @Import(JpaAuditingConfig.class)
 class CommentRepositoryTest {
+
+    @PersistenceContext
+    private EntityManager em;
 
     @Autowired
     private MemberRepository memberRepository;
@@ -124,6 +129,20 @@ class CommentRepositoryTest {
         Optional<Comment> findComment = commentRepository.findByPostIdAndCommentId(savePost.getId(), saveComment.getId());
 
         commentRepository.delete(findComment.get());
+    }
+
+    @DisplayName("게시글 기본키를 외래키로 가지고 있는 댓글을 전부 삭제한다.")
+    @Test
+    void commentDeleteByPostId() {
+        Comment comment = Comment.builder()
+                .writer("yoonkun")
+                .content("comment")
+                .member(saveMember)
+                .post(savePost)
+                .build();
+        commentRepository.save(comment);
+
+        commentRepository.deleteByPostId(savePost.getId());
     }
 
     @DisplayName("게시글 기본키를 외래키로 가지고 있는 댓글 목록을 조회한다.")
