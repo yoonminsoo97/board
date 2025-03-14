@@ -1,5 +1,6 @@
 package com.backend.domain.post.service;
 
+import com.backend.domain.comment.repository.CommentRepository;
 import com.backend.domain.member.entity.Member;
 import com.backend.domain.member.exception.NotFoundMemberException;
 import com.backend.domain.member.repository.MemberRepository;
@@ -26,6 +27,7 @@ public class PostService {
 
     private final MemberRepository memberRepository;
     private final PostRepository postRepository;
+    private final CommentRepository commentRepository;
 
     @Transactional
     public void postWrite(PostWriteRequest postWriteRequest, String username) {
@@ -78,6 +80,7 @@ public class PostService {
     public void postDelete(Long postId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(NotFoundPostException::new);
+        commentRepository.deleteByPostId(postId);
         postRepository.delete(post);
     }
 
