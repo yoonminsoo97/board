@@ -1,7 +1,7 @@
 package com.backend.domain.auth.controller;
 
-import com.backend.domain.auth.dto.MemberLoginRequest;
-import com.backend.domain.auth.dto.MemberLoginResponse;
+import com.backend.domain.auth.dto.LoginRequest;
+import com.backend.domain.auth.dto.TokenResponse;
 import com.backend.domain.auth.exception.BadCredentialsException;
 import com.backend.domain.auth.service.AuthService;
 import com.backend.support.ControllerTest;
@@ -43,14 +43,14 @@ class AuthControllerTest extends ControllerTest {
     @DisplayName("로그인에 성공하면 access token과 refresh token을 응답한다.")
     @Test
     void memberLogin() throws Exception {
-        MemberLoginRequest memberLoginRequest = new MemberLoginRequest("yoon1234", "12345678");
-        MemberLoginResponse memberLoginResponse = new MemberLoginResponse("access-token", "refresh-token");
+        LoginRequest loginRequest = new LoginRequest("yoon1234", "12345678");
+        TokenResponse tokenResponse = new TokenResponse("access-token", "refresh-token");
 
-        given(authService.memberLogin(any(MemberLoginRequest.class))).willReturn(memberLoginResponse);
+        given(authService.memberLogin(any(LoginRequest.class))).willReturn(tokenResponse);
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(memberLoginRequest))
+                        .content(objectMapper.writeValueAsString(loginRequest))
                 )
                 .andExpectAll(
                         status().isOk(),
@@ -73,13 +73,13 @@ class AuthControllerTest extends ControllerTest {
     @DisplayName("로그인 시 아이디 또는 비밀번호가 잘못되면 401을 응답한다.")
     @Test
     void memberLoginBadCredentials() throws Exception {
-        MemberLoginRequest memberLoginRequest = new MemberLoginRequest("yoon1234", "12345678");
+        LoginRequest loginRequest = new LoginRequest("yoon1234", "12345678");
 
-        willThrow(new BadCredentialsException()).given(authService).memberLogin(any(MemberLoginRequest.class));
+        willThrow(new BadCredentialsException()).given(authService).memberLogin(any(LoginRequest.class));
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(memberLoginRequest))
+                        .content(objectMapper.writeValueAsString(loginRequest))
                 )
                 .andExpectAll(
                         status().isUnauthorized(),
@@ -99,7 +99,7 @@ class AuthControllerTest extends ControllerTest {
 
         willDoNothing().given(tokenService).validateToken(anyString());
         given(tokenService.extractClaim(anyString())).willReturn(claims);
-        willDoNothing().given(authService).memberLogout(anyString());
+        willDoNothing().given(authService).memberLogout(anyString(), anyString());
 
         mockMvc.perform(post("/api/auth/logout")
                         .header("Authorization", "Bearer access-token")
