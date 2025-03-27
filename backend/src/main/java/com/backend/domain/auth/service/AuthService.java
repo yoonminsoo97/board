@@ -1,7 +1,6 @@
 package com.backend.domain.auth.service;
 
-import com.backend.domain.auth.dto.MemberLoginRequest;
-import com.backend.domain.auth.dto.MemberLoginResponse;
+import com.backend.domain.auth.dto.LoginRequest;
 import com.backend.domain.auth.dto.TokenResponse;
 import com.backend.domain.auth.exception.BadCredentialsException;
 import com.backend.domain.member.entity.Member;
@@ -22,19 +21,17 @@ public class AuthService {
     private final TokenService tokenService;
 
     @Transactional
-    public MemberLoginResponse memberLogin(MemberLoginRequest memberLoginRequest) {
-        Member member = memberRepository.findByUsername(memberLoginRequest.getUsername())
+    public TokenResponse memberLogin(LoginRequest loginRequest) {
+        Member member = memberRepository.findByUsername(loginRequest.getUsername())
                 .orElseThrow(BadCredentialsException::new);
-        if (!passwordEncoder.matches(memberLoginRequest.getPassword(), member.getPassword())) {
+        if (!passwordEncoder.matches(loginRequest.getPassword(), member.getPassword())) {
             throw new BadCredentialsException();
         }
-        TokenResponse tokenResponse = tokenService.tokenSave(member);
-        return new MemberLoginResponse(tokenResponse.getAccessToken(), tokenResponse.getRefreshToken());
+        return tokenService.issueToken(member.getUsername(), member.getAuthority());
     }
 
-    @Transactional
-    public void memberLogout(String username) {
-        tokenService.tokenDelete(username);
+    public void memberLogout(String accessToken, String username) {
+        tokenService.deleteToken(accessToken, username);
     }
 
 }

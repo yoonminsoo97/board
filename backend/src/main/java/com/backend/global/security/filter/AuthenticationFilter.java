@@ -50,7 +50,7 @@ public class AuthenticationFilter extends OncePerRequestFilter {
     }
 
     private Authentication createAuthentication(Claims claims) {
-        String username = claims.get("username", String.class);
+        String username = claims.getSubject();
         String authority = claims.get("authority", String.class);
         return UsernamePasswordAuthenticationToken.authenticated(username, null, createAuthorityList(authority));
     }
@@ -62,7 +62,7 @@ public class AuthenticationFilter extends OncePerRequestFilter {
 
     private enum RequestPath {
 
-        // PERMIT_ALL
+        // PERMIT_ALL(전부 허용)
         MEMBER_SIGNUP(HttpMethod.POST, "/api/members/signup", Authority.PERMIT_ALL),
         MEMBER_LOGIN(HttpMethod.POST, "/api/auth/login", Authority.PERMIT_ALL),
         POST_DETAIL(HttpMethod.GET, "/api/posts/*", Authority.PERMIT_ALL),
@@ -70,7 +70,7 @@ public class AuthenticationFilter extends OncePerRequestFilter {
         POST_LIST_SEARCH(HttpMethod.GET, "/api/posts/search", Authority.PERMIT_ALL),
         COMMENT_LIST(HttpMethod.GET, "/api/posts/*/comments", Authority.PERMIT_ALL),
 
-        // ROLE_MEMBER
+        // ROLE_MEMBER(로그인 회원 허용)
         MEMBER_LOGOUT(HttpMethod.POST, "/api/auth/logout", Authority.ROLE_MEMBER),
         POST_WRITE(HttpMethod.POST, "/api/posts/write", Authority.ROLE_MEMBER),
         POST_MODIFY(HttpMethod.PUT, "/api/posts/*", Authority.ROLE_MEMBER),

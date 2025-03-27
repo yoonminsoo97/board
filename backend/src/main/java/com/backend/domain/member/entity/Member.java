@@ -44,4 +44,8 @@ public class Member extends BaseEntity {
         this.role = Role.MEMBER;
     }
 
+    public String getAuthority() {
+        return role.getAuthority();
+    }
+
 }
