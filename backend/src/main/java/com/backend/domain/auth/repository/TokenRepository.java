@@ -1,13 +1,40 @@
 package com.backend.domain.auth.repository;
 
-import com.backend.domain.auth.entity.Token;
+import lombok.RequiredArgsConstructor;
 
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.stereotype.Component;
 
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
-public interface TokenRepository extends JpaRepository<Token, Long> {
+@Component
+@RequiredArgsConstructor
+public class TokenRepository {
 
-    Optional<Token> findByMemberUsername(String username);
+    private static final String BLACK_LIST_TOKEN_PREFIX = "black:";
+    private static final String BLOCKED = "blocked";
+
+    private final StringRedisTemplate stringRedisTemplate;
+
+    public void add(String key, String value, long expire) {
+        stringRedisTemplate.opsForValue().set(key, value, expire, TimeUnit.MILLISECONDS);
+    }
+
+    public void addBlackList(String token, long expire) {
+        stringRedisTemplate.opsForValue().set(BLACK_LIST_TOKEN_PREFIX + token, BLOCKED, expire, TimeUnit.MILLISECONDS);
+    }
+
+    public boolean isBlocked(String token) {
+        return stringRedisTemplate.hasKey(BLACK_LIST_TOKEN_PREFIX + token);
+    }
+
+    public Optional<String> findByUsername(String username) {
+        return Optional.of(stringRedisTemplate.opsForValue().get(username));
+    }
+
+    public void deleteByUsername(String username) {
+        stringRedisTemplate.delete(username);
+    }
 
 }
