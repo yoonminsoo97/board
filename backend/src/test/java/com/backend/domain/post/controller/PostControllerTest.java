@@ -5,6 +5,7 @@ import com.backend.domain.post.dto.PostItem;
 import com.backend.domain.post.dto.PostListResponse;
 import com.backend.domain.post.dto.PostModifyRequest;
 import com.backend.domain.post.dto.PostWriteRequest;
+import com.backend.domain.post.exception.AccessDeniedPostException;
 import com.backend.domain.post.exception.NotFoundPostException;
 import com.backend.domain.post.service.PostService;
 import com.backend.support.ControllerTest;
@@ -331,7 +332,7 @@ class PostControllerTest extends ControllerTest {
 
         willDoNothing().given(tokenService).validateToken(anyString());
         given(tokenService.extractClaim(anyString())).willReturn(claims);
-        willDoNothing().given(postService).postModify(anyLong(), any(PostModifyRequest.class));
+        willDoNothing().given(postService).postModify(anyLong(), anyString(), any(PostModifyRequest.class));
 
         mockMvc.perform(put("/api/posts/{postId}", 1)
                         .header("Authorization", "Bearer access-token")
@@ -361,13 +362,13 @@ class PostControllerTest extends ControllerTest {
     void postModifyNotFoundPost() throws Exception {
         PostModifyRequest postModifyRequest = new PostModifyRequest("title", "content");
         Claims claims = Jwts.claims()
-                .add("username", "yoon1234")
+                .subject("yoon1234")
                 .add("authority", "ROLE_MEMBER")
                 .build();
 
         willDoNothing().given(tokenService).validateToken(anyString());
         given(tokenService.extractClaim(anyString())).willReturn(claims);
-        willThrow(new NotFoundPostException()).given(postService).postModify(anyLong(), any(PostModifyRequest.class));
+        willThrow(new NotFoundPostException()).given(postService).postModify(anyLong(), anyString(), any(PostModifyRequest.class));
 
         mockMvc.perform(put("/api/posts/{postId}", 1)
                         .header("Authorization", "Bearer access-token")
@@ -424,6 +425,32 @@ class PostControllerTest extends ControllerTest {
                 );
     }
 
+    @DisplayName("게시글 수정 시 작성자가 아닌데 수정을 시도할 경우 403을 응답한다.")
+    @Test
+    void postModifyAccessDenied() throws Exception {
+        PostModifyRequest postModifyRequest = new PostModifyRequest("title", "content");
+        Claims claims = Jwts.claims()
+                .subject("yoon1234")
+                .add("authority", "ROLE_MEMBER")
+                .build();
+
+        willDoNothing().given(tokenService).validateToken(anyString());
+        given(tokenService.extractClaim(anyString())).willReturn(claims);
+        willThrow(new AccessDeniedPostException()).given(postService).postModify(anyLong(), anyString(), any(PostModifyRequest.class));
+
+        mockMvc.perform(put("/api/posts/{postId}", 1)
+                        .header("Authorization", "Bearer access-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(postModifyRequest))
+                )
+                .andExpectAll(
+                        status().isForbidden(),
+                        jsonPath("$.status").value(403),
+                        jsonPath("$.errorCode").value("E403001"),
+                        jsonPath("$.message").value("다른 사용자의 게시글을 수정/삭제 할 수 없습니다.")
+                );
+    }
+
     @DisplayName("게시글 삭제에 성공하면 200을 응답한다.")
     @Test
     void postDelete() throws Exception {
@@ -434,7 +461,7 @@ class PostControllerTest extends ControllerTest {
 
         willDoNothing().given(tokenService).validateToken(anyString());
         given(tokenService.extractClaim(anyString())).willReturn(claims);
-        willDoNothing().given(postService).postDelete(anyLong());
+        willDoNothing().given(postService).postDelete(anyLong(), anyString());
 
         mockMvc.perform(delete("/api/posts/{postId}", 1)
                         .header("Authorization", "Bearer access-token")
@@ -455,13 +482,13 @@ class PostControllerTest extends ControllerTest {
     @Test
     void postDeleteNotFoundPost() throws Exception {
         Claims claims = Jwts.claims()
-                .add("username", "yoon1234")
+                .subject("yoon1234")
                 .add("authority", "ROLE_MEMBER")
                 .build();
 
         willDoNothing().given(tokenService).validateToken(anyString());
         given(tokenService.extractClaim(anyString())).willReturn(claims);
-        willThrow(new NotFoundPostException()).given(postService).postDelete(anyLong());
+        willThrow(new NotFoundPostException()).given(postService).postDelete(anyLong(), anyString());
 
         mockMvc.perform(delete("/api/posts/{postId}", 1)
                         .header("Authorization", "Bearer access-token")
@@ -502,13 +529,35 @@ class PostControllerTest extends ControllerTest {
 
         mockMvc.perform(delete("/api/posts/{postId}", 1)
                         .header("Authorization", "Bearer access-token")
-                        .contentType(MediaType.APPLICATION_JSON)
                 )
                 .andExpectAll(
                         status().isUnauthorized(),
                         jsonPath("$.status").value(401),
                         jsonPath("$.errorCode").value("E401003"),
                         jsonPath("$.message").value("토큰 형식이 잘못 되었습니다.")
+                );
+    }
+
+    @DisplayName("게시글 삭제 시 작성자가 아닌데 삭제를 시도할 경우 403을 응답한다.")
+    @Test
+    void postDeleteAccessDenied() throws Exception {
+        Claims claims = Jwts.claims()
+                .subject("yoon1234")
+                .add("authority", "ROLE_MEMBER")
+                .build();
+
+        willDoNothing().given(tokenService).validateToken(anyString());
+        given(tokenService.extractClaim(anyString())).willReturn(claims);
+        willThrow(new AccessDeniedPostException()).given(postService).postDelete(anyLong(), anyString());
+
+        mockMvc.perform(delete("/api/posts/{postId}", 1)
+                        .header("Authorization", "Bearer access-token")
+                )
+                .andExpectAll(
+                        status().isForbidden(),
+                        jsonPath("$.status").value(403),
+                        jsonPath("$.errorCode").value("E403001"),
+                        jsonPath("$.message").value("다른 사용자의 게시글을 수정/삭제 할 수 없습니다.")
                 );
     }
 
