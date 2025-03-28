@@ -20,6 +20,9 @@ public enum ErrorType {
     EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "E401002", "토큰이 만료 되었습니다."),
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "E401003", "토큰 형식이 잘못 되었습니다."),
 
+    // 403
+    ACCESS_DENIED_POST(HttpStatus.FORBIDDEN, "E403001", "다른 사용자의 게시글을 수정/삭제 할 수 없습니다."),
+
     // 404
     NOT_FOUND_TOKEN(HttpStatus.NOT_FOUND, " E404001", "토큰이 존재하지 않습니다."),
     NOT_FOUND_MEMBER(HttpStatus.NOT_FOUND, "E404002", "회원이 존재하지 않습니다."),
