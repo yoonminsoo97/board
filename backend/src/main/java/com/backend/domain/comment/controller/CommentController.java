@@ -50,16 +50,18 @@ public class CommentController {
     @PutMapping("/{postId}/comments/{commentId}")
     public ResponseEntity<Void> commentModify(@PathVariable("postId") Long postId,
                                               @PathVariable("commentId") Long commentId,
+                                              @AuthenticationPrincipal String username,
                                               @RequestBody @Valid CommentModifyRequest commentModifyRequest) {
-        commentService.commentModify(postId, commentId, commentModifyRequest);
+        commentService.commentModify(postId, commentId, username, commentModifyRequest);
         return ResponseEntity.ok().build();
     }
 
     @PreAuthorize("hasRole('MEMBER')")
     @DeleteMapping("/{postId}/comments/{commentId}")
     public ResponseEntity<Void> commentDelete(@PathVariable("postId") Long postId,
-                                              @PathVariable("commentId") Long commentId) {
-        commentService.commentDelete(postId, commentId);
+                                              @PathVariable("commentId") Long commentId,
+                                              @AuthenticationPrincipal String username) {
+        commentService.commentDelete(postId, commentId, username);
         return ResponseEntity.ok().build();
     }
 

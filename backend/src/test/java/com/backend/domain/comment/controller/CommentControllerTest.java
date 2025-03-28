@@ -4,6 +4,7 @@ import com.backend.domain.comment.dto.CommentItem;
 import com.backend.domain.comment.dto.CommentListResponse;
 import com.backend.domain.comment.dto.CommentModifyRequest;
 import com.backend.domain.comment.dto.CommentWriteRequest;
+import com.backend.domain.comment.exception.AccessDeniedCommentException;
 import com.backend.domain.comment.exception.NotFoundCommentException;
 import com.backend.domain.comment.service.CommentService;
 import com.backend.domain.post.exception.NotFoundPostException;
@@ -112,7 +113,7 @@ class CommentControllerTest extends ControllerTest {
     void commentWrite() throws Exception {
         CommentWriteRequest commentWriteRequest = new CommentWriteRequest("comment");
         Claims claims = Jwts.claims()
-                .add("username", "yoon1234")
+                .subject("yoon1234")
                 .add("authority", "ROLE_MEMBER")
                 .build();
 
@@ -145,7 +146,7 @@ class CommentControllerTest extends ControllerTest {
     void commentWriteBlankContent() throws Exception {
         CommentWriteRequest commentWriteRequest = new CommentWriteRequest("");
         Claims claims = Jwts.claims()
-                .add("username", "yoon1234")
+                .subject("yoon1234")
                 .add("authority", "ROLE_MEMBER")
                 .build();
 
@@ -173,7 +174,7 @@ class CommentControllerTest extends ControllerTest {
     void commentWriteNotFoundPost() throws Exception {
         CommentWriteRequest commentWriteRequest = new CommentWriteRequest("comment");
         Claims claims = Jwts.claims()
-                .add("username", "yoon1234")
+                .subject("yoon1234")
                 .add("authority", "ROLE_MEMBER")
                 .build();
 
@@ -241,13 +242,13 @@ class CommentControllerTest extends ControllerTest {
     void commentModify() throws Exception {
         CommentModifyRequest commentModifyRequest = new CommentModifyRequest("comment");
         Claims claims = Jwts.claims()
-                .add("username", "yoon1234")
+                .subject("yoon1234")
                 .add("authority", "ROLE_MEMBER")
                 .build();
 
         willDoNothing().given(tokenService).validateToken(anyString());
         given(tokenService.extractClaim(anyString())).willReturn(claims);
-        willDoNothing().given(commentService).commentModify(anyLong(), anyLong(), any(CommentModifyRequest.class));
+        willDoNothing().given(commentService).commentModify(anyLong(), anyLong(), anyString(), any(CommentModifyRequest.class));
 
         mockMvc.perform(put("/api/posts/{postId}/comments/{commentId}", 1, 1)
                         .header("Authorization", "Bearer access-token")
@@ -275,7 +276,7 @@ class CommentControllerTest extends ControllerTest {
     void commentModifyBlankContent() throws Exception {
         CommentModifyRequest commentModifyRequest = new CommentModifyRequest("");
         Claims claims = Jwts.claims()
-                .add("username", "yoon1234")
+                .subject("yoon1234")
                 .add("authority", "ROLE_MEMBER")
                 .build();
 
@@ -303,13 +304,13 @@ class CommentControllerTest extends ControllerTest {
     void commentModifyNotFoundComment() throws Exception {
         CommentModifyRequest commentModifyRequest = new CommentModifyRequest("comment");
         Claims claims = Jwts.claims()
-                .add("username", "yoon1234")
+                .subject("yoon1234")
                 .add("authority", "ROLE_MEMBER")
                 .build();
 
         willDoNothing().given(tokenService).validateToken(anyString());
         given(tokenService.extractClaim(anyString())).willReturn(claims);
-        willThrow(new NotFoundCommentException()).given(commentService).commentModify(anyLong(), anyLong(), any(CommentModifyRequest.class));
+        willThrow(new NotFoundCommentException()).given(commentService).commentModify(anyLong(), anyLong(), anyString(), any(CommentModifyRequest.class));
 
         mockMvc.perform(put("/api/posts/{postId}/comments/{commentId}", 1, 1)
                         .header("Authorization", "Bearer access-token")
@@ -366,17 +367,43 @@ class CommentControllerTest extends ControllerTest {
                 );
     }
 
-    @DisplayName("댓글 삭제에 성공하면 200을 응답한다.")
+    @DisplayName("댓글 수정 시 작성자가 아닌데 수정하면 403을 응답한다.")
     @Test
-    void commentDelete() throws Exception {
+    void commentModifyAccessDenied() throws Exception {
+        CommentModifyRequest commentModifyRequest = new CommentModifyRequest("comment");
         Claims claims = Jwts.claims()
-                .add("username", "yoon1234")
+                .subject("yoon1234")
                 .add("authority", "ROLE_MEMBER")
                 .build();
 
         willDoNothing().given(tokenService).validateToken(anyString());
         given(tokenService.extractClaim(anyString())).willReturn(claims);
-        willDoNothing().given(commentService).commentDelete(anyLong(), anyLong());
+        willThrow(new AccessDeniedCommentException()).given(commentService).commentModify(anyLong(), anyLong(), anyString(), any(CommentModifyRequest.class));
+
+        mockMvc.perform(put("/api/posts/{postId}/comments/{commentId}", 1, 1)
+                        .header("Authorization", "Bearer access-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(commentModifyRequest))
+                )
+                .andExpectAll(
+                        status().isForbidden(),
+                        jsonPath("$.status").value(403),
+                        jsonPath("$.errorCode").value("E403002"),
+                        jsonPath("$.message").value("다른 사용자의 댓글을 수정/삭제 할 수 없습니다.")
+                );
+    }
+
+    @DisplayName("댓글 삭제에 성공하면 200을 응답한다.")
+    @Test
+    void commentDelete() throws Exception {
+        Claims claims = Jwts.claims()
+                .subject("yoon1234")
+                .add("authority", "ROLE_MEMBER")
+                .build();
+
+        willDoNothing().given(tokenService).validateToken(anyString());
+        given(tokenService.extractClaim(anyString())).willReturn(claims);
+        willDoNothing().given(commentService).commentDelete(anyLong(), anyLong(), anyString());
 
         mockMvc.perform(delete("/api/posts/{postId}/comments/{commentId}", 1, 1)
                         .header("Authorization", "Bearer access-token")
@@ -398,13 +425,13 @@ class CommentControllerTest extends ControllerTest {
     @Test
     void commentDeleteNotFoundComment() throws Exception {
         Claims claims = Jwts.claims()
-                .add("username", "yoon1234")
+                .subject("yoon1234")
                 .add("authority", "ROLE_MEMBER")
                 .build();
 
         willDoNothing().given(tokenService).validateToken(anyString());
         given(tokenService.extractClaim(anyString())).willReturn(claims);
-        willThrow(new NotFoundCommentException()).given(commentService).commentDelete(anyLong(), anyLong());
+        willThrow(new NotFoundCommentException()).given(commentService).commentDelete(anyLong(), anyLong(), anyString());
 
         mockMvc.perform(delete("/api/posts/{postId}/comments/{commentId}", 1, 1)
                         .header("Authorization", "Bearer access-token")
@@ -450,6 +477,29 @@ class CommentControllerTest extends ControllerTest {
                         jsonPath("$.status").value(401),
                         jsonPath("$.errorCode").value("E401003"),
                         jsonPath("$.message").value("토큰 형식이 잘못 되었습니다.")
+                );
+    }
+
+    @DisplayName("댓글 삭제 시 사용자가 아닌데 수정하면 403을 응답한다.")
+    @Test
+    void commentDeleteAccessDenied() throws Exception {
+        Claims claims = Jwts.claims()
+                .subject("yoon1234")
+                .add("authority", "ROLE_MEMBER")
+                .build();
+
+        willDoNothing().given(tokenService).validateToken(anyString());
+        given(tokenService.extractClaim(anyString())).willReturn(claims);
+        willThrow(new AccessDeniedCommentException()).given(commentService).commentDelete(anyLong(), anyLong(), anyString());
+
+        mockMvc.perform(delete("/api/posts/{postId}/comments/{commentId}", 1, 1)
+                        .header("Authorization", "Bearer access-token")
+                )
+                .andExpectAll(
+                        status().isForbidden(),
+                        jsonPath("$.status").value(403),
+                        jsonPath("$.errorCode").value("E403002"),
+                        jsonPath("$.message").value("다른 사용자의 댓글을 수정/삭제 할 수 없습니다.")
                 );
     }
 

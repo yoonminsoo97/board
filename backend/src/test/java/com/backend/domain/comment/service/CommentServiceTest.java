@@ -4,6 +4,7 @@ import com.backend.domain.comment.dto.CommentListResponse;
 import com.backend.domain.comment.dto.CommentModifyRequest;
 import com.backend.domain.comment.dto.CommentWriteRequest;
 import com.backend.domain.comment.entity.Comment;
+import com.backend.domain.comment.exception.AccessDeniedCommentException;
 import com.backend.domain.comment.exception.NotFoundCommentException;
 import com.backend.domain.comment.repository.CommentRepository;
 import com.backend.domain.member.entity.Member;
@@ -21,6 +22,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
@@ -160,7 +162,7 @@ class CommentServiceTest {
 
         given(commentRepository.findByPostIdAndCommentId(anyLong(), anyLong())).willReturn(Optional.of(comment));
 
-        commentService.commentModify(1L, 1L, commentModifyRequest);
+        commentService.commentModify(1L, 1L, "yoon1234", commentModifyRequest);
 
         then(commentRepository).should().findByPostIdAndCommentId(anyLong(), anyLong());
     }
@@ -172,8 +174,28 @@ class CommentServiceTest {
 
         willThrow(new NotFoundCommentException()).given(commentRepository).findByPostIdAndCommentId(anyLong(), anyLong());
 
-        assertThatThrownBy(() -> commentService.commentModify(1L, 1L, commentModifyRequest))
+        assertThatThrownBy(() -> commentService.commentModify(1L, 1L, "yoon1234", commentModifyRequest))
                 .isInstanceOf(NotFoundCommentException.class);
+
+        then(commentRepository).should().findByPostIdAndCommentId(anyLong(), anyLong());
+    }
+
+    @DisplayName("댓글 수정 시 작성자가 아닌데 수정을 시도하면 예외가 발생한다.")
+    @Test
+    void commentModifyAccessDenied() {
+        CommentModifyRequest commentModifyRequest = new CommentModifyRequest("comment");
+        Comment comment = Comment.builder()
+                .writer(member.getNickname())
+                .content("comment")
+                .member(member)
+                .post(post)
+                .build();
+
+        given(commentRepository.findByPostIdAndCommentId(anyLong(), anyLong())).willReturn(Optional.of(comment));
+
+        String notPostOwner = "yoonyoon";
+        assertThatThrownBy(() -> commentService.commentModify(1L, 1L, notPostOwner, commentModifyRequest))
+                .isInstanceOf(AccessDeniedCommentException.class);
 
         then(commentRepository).should().findByPostIdAndCommentId(anyLong(), anyLong());
     }
@@ -191,7 +213,7 @@ class CommentServiceTest {
         given(commentRepository.findByPostIdAndCommentId(anyLong(), anyLong())).willReturn(Optional.of(comment));
         willDoNothing().given(commentRepository).delete(any(Comment.class));
 
-        commentService.commentDelete(1L, 1L);
+        commentService.commentDelete(1L, 1L, "yoon1234");
 
         then(commentRepository).should().findByPostIdAndCommentId(anyLong(), anyLong());
         then(commentRepository).should().delete(any(Comment.class));
@@ -202,8 +224,28 @@ class CommentServiceTest {
     void commentDeleteNotFoundComment() {
         willThrow(new NotFoundCommentException()).given(commentRepository).findByPostIdAndCommentId(anyLong(), anyLong());
 
-        assertThatThrownBy(() -> commentService.commentDelete(1L, 1L))
+        assertThatThrownBy(() -> commentService.commentDelete(1L, 1L, "yoon1234"))
                 .isInstanceOf(NotFoundCommentException.class);
+
+        then(commentRepository).should().findByPostIdAndCommentId(anyLong(), anyLong());
+        then(commentRepository).should(never()).delete(any(Comment.class));
+    }
+
+    @DisplayName("댓글 삭제 시 작성자가 아닌데 삭제를 시도하면 예외가 발생한다.")
+    @Test
+    void commentDeleteAccessDenied() {
+        Comment comment = Comment.builder()
+                .writer(member.getNickname())
+                .content("comment")
+                .member(member)
+                .post(post)
+                .build();
+
+        given(commentRepository.findByPostIdAndCommentId(anyLong(), anyLong())).willReturn(Optional.of(comment));
+
+        String notPostOwner = "yoonyoon";
+        assertThatThrownBy(() -> commentService.commentDelete(1L, 1L, notPostOwner))
+                .isInstanceOf(AccessDeniedCommentException.class);
 
         then(commentRepository).should().findByPostIdAndCommentId(anyLong(), anyLong());
         then(commentRepository).should(never()).delete(any(Comment.class));

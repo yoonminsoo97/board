@@ -4,6 +4,7 @@ import com.backend.domain.comment.dto.CommentListResponse;
 import com.backend.domain.comment.dto.CommentModifyRequest;
 import com.backend.domain.comment.dto.CommentWriteRequest;
 import com.backend.domain.comment.entity.Comment;
+import com.backend.domain.comment.exception.AccessDeniedCommentException;
 import com.backend.domain.comment.exception.NotFoundCommentException;
 import com.backend.domain.comment.repository.CommentRepository;
 import com.backend.domain.member.entity.Member;
@@ -54,17 +55,29 @@ public class CommentService {
     }
 
     @Transactional
-    public void commentModify(Long postId, Long commentId, CommentModifyRequest commentModifyRequest) {
+    public void commentModify(Long postId, Long commentId, String loginUsername, CommentModifyRequest commentModifyRequest) {
         Comment comment = commentRepository.findByPostIdAndCommentId(postId, commentId)
                 .orElseThrow(NotFoundCommentException::new);
+        String commentOwner = comment.getMember().getUsername();
+        if (isNotCommentOwner(commentOwner, loginUsername)) {
+            throw new AccessDeniedCommentException();
+        }
         comment.modify(commentModifyRequest.getContent());
     }
 
     @Transactional
-    public void commentDelete(Long postId, Long commentId) {
+    public void commentDelete(Long postId, Long commentId, String loginUsername) {
         Comment comment = commentRepository.findByPostIdAndCommentId(postId, commentId)
                 .orElseThrow(NotFoundCommentException::new);
+        String commentOwner = comment.getMember().getUsername();
+        if (isNotCommentOwner(commentOwner, loginUsername)) {
+            throw new AccessDeniedCommentException();
+        }
         commentRepository.delete(comment);
+    }
+
+    private boolean isNotCommentOwner(String commentOwner, String loginUsername) {
+        return !commentOwner.equals(loginUsername);
     }
 
 }

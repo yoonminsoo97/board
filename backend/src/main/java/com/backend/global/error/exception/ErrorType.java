@@ -22,6 +22,7 @@ public enum ErrorType {
 
     // 403
     ACCESS_DENIED_POST(HttpStatus.FORBIDDEN, "E403001", "다른 사용자의 게시글을 수정/삭제 할 수 없습니다."),
+    ACCESS_DENIED_COMMENT(HttpStatus.FORBIDDEN, "E403002", "다른 사용자의 댓글을 수정/삭제 할 수 없습니다."),
 
     // 404
     NOT_FOUND_TOKEN(HttpStatus.NOT_FOUND, " E404001", "토큰이 존재하지 않습니다."),
