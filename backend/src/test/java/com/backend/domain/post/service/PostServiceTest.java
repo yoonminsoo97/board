@@ -10,6 +10,7 @@ import com.backend.domain.post.dto.PostListResponse;
 import com.backend.domain.post.dto.PostModifyRequest;
 import com.backend.domain.post.dto.PostWriteRequest;
 import com.backend.domain.post.entity.Post;
+import com.backend.domain.post.exception.AccessDeniedPostException;
 import com.backend.domain.post.exception.NotFoundPostException;
 import com.backend.domain.post.repository.PostRepository;
 
@@ -189,7 +190,26 @@ class PostServiceTest {
 
         given(postRepository.findById(anyLong())).willReturn(Optional.of(post));
 
-        postService.postModify(1L, postModifyRequest);
+        postService.postModify(1L, "yoon1234", postModifyRequest);
+
+        then(postRepository).should().findById(anyLong());
+    }
+
+    @DisplayName("게시글 수정 시 작성자가 아닌데 수정을 시도할 경우 예외가 발생한다.")
+    @Test
+    void postModifyAccessDenied() {
+        PostModifyRequest postModifyRequest = new PostModifyRequest("title", "content");
+        Post post = Post.builder()
+                .title("title")
+                .writer(member.getNickname())
+                .content("content")
+                .member(member)
+                .build();
+
+        given(postRepository.findById(anyLong())).willReturn(Optional.of(post));
+
+        assertThatThrownBy(() -> postService.postModify(1L, "yoon1234", postModifyRequest))
+                .isInstanceOf(AccessDeniedPostException.class);
 
         then(postRepository).should().findById(anyLong());
     }
@@ -201,7 +221,8 @@ class PostServiceTest {
 
         willThrow(new NotFoundPostException()).given(postRepository).findById(anyLong());
 
-        assertThatThrownBy(() -> postService.postModify(1L, postModifyRequest))
+        String notPostOwner = "yoonyoon";
+        assertThatThrownBy(() -> postService.postModify(1L, notPostOwner, postModifyRequest))
                 .isInstanceOf(NotFoundPostException.class);
 
         then(postRepository).should().findById(anyLong());
@@ -221,11 +242,31 @@ class PostServiceTest {
         willDoNothing().given(commentRepository).deleteByPostId(anyLong());
         willDoNothing().given(postRepository).delete(any(Post.class));
 
-        postService.postDelete(1L);
+        postService.postDelete(1L, "yoon1234");
 
         then(postRepository).should().findById(anyLong());
         then(commentRepository).should().deleteByPostId(anyLong());
         then(postRepository).should().delete(any(Post.class));
+    }
+
+    @DisplayName("게시글 삭제 시 작성자가 아닌데 삭제를 시도할 경우 예외가 발생한다.")
+    @Test
+    void postDeleteAccessDenied() {
+        Post post = Post.builder()
+                .title("title")
+                .writer(member.getNickname())
+                .content("content")
+                .member(member)
+                .build();
+
+        given(postRepository.findById(anyLong())).willReturn(Optional.of(post));
+
+        String notPostOwner = "yoonyoon";
+        assertThatThrownBy(() -> postService.postDelete(1L, notPostOwner));
+
+        then(postRepository).should().findById(anyLong());
+        then(commentRepository).should(never()).deleteByPostId(anyLong());
+        then(postRepository).should(never()).delete(any(Post.class));
     }
 
     @DisplayName("게시글 삭제 시 게시글이 존재하지 않으면 예외가 발생한다.")
@@ -233,7 +274,7 @@ class PostServiceTest {
     void postDeleteNotFoundPost() {
         willThrow(new NotFoundPostException()).given(postRepository).findById(anyLong());
 
-        assertThatThrownBy(() -> postService.postDelete(1L))
+        assertThatThrownBy(() -> postService.postDelete(1L, "yoon1234"))
                 .isInstanceOf(NotFoundPostException.class);
 
         then(postRepository).should().findById(anyLong());
