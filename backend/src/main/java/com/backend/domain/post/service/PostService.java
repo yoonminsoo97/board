@@ -10,6 +10,7 @@ import com.backend.domain.post.dto.PostListResponse;
 import com.backend.domain.post.dto.PostModifyRequest;
 import com.backend.domain.post.dto.PostWriteRequest;
 import com.backend.domain.post.entity.Post;
+import com.backend.domain.post.exception.AccessDeniedPostException;
 import com.backend.domain.post.exception.NotFoundPostException;
 import com.backend.domain.post.repository.PostRepository;
 
@@ -70,18 +71,30 @@ public class PostService {
     }
 
     @Transactional
-    public void postModify(Long postId, PostModifyRequest postModifyRequest) {
+    public void postModify(Long postId, String loginUsername, PostModifyRequest postModifyRequest) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(NotFoundPostException::new);
+        String postOwner = post.getMember().getUsername();
+        if (isNotOwner(postOwner, loginUsername)) {
+            throw new AccessDeniedPostException();
+        }
         post.modify(postModifyRequest.getTitle(), postModifyRequest.getContent());
     }
 
     @Transactional
-    public void postDelete(Long postId) {
+    public void postDelete(Long postId, String loginUsername) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(NotFoundPostException::new);
+        String postOwner = post.getMember().getUsername();
+        if (isNotOwner(postOwner, loginUsername)) {
+            throw new AccessDeniedPostException();
+        }
         commentRepository.deleteByPostId(postId);
         postRepository.delete(post);
+    }
+
+    private boolean isNotOwner(String postOwner, String loginUsername) {
+        return !postOwner.equals(loginUsername);
     }
 
 }

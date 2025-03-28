@@ -64,15 +64,17 @@ public class PostController {
     @PreAuthorize("hasRole('MEMBER')")
     @PutMapping("/{postId}")
     public ResponseEntity<Void> postModify(@PathVariable("postId") Long postId,
+                                           @AuthenticationPrincipal String username,
                                            @RequestBody @Valid PostModifyRequest postModifyRequest) {
-        postService.postModify(postId, postModifyRequest);
+        postService.postModify(postId, username, postModifyRequest);
         return ResponseEntity.ok().build();
     }
 
     @PreAuthorize("hasRole('MEMBER')")
     @DeleteMapping("/{postId}")
-    public ResponseEntity<Void> postDelete(@PathVariable("postId") Long postId) {
-        postService.postDelete(postId);
+    public ResponseEntity<Void> postDelete(@PathVariable("postId") Long postId,
+                                           @AuthenticationPrincipal String username) {
+        postService.postDelete(postId, username);
         return ResponseEntity.ok().build();
     }
 
