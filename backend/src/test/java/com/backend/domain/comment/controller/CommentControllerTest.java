@@ -4,7 +4,8 @@ import com.backend.domain.comment.dto.CommentItem;
 import com.backend.domain.comment.dto.CommentListResponse;
 import com.backend.domain.comment.dto.CommentModifyRequest;
 import com.backend.domain.comment.dto.CommentWriteRequest;
-import com.backend.domain.comment.exception.AccessDeniedCommentException;
+import com.backend.domain.comment.exception.AccessDeniedDeleteCommentException;
+import com.backend.domain.comment.exception.AccessDeniedModifyCommentException;
 import com.backend.domain.comment.exception.NotFoundCommentException;
 import com.backend.domain.comment.service.CommentService;
 import com.backend.domain.post.exception.NotFoundPostException;
@@ -378,7 +379,7 @@ class CommentControllerTest extends ControllerTest {
 
         willDoNothing().given(tokenService).validateToken(anyString());
         given(tokenService.extractClaim(anyString())).willReturn(claims);
-        willThrow(new AccessDeniedCommentException()).given(commentService).commentModify(anyLong(), anyLong(), anyString(), any(CommentModifyRequest.class));
+        willThrow(new AccessDeniedModifyCommentException()).given(commentService).commentModify(anyLong(), anyLong(), anyString(), any(CommentModifyRequest.class));
 
         mockMvc.perform(put("/api/posts/{postId}/comments/{commentId}", 1, 1)
                         .header("Authorization", "Bearer access-token")
@@ -388,8 +389,8 @@ class CommentControllerTest extends ControllerTest {
                 .andExpectAll(
                         status().isForbidden(),
                         jsonPath("$.status").value(403),
-                        jsonPath("$.errorCode").value("E403002"),
-                        jsonPath("$.message").value("다른 사용자의 댓글을 수정/삭제 할 수 없습니다.")
+                        jsonPath("$.errorCode").value("E403003"),
+                        jsonPath("$.message").value("다른 사용자의 댓글을 수정 할 수 없습니다.")
                 );
     }
 
@@ -480,7 +481,7 @@ class CommentControllerTest extends ControllerTest {
                 );
     }
 
-    @DisplayName("댓글 삭제 시 사용자가 아닌데 수정하면 403을 응답한다.")
+    @DisplayName("댓글 삭제 시 사용자가 아닌데 삭제하면 403을 응답한다.")
     @Test
     void commentDeleteAccessDenied() throws Exception {
         Claims claims = Jwts.claims()
@@ -490,7 +491,7 @@ class CommentControllerTest extends ControllerTest {
 
         willDoNothing().given(tokenService).validateToken(anyString());
         given(tokenService.extractClaim(anyString())).willReturn(claims);
-        willThrow(new AccessDeniedCommentException()).given(commentService).commentDelete(anyLong(), anyLong(), anyString());
+        willThrow(new AccessDeniedDeleteCommentException()).given(commentService).commentDelete(anyLong(), anyLong(), anyString());
 
         mockMvc.perform(delete("/api/posts/{postId}/comments/{commentId}", 1, 1)
                         .header("Authorization", "Bearer access-token")
@@ -498,8 +499,8 @@ class CommentControllerTest extends ControllerTest {
                 .andExpectAll(
                         status().isForbidden(),
                         jsonPath("$.status").value(403),
-                        jsonPath("$.errorCode").value("E403002"),
-                        jsonPath("$.message").value("다른 사용자의 댓글을 수정/삭제 할 수 없습니다.")
+                        jsonPath("$.errorCode").value("E403004"),
+                        jsonPath("$.message").value("다른 사용자의 댓글을 삭제 할 수 없습니다.")
                 );
     }
 

@@ -5,7 +5,8 @@ import com.backend.domain.post.dto.PostItem;
 import com.backend.domain.post.dto.PostListResponse;
 import com.backend.domain.post.dto.PostModifyRequest;
 import com.backend.domain.post.dto.PostWriteRequest;
-import com.backend.domain.post.exception.AccessDeniedPostException;
+import com.backend.domain.post.exception.AccessDeniedDeletePostException;
+import com.backend.domain.post.exception.AccessDeniedModifyPostException;
 import com.backend.domain.post.exception.NotFoundPostException;
 import com.backend.domain.post.service.PostService;
 import com.backend.support.ControllerTest;
@@ -436,7 +437,7 @@ class PostControllerTest extends ControllerTest {
 
         willDoNothing().given(tokenService).validateToken(anyString());
         given(tokenService.extractClaim(anyString())).willReturn(claims);
-        willThrow(new AccessDeniedPostException()).given(postService).postModify(anyLong(), anyString(), any(PostModifyRequest.class));
+        willThrow(new AccessDeniedModifyPostException()).given(postService).postModify(anyLong(), anyString(), any(PostModifyRequest.class));
 
         mockMvc.perform(put("/api/posts/{postId}", 1)
                         .header("Authorization", "Bearer access-token")
@@ -447,7 +448,7 @@ class PostControllerTest extends ControllerTest {
                         status().isForbidden(),
                         jsonPath("$.status").value(403),
                         jsonPath("$.errorCode").value("E403001"),
-                        jsonPath("$.message").value("다른 사용자의 게시글을 수정/삭제 할 수 없습니다.")
+                        jsonPath("$.message").value("다른 사용자의 게시글을 수정 할 수 없습니다.")
                 );
     }
 
@@ -548,7 +549,7 @@ class PostControllerTest extends ControllerTest {
 
         willDoNothing().given(tokenService).validateToken(anyString());
         given(tokenService.extractClaim(anyString())).willReturn(claims);
-        willThrow(new AccessDeniedPostException()).given(postService).postDelete(anyLong(), anyString());
+        willThrow(new AccessDeniedDeletePostException()).given(postService).postDelete(anyLong(), anyString());
 
         mockMvc.perform(delete("/api/posts/{postId}", 1)
                         .header("Authorization", "Bearer access-token")
@@ -556,8 +557,8 @@ class PostControllerTest extends ControllerTest {
                 .andExpectAll(
                         status().isForbidden(),
                         jsonPath("$.status").value(403),
-                        jsonPath("$.errorCode").value("E403001"),
-                        jsonPath("$.message").value("다른 사용자의 게시글을 수정/삭제 할 수 없습니다.")
+                        jsonPath("$.errorCode").value("E403002"),
+                        jsonPath("$.message").value("다른 사용자의 게시글을 삭제 할 수 없습니다.")
                 );
     }
 

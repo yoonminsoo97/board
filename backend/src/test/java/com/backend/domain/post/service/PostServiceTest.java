@@ -10,7 +10,8 @@ import com.backend.domain.post.dto.PostListResponse;
 import com.backend.domain.post.dto.PostModifyRequest;
 import com.backend.domain.post.dto.PostWriteRequest;
 import com.backend.domain.post.entity.Post;
-import com.backend.domain.post.exception.AccessDeniedPostException;
+import com.backend.domain.post.exception.AccessDeniedDeletePostException;
+import com.backend.domain.post.exception.AccessDeniedModifyPostException;
 import com.backend.domain.post.exception.NotFoundPostException;
 import com.backend.domain.post.repository.PostRepository;
 
@@ -208,8 +209,9 @@ class PostServiceTest {
 
         given(postRepository.findById(anyLong())).willReturn(Optional.of(post));
 
-        assertThatThrownBy(() -> postService.postModify(1L, "yoon1234", postModifyRequest))
-                .isInstanceOf(AccessDeniedPostException.class);
+        String notPostOwner = "yoonyoon";
+        assertThatThrownBy(() -> postService.postModify(1L, notPostOwner, postModifyRequest))
+                .isInstanceOf(AccessDeniedModifyPostException.class);
 
         then(postRepository).should().findById(anyLong());
     }
@@ -221,8 +223,7 @@ class PostServiceTest {
 
         willThrow(new NotFoundPostException()).given(postRepository).findById(anyLong());
 
-        String notPostOwner = "yoonyoon";
-        assertThatThrownBy(() -> postService.postModify(1L, notPostOwner, postModifyRequest))
+        assertThatThrownBy(() -> postService.postModify(1L, "yoon1234", postModifyRequest))
                 .isInstanceOf(NotFoundPostException.class);
 
         then(postRepository).should().findById(anyLong());
@@ -262,7 +263,8 @@ class PostServiceTest {
         given(postRepository.findById(anyLong())).willReturn(Optional.of(post));
 
         String notPostOwner = "yoonyoon";
-        assertThatThrownBy(() -> postService.postDelete(1L, notPostOwner));
+        assertThatThrownBy(() -> postService.postDelete(1L, notPostOwner))
+                .isInstanceOf(AccessDeniedDeletePostException.class);
 
         then(postRepository).should().findById(anyLong());
         then(commentRepository).should(never()).deleteByPostId(anyLong());
