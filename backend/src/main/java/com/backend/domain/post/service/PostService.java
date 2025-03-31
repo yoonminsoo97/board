@@ -10,7 +10,8 @@ import com.backend.domain.post.dto.PostListResponse;
 import com.backend.domain.post.dto.PostModifyRequest;
 import com.backend.domain.post.dto.PostWriteRequest;
 import com.backend.domain.post.entity.Post;
-import com.backend.domain.post.exception.AccessDeniedPostException;
+import com.backend.domain.post.exception.AccessDeniedDeletePostException;
+import com.backend.domain.post.exception.AccessDeniedModifyPostException;
 import com.backend.domain.post.exception.NotFoundPostException;
 import com.backend.domain.post.repository.PostRepository;
 
@@ -76,7 +77,7 @@ public class PostService {
                 .orElseThrow(NotFoundPostException::new);
         String postOwner = post.getMember().getUsername();
         if (isNotOwner(postOwner, loginUsername)) {
-            throw new AccessDeniedPostException();
+            throw new AccessDeniedModifyPostException();
         }
         post.modify(postModifyRequest.getTitle(), postModifyRequest.getContent());
     }
@@ -87,7 +88,7 @@ public class PostService {
                 .orElseThrow(NotFoundPostException::new);
         String postOwner = post.getMember().getUsername();
         if (isNotOwner(postOwner, loginUsername)) {
-            throw new AccessDeniedPostException();
+            throw new AccessDeniedDeletePostException();
         }
         commentRepository.deleteByPostId(postId);
         postRepository.delete(post);

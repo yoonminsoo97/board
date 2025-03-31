@@ -21,8 +21,10 @@ public enum ErrorType {
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "E401003", "토큰 형식이 잘못 되었습니다."),
 
     // 403
-    ACCESS_DENIED_POST(HttpStatus.FORBIDDEN, "E403001", "다른 사용자의 게시글을 수정/삭제 할 수 없습니다."),
-    ACCESS_DENIED_COMMENT(HttpStatus.FORBIDDEN, "E403002", "다른 사용자의 댓글을 수정/삭제 할 수 없습니다."),
+    ACCESS_DENIED_MODIFY_POST(HttpStatus.FORBIDDEN, "E403001", "다른 사용자의 게시글을 수정 할 수 없습니다."),
+    ACCESS_DENIED_DELETE_POST(HttpStatus.FORBIDDEN, "E403002", "다른 사용자의 게시글을 삭제 할 수 없습니다."),
+    ACCESS_DENIED_MODIFY_COMMENT(HttpStatus.FORBIDDEN, "E403003", "다른 사용자의 댓글을 수정 할 수 없습니다."),
+    ACCESS_DENIED_DELETE_COMMENT(HttpStatus.FORBIDDEN, "E403004", "다른 사용자의 댓글을 삭제 할 수 없습니다."),
 
     // 404
     NOT_FOUND_TOKEN(HttpStatus.NOT_FOUND, " E404001", "토큰이 존재하지 않습니다."),

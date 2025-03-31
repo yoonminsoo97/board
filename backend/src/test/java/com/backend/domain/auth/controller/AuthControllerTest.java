@@ -3,6 +3,8 @@ package com.backend.domain.auth.controller;
 import com.backend.domain.auth.dto.LoginRequest;
 import com.backend.domain.auth.dto.TokenResponse;
 import com.backend.domain.auth.exception.BadCredentialsException;
+import com.backend.domain.auth.exception.ExpiredTokenException;
+import com.backend.domain.auth.exception.InvalidTokenException;
 import com.backend.domain.auth.service.AuthService;
 import com.backend.support.ControllerTest;
 import com.backend.global.error.exception.ErrorType;
@@ -16,7 +18,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.restdocs.payload.JsonFieldType;
-import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -118,7 +119,7 @@ class AuthControllerTest extends ControllerTest {
     void memberLogoutExpiredAccessToken() throws Exception {
         ErrorType errorType = ErrorType.EXPIRED_TOKEN;
 
-        willThrow(new AuthenticationServiceException(errorType.getErrorCode())).given(tokenService).validateToken(anyString());
+        willThrow(new ExpiredTokenException()).given(tokenService).validateToken(anyString());
 
         mockMvc.perform(post("/api/auth/logout")
                         .header("Authorization", "Bearer access-token")
@@ -136,7 +137,7 @@ class AuthControllerTest extends ControllerTest {
     void memberLogoutInvalidAccessToken() throws Exception {
         ErrorType errorType = ErrorType.INVALID_TOKEN;
 
-        willThrow(new AuthenticationServiceException(errorType.getErrorCode())).given(tokenService).validateToken(anyString());
+        willThrow(new InvalidTokenException()).given(tokenService).validateToken(anyString());
 
         mockMvc.perform(post("/api/auth/logout")
                         .header("Authorization", "Bearer access-token")

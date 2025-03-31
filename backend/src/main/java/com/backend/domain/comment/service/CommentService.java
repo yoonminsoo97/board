@@ -4,7 +4,8 @@ import com.backend.domain.comment.dto.CommentListResponse;
 import com.backend.domain.comment.dto.CommentModifyRequest;
 import com.backend.domain.comment.dto.CommentWriteRequest;
 import com.backend.domain.comment.entity.Comment;
-import com.backend.domain.comment.exception.AccessDeniedCommentException;
+import com.backend.domain.comment.exception.AccessDeniedDeleteCommentException;
+import com.backend.domain.comment.exception.AccessDeniedModifyCommentException;
 import com.backend.domain.comment.exception.NotFoundCommentException;
 import com.backend.domain.comment.repository.CommentRepository;
 import com.backend.domain.member.entity.Member;
@@ -60,7 +61,7 @@ public class CommentService {
                 .orElseThrow(NotFoundCommentException::new);
         String commentOwner = comment.getMember().getUsername();
         if (isNotCommentOwner(commentOwner, loginUsername)) {
-            throw new AccessDeniedCommentException();
+            throw new AccessDeniedModifyCommentException();
         }
         comment.modify(commentModifyRequest.getContent());
     }
@@ -71,7 +72,7 @@ public class CommentService {
                 .orElseThrow(NotFoundCommentException::new);
         String commentOwner = comment.getMember().getUsername();
         if (isNotCommentOwner(commentOwner, loginUsername)) {
-            throw new AccessDeniedCommentException();
+            throw new AccessDeniedDeleteCommentException();
         }
         commentRepository.delete(comment);
     }

@@ -4,7 +4,8 @@ import com.backend.domain.comment.dto.CommentListResponse;
 import com.backend.domain.comment.dto.CommentModifyRequest;
 import com.backend.domain.comment.dto.CommentWriteRequest;
 import com.backend.domain.comment.entity.Comment;
-import com.backend.domain.comment.exception.AccessDeniedCommentException;
+import com.backend.domain.comment.exception.AccessDeniedDeleteCommentException;
+import com.backend.domain.comment.exception.AccessDeniedModifyCommentException;
 import com.backend.domain.comment.exception.NotFoundCommentException;
 import com.backend.domain.comment.repository.CommentRepository;
 import com.backend.domain.member.entity.Member;
@@ -195,7 +196,7 @@ class CommentServiceTest {
 
         String notPostOwner = "yoonyoon";
         assertThatThrownBy(() -> commentService.commentModify(1L, 1L, notPostOwner, commentModifyRequest))
-                .isInstanceOf(AccessDeniedCommentException.class);
+                .isInstanceOf(AccessDeniedModifyCommentException.class);
 
         then(commentRepository).should().findByPostIdAndCommentId(anyLong(), anyLong());
     }
@@ -245,7 +246,7 @@ class CommentServiceTest {
 
         String notPostOwner = "yoonyoon";
         assertThatThrownBy(() -> commentService.commentDelete(1L, 1L, notPostOwner))
-                .isInstanceOf(AccessDeniedCommentException.class);
+                .isInstanceOf(AccessDeniedDeleteCommentException.class);
 
         then(commentRepository).should().findByPostIdAndCommentId(anyLong(), anyLong());
         then(commentRepository).should(never()).delete(any(Comment.class));
