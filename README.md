@@ -24,6 +24,7 @@
   - Spring Rest Docs
 - Lombok
 - H2 Database
+- Redis
 - Gradle
 
 ### ERD
